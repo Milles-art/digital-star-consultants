@@ -12,16 +12,16 @@ class DatabaseSeeder extends Seeder
             ServiceCategorySeeder::class,
             SerikaliIdentificationServiceSeeder::class,
 
-            // Written next, uncomment as each one lands:
-            // JobsServiceSeeder::class,
-            // EducationServiceSeeder::class,
-            // TraServiceSeeder::class,
-            // BrelaBusinessServiceSeeder::class,
-            // TravelServiceSeeder::class,
-            // OtherOnlineFormsServiceSeeder::class,
-            // PrintingGraphicsServiceSeeder::class,
-            // StationeryServiceSeeder::class,
-            // ItConsultancyServiceSeeder::class,
+             //Written next, uncomment as each one lands:
+             JobsServiceSeeder::class,
+             EducationServiceSeeder::class,
+             TraServiceSeeder::class,
+             BrelaBusinessServiceSeeder::class,
+             TravelServiceSeeder::class,
+             OtherOnlineFormsServiceSeeder::class,
+             PrintingGraphicsServiceSeeder::class,
+             StationeryServiceSeeder::class,
+             ItConsultancyServiceSeeder::class,
         ]);
     }
 }
