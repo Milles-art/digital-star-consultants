@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Notifications;
+
+use App\Models\Submission;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+
+class SubmissionAssignedNotification extends Notification implements ShouldQueue
+{
+    use Queueable;
+
+    protected $submission;
+
+    public function __construct(Submission $submission)
+    {
+        $this->submission = $submission;
+    }
+
+    public function via($notifiable)
+    {
+        return ['mail'];
+    }
+
+    public function toMail($notifiable)
+    {
+        return (new MailMessage)
+            ->subject('New Submission Assigned: ' . $this->submission->reference_number)
+            ->greeting('Hello ' . $notifiable->name . '!')
+            ->line('A submission has been assigned to you.')
+            ->line('**Reference:** ' . $this->submission->reference_number)
+            ->line('**Customer:** ' . $this->submission->customer_name)
+            ->line('**Service:** ' . ($this->submission->service->name ?? 'N/A'))
+            ->line('**Phone:** ' . $this->submission->customer_phone)
+            ->line('**Email:** ' . $this->submission->customer_email ?? 'Not provided')
+            ->line('**Status:** ' . $this->submission->status_label)
+            ->action('View Submission', url('/admin/submissions/' . $this->submission->id))
+            ->line('Please process this submission as soon as possible.');
+    }
+}

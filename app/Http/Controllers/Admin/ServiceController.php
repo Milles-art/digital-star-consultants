@@ -4,31 +4,25 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
-use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
-    /**
-     * List all services
-     * GET /admin/services
-     */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Service::class);
+
         $query = Service::with(['category']);
 
-        // Filter by category
         if ($request->filled('category_id')) {
             $query->where('service_category_id', $request->category_id);
         }
 
-        // Filter by active status
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->is_active);
         }
 
-        // Search by name
         if ($request->filled('search')) {
             $query->where('name', 'LIKE', "%{$request->search}%");
         }
@@ -37,34 +31,14 @@ class ServiceController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $services->map(function ($service) {
-                return [
-                    'id' => $service->id,
-                    'name' => $service->name,
-                    'slug' => $service->slug,
-                    'description' => $service->description,
-                    'price' => $service->price,
-                    'formatted_price' => $service->formatted_price,
-                    'duration_minutes' => $service->duration_minutes,
-                    'duration' => $service->duration,
-                    'sort_order' => $service->sort_order,
-                    'is_active' => $service->is_active,
-                    'category_id' => $service->service_category_id,
-                    'category_name' => $service->category->name ?? null,
-                    'fields_count' => $service->fields()->count(),
-                    'submissions_count' => $service->submissions()->count(),
-                    'created_at' => $service->created_at->format('Y-m-d H:i'),
-                ];
-            })
+            'data' => $services
         ]);
     }
 
-    /**
-     * Create a new service
-     * POST /admin/services
-     */
     public function store(Request $request)
     {
+        $this->authorize('create', Service::class);
+
         $request->validate([
             'service_category_id' => 'required|exists:service_categories,id',
             'name' => 'required|string|max:255',
@@ -76,7 +50,6 @@ class ServiceController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        // Check if slug exists
         $slug = Str::slug($request->name);
         $originalSlug = $slug;
         $counter = 1;
@@ -101,31 +74,13 @@ class ServiceController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Service created successfully',
-            'data' => [
-                'id' => $service->id,
-                'name' => $service->name,
-                'slug' => $service->slug,
-                'description' => $service->description,
-                'price' => $service->price,
-                'formatted_price' => $service->formatted_price,
-                'duration_minutes' => $service->duration_minutes,
-                'duration' => $service->duration,
-                'sort_order' => $service->sort_order,
-                'is_active' => $service->is_active,
-                'category_id' => $service->service_category_id,
-                'created_at' => $service->created_at->format('Y-m-d H:i'),
-            ]
+            'data' => $service
         ], 201);
     }
 
-    /**
-     * Show a single service
-     * GET /admin/services/{id}
-     */
     public function show($id)
     {
-        $service = Service::with(['category', 'fields'])
-            ->find($id);
+        $service = Service::with(['category', 'fields'])->find($id);
 
         if (!$service) {
             return response()->json([
@@ -134,45 +89,14 @@ class ServiceController extends Controller
             ], 404);
         }
 
+        $this->authorize('view', $service);
+
         return response()->json([
             'status' => 'success',
-            'data' => [
-                'id' => $service->id,
-                'name' => $service->name,
-                'slug' => $service->slug,
-                'description' => $service->description,
-                'price' => $service->price,
-                'formatted_price' => $service->formatted_price,
-                'duration_minutes' => $service->duration_minutes,
-                'duration' => $service->duration,
-                'is_free' => $service->is_free,
-                'metadata' => $service->metadata,
-                'sort_order' => $service->sort_order,
-                'is_active' => $service->is_active,
-                'category_id' => $service->service_category_id,
-                'category_name' => $service->category->name ?? null,
-                'fields' => $service->fields->map(function ($field) {
-                    return [
-                        'id' => $field->id,
-                        'label' => $field->label,
-                        'field_key' => $field->field_key,
-                        'field_type' => $field->field_type,
-                        'type_label' => $field->type_label,
-                        'is_required' => $field->is_required,
-                        'sort_order' => $field->sort_order,
-                    ];
-                }),
-                'submissions_count' => $service->submissions()->count(),
-                'created_at' => $service->created_at->format('Y-m-d H:i'),
-                'updated_at' => $service->updated_at->format('Y-m-d H:i'),
-            ]
+            'data' => $service
         ]);
     }
 
-    /**
-     * Update a service
-     * PUT /admin/services/{id}
-     */
     public function update(Request $request, $id)
     {
         $service = Service::find($id);
@@ -183,6 +107,8 @@ class ServiceController extends Controller
                 'message' => 'Service not found'
             ], 404);
         }
+
+        $this->authorize('update', $service);
 
         $request->validate([
             'service_category_id' => 'nullable|exists:service_categories,id',
@@ -206,7 +132,6 @@ class ServiceController extends Controller
             'is_active'
         ]);
 
-        // If name is updated, update slug too
         if ($request->has('name') && $request->name !== $service->name) {
             $slug = Str::slug($request->name);
             $originalSlug = $slug;
@@ -227,27 +152,10 @@ class ServiceController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Service updated successfully',
-            'data' => [
-                'id' => $service->id,
-                'name' => $service->name,
-                'slug' => $service->slug,
-                'description' => $service->description,
-                'price' => $service->price,
-                'formatted_price' => $service->formatted_price,
-                'duration_minutes' => $service->duration_minutes,
-                'duration' => $service->duration,
-                'sort_order' => $service->sort_order,
-                'is_active' => $service->is_active,
-                'category_id' => $service->service_category_id,
-                'updated_at' => $service->updated_at->format('Y-m-d H:i'),
-            ]
+            'data' => $service
         ]);
     }
 
-    /**
-     * Delete a service
-     * DELETE /admin/services/{id}
-     */
     public function destroy($id)
     {
         $service = Service::find($id);
@@ -259,7 +167,8 @@ class ServiceController extends Controller
             ], 404);
         }
 
-        // Check if service has submissions
+        $this->authorize('delete', $service);
+
         if ($service->submissions()->count() > 0) {
             return response()->json([
                 'status' => 'error',
@@ -267,7 +176,6 @@ class ServiceController extends Controller
             ], 422);
         }
 
-        // Check if service has fields
         if ($service->fields()->count() > 0) {
             return response()->json([
                 'status' => 'error',
@@ -283,10 +191,6 @@ class ServiceController extends Controller
         ]);
     }
 
-    /**
-     * Toggle service active status
-     * POST /admin/services/{id}/toggle-active
-     */
     public function toggleActive($id)
     {
         $service = Service::find($id);
@@ -297,6 +201,8 @@ class ServiceController extends Controller
                 'message' => 'Service not found'
             ], 404);
         }
+
+        $this->authorize('update', $service);
 
         $service->is_active = !$service->is_active;
         $service->save();

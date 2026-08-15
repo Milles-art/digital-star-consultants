@@ -8,27 +8,26 @@ use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-class DashnoardConntroller extends controller
+class DashboardController extends Controller
 {
     public function index()
     {
-        $user = auth ()-> user();
+        $user = auth()->user();
 
-        // check if the user has a role in management (admin, ceo, gm)
-        if ($user->isManagement())
-            {
-                return $this->managementDashboard();
-            }
+        // If user is management (admin, ceo, gm)
+        if ($user->isManagement()) {
+            return $this->managementDashboard();
+        }
 
-        // check if the user has a role in staff 
+        // If user is staff
         return $this->staffDashboard();
     }
 
-    private function managementDDashboard()
+    private function managementDashboard()
     {
         $stats = [
-            'total_submissions' =>Submission::coumt(),
-            'pending_submissions' =>Submission::pending()->count(),
+            'total_submissions' => Submission::count(),
+            'pending_submissions' => Submission::pending()->count(),
             'in_progress_submissions' => Submission::inProgress()->count(),
             'completed_submissions' => Submission::completed()->count(),
             'rejected_submissions' => Submission::rejected()->count(),
@@ -37,10 +36,11 @@ class DashnoardConntroller extends controller
             'total_management' => User::whereIn('role', ['admin', 'ceo', 'gm'])->count(),
             'today_submissions' => Submission::today()->count(),
         ];
-        $recent_Submissions = Submission::with(['service', 'processedBy'])
-        ->latest()
-        ->limit(10)
-        ->get();
+
+        $recent_submissions = Submission::with(['service', 'processedBy'])
+            ->latest()
+            ->limit(10)
+            ->get();
 
         return response()->json([
             'status' => 'success',
@@ -62,7 +62,8 @@ class DashnoardConntroller extends controller
             ]
         ]);
     }
-         private function staffDashboard()
+
+    private function staffDashboard()
     {
         $user = auth()->user();
 

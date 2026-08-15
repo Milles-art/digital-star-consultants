@@ -1,0 +1,16 @@
+$kind: http-request
+name: Login
+url: http://localhost:8000/login
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \    \"email\": \"admin@example.com\",\r
+
+    \    \"password\": \"password123\"\r
+
+    }"
+order: 1786747576331

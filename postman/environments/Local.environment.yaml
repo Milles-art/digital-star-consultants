@@ -1,0 +1,8 @@
+name: Local
+values:
+  - key: base_url
+    value: ''
+  - key: admin_email
+    value: ''
+  - key: admin_password
+    value: ''

@@ -9,12 +9,10 @@ use Illuminate\Support\Str;
 
 class ServiceCategoryController extends Controller
 {
-    /**
-     * List all categories
-     * GET /admin/categories
-     */
     public function index()
     {
+        $this->authorize('viewAny', ServiceCategory::class);
+
         $categories = ServiceCategory::with(['parent', 'children'])
             ->orderBy('sort_order')
             ->get();
@@ -40,12 +38,10 @@ class ServiceCategoryController extends Controller
         ]);
     }
 
-    /**
-     * Create a new category
-     * POST /admin/categories
-     */
     public function store(Request $request)
     {
+        $this->authorize('create', ServiceCategory::class);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -70,29 +66,13 @@ class ServiceCategoryController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Category created successfully',
-            'data' => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'description' => $category->description,
-                'parent_id' => $category->parent_id,
-                'icon' => $category->icon,
-                'color' => $category->color,
-                'sort_order' => $category->sort_order,
-                'is_active' => $category->is_active,
-                'created_at' => $category->created_at->format('Y-m-d H:i'),
-            ]
+            'data' => $category
         ], 201);
     }
 
-    /**
-     * Show a single category
-     * GET /admin/categories/{id}
-     */
     public function show($id)
     {
-        $category = ServiceCategory::with(['parent', 'children', 'services'])
-            ->find($id);
+        $category = ServiceCategory::with(['parent', 'children', 'services'])->find($id);
 
         if (!$category) {
             return response()->json([
@@ -101,38 +81,14 @@ class ServiceCategoryController extends Controller
             ], 404);
         }
 
+        $this->authorize('view', $category);
+
         return response()->json([
             'status' => 'success',
-            'data' => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'description' => $category->description,
-                'icon' => $category->icon,
-                'color' => $category->color,
-                'sort_order' => $category->sort_order,
-                'is_active' => $category->is_active,
-                'parent_id' => $category->parent_id,
-                'parent_name' => $category->parent->name ?? null,
-                'children' => $category->children->map(function ($child) {
-                    return [
-                        'id' => $child->id,
-                        'name' => $child->name,
-                        'slug' => $child->slug,
-                        'is_active' => $child->is_active,
-                    ];
-                }),
-                'services_count' => $category->services->count(),
-                'created_at' => $category->created_at->format('Y-m-d H:i'),
-                'updated_at' => $category->updated_at->format('Y-m-d H:i'),
-            ]
+            'data' => $category
         ]);
     }
 
-    /**
-     * Update a category
-     * PUT /admin/categories/{id}
-     */
     public function update(Request $request, $id)
     {
         $category = ServiceCategory::find($id);
@@ -143,6 +99,8 @@ class ServiceCategoryController extends Controller
                 'message' => 'Category not found'
             ], 404);
         }
+
+        $this->authorize('update', $category);
 
         $request->validate([
             'name' => 'nullable|string|max:255',
@@ -156,7 +114,6 @@ class ServiceCategoryController extends Controller
 
         $data = $request->only(['name', 'description', 'parent_id', 'icon', 'color', 'sort_order', 'is_active']);
 
-        // If name is updated, update slug too
         if ($request->has('name') && $request->name !== $category->name) {
             $data['slug'] = Str::slug($request->name);
         }
@@ -168,25 +125,10 @@ class ServiceCategoryController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Category updated successfully',
-            'data' => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'description' => $category->description,
-                'parent_id' => $category->parent_id,
-                'icon' => $category->icon,
-                'color' => $category->color,
-                'sort_order' => $category->sort_order,
-                'is_active' => $category->is_active,
-                'updated_at' => $category->updated_at->format('Y-m-d H:i'),
-            ]
+            'data' => $category
         ]);
     }
 
-    /**
-     * Delete a category
-     * DELETE /admin/categories/{id}
-     */
     public function destroy($id)
     {
         $category = ServiceCategory::find($id);
@@ -198,7 +140,8 @@ class ServiceCategoryController extends Controller
             ], 404);
         }
 
-        // Check if category has children
+        $this->authorize('delete', $category);
+
         if ($category->children()->count() > 0) {
             return response()->json([
                 'status' => 'error',
@@ -206,7 +149,6 @@ class ServiceCategoryController extends Controller
             ], 422);
         }
 
-        // Check if category has services
         if ($category->services()->count() > 0) {
             return response()->json([
                 'status' => 'error',
@@ -222,10 +164,6 @@ class ServiceCategoryController extends Controller
         ]);
     }
 
-    /**
-     * Toggle category active status
-     * POST /admin/categories/{id}/toggle-active
-     */
     public function toggleActive($id)
     {
         $category = ServiceCategory::find($id);
@@ -236,6 +174,8 @@ class ServiceCategoryController extends Controller
                 'message' => 'Category not found'
             ], 404);
         }
+
+        $this->authorize('update', $category);
 
         $category->is_active = !$category->is_active;
         $category->save();
