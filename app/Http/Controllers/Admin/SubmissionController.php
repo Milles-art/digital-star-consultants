@@ -11,9 +11,12 @@ use App\Jobs\SendSubmissionCompletedEmailJob;
 use App\Jobs\SendSubmissionRejectedEmailJob;
 use App\Jobs\SendStatusUpdateEmailJob;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SubmissionController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', Submission::class);
@@ -156,7 +159,6 @@ class SubmissionController extends Controller
 
         $submission->assignTo($staff);
 
-        //  Dispatch job to send assignment notification
         SendSubmissionAssignedEmailJob::dispatch($submission);
 
         return response()->json([
@@ -181,7 +183,6 @@ class SubmissionController extends Controller
 
         $submission->markAsCompleted();
 
-        //  Dispatch job to send completion notification
         SendSubmissionCompletedEmailJob::dispatch($submission);
 
         return response()->json([
@@ -207,7 +208,6 @@ class SubmissionController extends Controller
         $oldStatus = $submission->status;
         $submission->markAsInProgress();
 
-        // Dispatch job to send status update notification
         SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
 
         return response()->json([

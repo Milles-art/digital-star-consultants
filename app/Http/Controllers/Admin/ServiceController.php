@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ServiceController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', Service::class);
@@ -31,7 +35,25 @@ class ServiceController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $services
+            'data' => $services->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'slug' => $service->slug,
+                    'description' => $service->description,
+                    'price' => $service->price,
+                    'formatted_price' => $service->formatted_price,
+                    'duration_minutes' => $service->duration_minutes,
+                    'duration' => $service->duration,
+                    'sort_order' => $service->sort_order,
+                    'is_active' => $service->is_active,
+                    'category_id' => $service->service_category_id,
+                    'category_name' => $service->category->name ?? null,
+                    'fields_count' => $service->fields()->count(),
+                    'submissions_count' => $service->submissions()->count(),
+                    'created_at' => $service->created_at->format('Y-m-d H:i'),
+                ];
+            })
         ]);
     }
 
