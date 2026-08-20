@@ -5,24 +5,18 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\Submission;
-use App\Models\SubmissionFieldValue;
-use App\Models\User;
-use App\Jobs\SendNewSubmissionEmailJob;
+use App\Services\SubmissionService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class SubmissionController extends Controller
 {
-    /**
-     * Submit a service request
-     * POST /submit
-     *
-     * NOTE: This endpoint remains fully public and unauthenticated, per
-     * design — no login is required to submit a service request. The only
-     * change here is where uploaded files are stored (see below).
-     */
-    public function store(Request $request)
+    public function __construct(
+        private SubmissionService $submissionService
+    ) {}
+
+    public function store(Request $request): JsonResponse
     {
         $request->validate([
             'service_id' => 'required|exists:services,id',
@@ -36,68 +30,29 @@ class SubmissionController extends Controller
 
         $service = Service::with('fields')->find($request->service_id);
 
-        if (!$service || !$service->is_active) {
+        if (! $service || ! $service->is_active) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not available'
+                'message' => 'Service not available',
             ], 404);
         }
 
-        // Validate dynamic fields — delegates to ServiceField::getValidationRules(),
-        // the single source of truth (was previously duplicated inline here,
-        // which had already drifted from the model's version by missing a
-        // MIME whitelist).
         $fieldRules = [];
         foreach ($service->fields as $field) {
             $fieldRules["fields.{$field->field_key}"] = $field->getValidationRules();
         }
-
         $request->validate($fieldRules);
 
-        DB::beginTransaction();
-
         try {
-            // Create submission
-            $submission = Submission::create([
-                'service_id' => $service->id,
+            $submission = $this->submissionService->createSubmission($service, [
                 'customer_name' => $request->customer_name,
                 'customer_phone' => $request->customer_phone,
                 'customer_email' => $request->customer_email,
                 'customer_notes' => $request->customer_notes,
                 'preferred_date' => $request->preferred_date,
-                'status' => 'pending',
+                'fields' => $request->input('fields', []),
+                'files' => $request->file('fields', []),
             ]);
-
-            // Store field values
-            foreach ($service->fields as $field) {
-                $value = $request->input("fields.{$field->field_key}");
-                $filePath = null;
-
-                // Handle file upload
-                if ($field->field_type === 'file' && $request->hasFile("fields.{$field->field_key}")) {
-                    $file = $request->file("fields.{$field->field_key}");
-
-                    // IMPORTANT: store on the "local" (private) disk, not
-                    // "public". Customer documents (NIDA, passports, birth
-                    // certificates) must never be reachable via a guessable
-                    // public URL. Staff retrieve these through the
-                    // authenticated Admin\SubmissionFileController download
-                    // route instead of Storage::url().
-                    $filePath = $file->store("submissions/{$submission->id}", 'local');
-                }
-
-                SubmissionFieldValue::create([
-                    'submission_id' => $submission->id,
-                    'service_field_id' => $field->id,
-                    'value' => $value,
-                    'file_path' => $filePath,
-                ]);
-            }
-
-            // Dispatch job to send email notification to admins
-            SendNewSubmissionEmailJob::dispatch($submission);
-
-            DB::commit();
 
             return response()->json([
                 'status' => 'success',
@@ -114,38 +69,35 @@ class SubmissionController extends Controller
                         'customer_email' => $submission->customer_email,
                         'service_name' => $service->name,
                         'created_at' => $submission->created_at->format('Y-m-d H:i'),
-                    ]
-                ]
+                    ],
+                ],
             ], 201);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            Log::error('Submission creation failed', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'service_id' => $service->id,
+                'ip' => $request->ip(),
+            ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to create submission: ' . $e->getMessage()
+                'message' => 'Unable to process your request. Please try again later.',
             ], 500);
         }
     }
 
-    /**
-     * Track submission by reference number
-     * GET /track/{reference}
-     *
-     * Stays public/unauthenticated by design. file_url below now points to
-     * nothing for the public tracker (files are private) — see
-     * SubmissionFieldValue::getFileUrlAttribute().
-     */
-    public function track($reference)
+    public function track(string $reference): JsonResponse
     {
         $submission = Submission::with(['service', 'values.field'])
             ->where('reference_number', $reference)
             ->first();
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
@@ -162,18 +114,17 @@ class SubmissionController extends Controller
                 'customer_email' => $submission->customer_email,
                 'preferred_date' => $submission->preferred_date,
                 'created_at' => $submission->created_at->format('Y-m-d H:i'),
-                'completed_at' => $submission->completed_at ? $submission->completed_at->format('Y-m-d H:i') : null,
+                'completed_at' => $submission->completed_at?->format('Y-m-d H:i'),
                 'fields' => $submission->values->map(function ($value) {
                     return [
                         'label' => $value->field->label ?? null,
                         'field_key' => $value->field->field_key ?? null,
                         'value' => $value->getValueForDisplay(),
                         'is_file' => $value->isFile(),
-                        // no file_url for public tracking — files are private now
                     ];
                 }),
                 'staff_notes' => $submission->staff_notes,
-            ]
+            ],
         ]);
     }
 }

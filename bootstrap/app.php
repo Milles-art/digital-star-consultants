@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(AppHttpMiddlewareSecurityHeaders::class);
         // CSRF exemptions are limited to genuinely public, unauthenticated
         // write endpoints only. Admin routes are session-authenticated and
         // MUST keep CSRF protection — they were previously (incorrectly)

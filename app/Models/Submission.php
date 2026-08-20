@@ -151,5 +151,58 @@ class Submission extends Model
         return self::STATUSES[$status]['label'] ?? $status;
     }
 
-    // ... rest of your code (generateReferenceNumber, helpers, etc.)
+    // Status transitions
+    // Staff\SubmissionController calls these; they didn't exist on the
+    // model yet, so every markInProgress/markCompleted/markRejected
+    // action would have fatal-errored with "Call to undefined method".
+
+    public function markAsInProgress(): void
+    {
+        $this->status = self::STATUS_IN_PROGRESS;
+        $this->save();
+    }
+
+    public function markAsCompleted(): void
+    {
+        $this->status = self::STATUS_COMPLETED;
+        $this->completed_at = now();
+        $this->save();
+    }
+
+    public function markAsRejected(?string $reason = null): void
+    {
+        $this->status = self::STATUS_REJECTED;
+
+        if ($reason !== null) {
+            $this->staff_notes = trim(($this->staff_notes ? $this->staff_notes."\n" : '')."Rejected: {$reason}");
+        }
+
+        $this->save();
+    }
+
+    // Reference number generation
+
+    protected static function booted(): void
+    {
+        static::creating(function (Submission $submission) {
+            if (empty($submission->reference_number)) {
+                $submission->reference_number = self::generateReferenceNumber();
+            }
+        });
+    }
+
+    /**
+     * Generate a unique, customer-friendly tracking reference, e.g.
+     * "DSC-20260821-A1B2C3". Used both as the public tracking code
+     * (GET /track/{reference}) and as a searchable admin field, so it
+     * must be unique and never regenerated after creation.
+     */
+    public static function generateReferenceNumber(): string
+    {
+        do {
+            $candidate = 'DSC-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
+        } while (self::where('reference_number', $candidate)->exists());
+
+        return $candidate;
+    }
 }

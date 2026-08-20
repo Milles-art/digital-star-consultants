@@ -36,7 +36,7 @@
         <div id="request-form-panel" class="rounded-[26px] border border-line bg-white p-6 shadow-[0_18px_52px_#08244b0b] sm:p-10">
             <div class="border-b border-line pb-8">
                 <p class="eyebrow">Step 1 of 2</p>
-                <h2 class="mt-4 text-3xl font-bold">Tell us a little more.</h2>
+                <h2 class="mt-4 text-3xl font-bold">Start your request.</h2>
                 <p class="mt-3 text-sm text-muted">The essentials help us route your request quickly. Required fields are marked with <span class="text-red-700">*</span>.</p>
             </div>
             <form id="service-request-form" class="mt-8 space-y-7" action="{{ route('public.submissions.store') }}" method="POST" enctype="multipart/form-data" novalidate data-service-id="{{ data_get($service, 'id') }}">

@@ -115,6 +115,13 @@
                     <div class="mt-8">
                         <h3 class="text-xl font-bold transition-colors group-hover:text-blue">{{ data_get($category, 'name') }}</h3>
                         <p class="mt-3 text-sm text-muted">{{ data_get($category, 'description', 'Focused support with a clear outcome.') }}</p>
+                        @if (data_get($category, 'services') && collect(data_get($category, 'services'))->isNotEmpty())
+                            <ul class="mt-4 space-y-1 text-xs text-muted">
+                                @foreach (collect(data_get($category, 'services'))->take(3) as $featuredService)
+                                    <li>{{ data_get($featuredService, 'name') }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
                     </div>
                     <div class="mt-auto flex items-center gap-2 border-t border-line pt-5">
                         <span class="text-sm font-bold text-blue transition group-hover:translate-x-1">Explore</span>

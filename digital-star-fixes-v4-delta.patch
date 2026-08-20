@@ -1,0 +1,152 @@
+diff --git a/app/Models/Submission.php b/app/Models/Submission.php
+--- a/app/Models/Submission.php	2026-08-20 22:16:00.712757058 +0000
++++ b/app/Models/Submission.php	2026-08-20 22:15:25.226570011 +0000
+@@ -151,6 +151,35 @@
+         return self::STATUSES[$status]['label'] ?? $status;
+     }
+ 
++    // Status transitions
++    // Staff\SubmissionController calls these; they didn't exist on the
++    // model yet, so every markInProgress/markCompleted/markRejected
++    // action would have fatal-errored with "Call to undefined method".
++
++    public function markAsInProgress(): void
++    {
++        $this->status = self::STATUS_IN_PROGRESS;
++        $this->save();
++    }
++
++    public function markAsCompleted(): void
++    {
++        $this->status = self::STATUS_COMPLETED;
++        $this->completed_at = now();
++        $this->save();
++    }
++
++    public function markAsRejected(?string $reason = null): void
++    {
++        $this->status = self::STATUS_REJECTED;
++
++        if ($reason !== null) {
++            $this->staff_notes = trim(($this->staff_notes ? $this->staff_notes."\n" : '')."Rejected: {$reason}");
++        }
++
++        $this->save();
++    }
++
+     // Reference number generation
+ 
+     protected static function booted(): void
+diff --git a/app/Http/Controllers/Public/SubmissionController.php b/app/Http/Controllers/Public/SubmissionController.php
+--- a/app/Http/Controllers/Public/SubmissionController.php	2026-08-20 22:15:56.577397747 +0000
++++ b/app/Http/Controllers/Public/SubmissionController.php	2026-08-20 22:14:37.038176275 +0000
+@@ -107,6 +107,8 @@
+                     'status' => $submission->status,
+                     'status_label' => $submission->status_label,
+                     'tracking_url' => url("/track/{$submission->reference_number}"),
++                    'customer_name' => $submission->customer_name,
++                    'service_name' => $service->name,
+                     'submission' => [
+                         'id' => $submission->id,
+                         'customer_name' => $submission->customer_name,
+@@ -132,9 +134,12 @@
+      * Track submission by reference number
+      * GET /track/{reference}
+      *
+-     * Stays public/unauthenticated by design. file_url below now points to
+-     * nothing for the public tracker (files are private) — see
+-     * SubmissionFieldValue::getFileUrlAttribute().
++     * Stays public/unauthenticated by design — anyone with the reference
++     * number (given to the customer at submission time) can look up
++     * status. Because this endpoint requires no login, it must never
++     * return anything an outside party could use as PII: no phone,
++     * email, or internal staff_notes. Only status/progress info, which
++     * is the whole point of the tracker.
+      */
+     public function track($reference)
+     {
+@@ -158,8 +163,6 @@
+                 'status_color' => $submission->status_color,
+                 'service_name' => $submission->service->name ?? null,
+                 'customer_name' => $submission->customer_name,
+-                'customer_phone' => $submission->customer_phone,
+-                'customer_email' => $submission->customer_email,
+                 'preferred_date' => $submission->preferred_date,
+                 'created_at' => $submission->created_at->format('Y-m-d H:i'),
+                 'completed_at' => $submission->completed_at ? $submission->completed_at->format('Y-m-d H:i') : null,
+@@ -172,7 +175,6 @@
+                         // no file_url for public tracking — files are private now
+                     ];
+                 }),
+-                'staff_notes' => $submission->staff_notes,
+             ]
+         ]);
+     }
+diff --git a/routes/web.php b/routes/web.php
+--- a/routes/web.php	2026-08-20 22:16:00.712757058 +0000
++++ b/routes/web.php	2026-08-20 22:15:05.964747616 +0000
+@@ -13,6 +13,7 @@
+ use App\Http\Controllers\Public\HomeController;
+ use App\Http\Controllers\Public\ServiceController as PublicServiceController;
+ use App\Http\Controllers\Public\SubmissionController as PublicSubmissionController;
++use App\Http\Controllers\Staff\SubmissionController as StaffSubmissionController;
+ use Illuminate\Support\Facades\Route;
+ 
+ // ========== TEST LOGIN PAGE (local/dev only) ==========
+@@ -136,13 +137,20 @@
+     });
+ 
+     // Staff Routes
+-    Route::prefix('staff')->middleware(['role:staff'])->group(function () {
+-        Route::get('/submissions', function () {
+-            return response()->json([
+-                'message' => 'Staff submissions list',
+-                'user' => auth()->user()
+-            ]);
+-        })->name('staff.submissions');
++    // Staff\SubmissionController already existed fully built (list/show
++    // scoped to the current staff member's assignments, status-transition
++    // actions each re-checked via ensureAssigned()) but was never wired to
++    // routes — this block previously had only a single placeholder closure
++    // route. Route-model binding on {submission} plus ensureAssigned()/the
++    // 403 in show() together cover the "staff can't touch someone else's
++    // submission" requirement.
++    Route::prefix('staff')->middleware(['role:staff,admin,ceo,gm'])->group(function () {
++        Route::get('/submissions', [StaffSubmissionController::class, 'index'])->name('staff.submissions.index');
++        Route::get('/submissions/{submission}', [StaffSubmissionController::class, 'show'])->name('staff.submissions.show');
++        Route::post('/submissions/{submission}/in-progress', [StaffSubmissionController::class, 'markInProgress'])->name('staff.submissions.in-progress');
++        Route::post('/submissions/{submission}/complete', [StaffSubmissionController::class, 'markCompleted'])->name('staff.submissions.complete');
++        Route::post('/submissions/{submission}/reject', [StaffSubmissionController::class, 'markRejected'])->name('staff.submissions.reject');
++        Route::put('/submissions/{submission}/notes', [StaffSubmissionController::class, 'updateNotes'])->name('staff.submissions.notes');
+     });
+ 
+ });
+diff --git a/resources/views/home.blade.php b/resources/views/home.blade.php
+--- a/resources/views/home.blade.php	2026-08-20 22:15:56.585397748 +0000
++++ b/resources/views/home.blade.php	2026-08-20 22:14:06.923994547 +0000
+@@ -115,6 +115,13 @@
+                     <div class="mt-8">
+                         <h3 class="text-xl font-bold transition-colors group-hover:text-blue">{{ data_get($category, 'name') }}</h3>
+                         <p class="mt-3 text-sm text-muted">{{ data_get($category, 'description', 'Focused support with a clear outcome.') }}</p>
++                        @if (data_get($category, 'services') && collect(data_get($category, 'services'))->isNotEmpty())
++                            <ul class="mt-4 space-y-1 text-xs text-muted">
++                                @foreach (collect(data_get($category, 'services'))->take(3) as $featuredService)
++                                    <li>{{ data_get($featuredService, 'name') }}</li>
++                                @endforeach
++                            </ul>
++                        @endif
+                     </div>
+                     <div class="mt-auto flex items-center gap-2 border-t border-line pt-5">
+                         <span class="text-sm font-bold text-blue transition group-hover:translate-x-1">Explore</span>
+diff --git a/resources/views/services/show.blade.php b/resources/views/services/show.blade.php
+--- a/resources/views/services/show.blade.php	2026-08-20 22:15:56.585397748 +0000
++++ b/resources/views/services/show.blade.php	2026-08-20 22:14:02.198831174 +0000
+@@ -36,7 +36,7 @@
+         <div id="request-form-panel" class="rounded-[26px] border border-line bg-white p-6 shadow-[0_18px_52px_#08244b0b] sm:p-10">
+             <div class="border-b border-line pb-8">
+                 <p class="eyebrow">Step 1 of 2</p>
+-                <h2 class="mt-4 text-3xl font-bold">Tell us a little more.</h2>
++                <h2 class="mt-4 text-3xl font-bold">Start your request.</h2>
+                 <p class="mt-3 text-sm text-muted">The essentials help us route your request quickly. Required fields are marked with <span class="text-red-700">*</span>.</p>
+             </div>
+             <form id="service-request-form" class="mt-8 space-y-7" action="{{ route('public.submissions.store') }}" method="POST" enctype="multipart/form-data" novalidate data-service-id="{{ data_get($service, 'id') }}">
