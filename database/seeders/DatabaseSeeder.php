@@ -14,6 +14,14 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Guard: this seeder creates demo accounts with the known password
+        // "password" (admin/ceo/gm/staff). Never let it run in production —
+        // if it does, anyone who knows these emails can log in as admin.
+        if (app()->environment('production')) {
+            $this->command?->error('DatabaseSeeder skipped: refusing to seed demo accounts in production.');
+            return;
+        }
+
         // --------------------------------------------------
         // Core users (explicit assignment – role not fillable)
         // --------------------------------------------------

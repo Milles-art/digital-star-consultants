@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -47,8 +46,14 @@ Route::get('/track/{reference}', [PublicSubmissionController::class, 'track'])
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1');
 
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
+// NOTE: There is intentionally no public /register route. Staff/admin
+// accounts are created only by an authenticated admin/ceo/gm via
+// Admin\UserController::store (POST /admin/users), which already handles
+// role assignment, policy authorization, and sending the welcome email
+// with login instructions. A prior public /register endpoint duplicated
+// this badly (no role check needed since it forced "staff", but also
+// never actually delivered the generated temp password to anyone) and
+// has been removed rather than patched.
 
 Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');

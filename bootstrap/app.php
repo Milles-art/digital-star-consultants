@@ -19,10 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // exempted via '/admin/*', which left every admin POST/PUT/DELETE
         // open to cross-site request forgery from an authenticated
         // session. Do not re-add '/admin/*' here.
+        // This is the ONLY place CSRF exemptions are configured. Laravel
+        // 11+/13 uses this app.php-based middleware config; the old
+        // app/Http/Middleware/VerifyCsrfToken.php $except-array pattern is
+        // legacy from before that and has been deleted so there is exactly
+        // one list to keep in sync with routes/web.php's public endpoints.
         $middleware->validateCsrfTokens(except: [
             '/login',
             '/logout',
-            '/register',
             '/submit',
             '/track/*',
             '/services/*',
