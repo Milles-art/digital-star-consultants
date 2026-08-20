@@ -3,99 +3,146 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreServiceFieldRequest;
+use App\Http\Requests\Admin\UpdateServiceFieldRequest;
+use App\Http\Resources\ServiceFieldResource;
 use App\Models\Service;
 use App\Models\ServiceField;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Str;
 
 class ServiceFieldController extends Controller
 {
-    use AuthorizesRequests;
-
-    public function index(Service $service): View|JsonResponse
+    public function index(Service $service)
     {
         $this->authorize('viewAny', ServiceField::class);
 
         $fields = $service->fields()->orderBy('sort_order')->get();
 
-        if (! request()->expectsJson()) {
-            return view('admin.fields.index', compact('service', 'fields'));
-        }
-
         return response()->json([
             'status' => 'success',
             'data' => [
-                'service' => $service->only(['id', 'name']),
-                'fields' => $fields,
-            ],
+                'service' => [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                ],
+                'fields' => ServiceFieldResource::collection($fields)
+            ]
         ]);
     }
 
-    public function store(Request $request, Service $service): JsonResponse
+    public function store(StoreServiceFieldRequest $request, Service $service)
     {
-        $this->authorize('create', ServiceField::class);
+        // Authorization already handled by StoreServiceFieldRequest::authorize()
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'label' => ['required', 'string', 'max:255'],
-            'field_key' => ['required', 'string', 'max:100', 'alpha_dash'],
-            'field_type' => ['required', 'in:text,textarea,email,number,select,radio,file,date,checkbox'],
-            'is_required' => ['nullable', 'boolean'],
-            'options' => ['nullable', 'array'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-            'placeholder' => ['nullable', 'string', 'max:255'],
-        ]);
+        $fieldKey = Str::slug($validated['label'], '_');
+        $originalKey = $fieldKey;
+        $counter = 1;
+
+        while ($service->fields()->where('field_key', $fieldKey)->exists()) {
+            $fieldKey = $originalKey . '_' . $counter;
+            $counter++;
+        }
 
         $field = $service->fields()->create([
             'label' => $validated['label'],
-            'field_key' => $validated['field_key'],
+            'field_key' => $fieldKey,
             'field_type' => $validated['field_type'],
-            'is_required' => $validated['is_required'] ?? false,
             'options' => $validated['options'] ?? null,
-            'sort_order' => $validated['sort_order'] ?? 0,
             'placeholder' => $validated['placeholder'] ?? null,
+            'help_text' => $validated['help_text'] ?? null,
+            'default_value' => $validated['default_value'] ?? null,
+            'is_required' => $validated['is_required'] ?? true,
+            'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Field created',
-            'data' => $field,
+            'message' => 'Field created successfully',
+            'data' => new ServiceFieldResource($field)
         ], 201);
     }
 
-    public function update(Request $request, ServiceField $field): JsonResponse
+    public function show(ServiceField $field)
     {
-        $this->authorize('update', $field);
+        $this->authorize('view', $field);
 
-        $validated = $request->validate([
-            'label' => ['sometimes', 'string', 'max:255'],
-            'field_key' => ['sometimes', 'string', 'max:100', 'alpha_dash'],
-            'field_type' => ['sometimes', 'in:text,textarea,email,number,select,radio,file,date,checkbox'],
-            'is_required' => ['nullable', 'boolean'],
-            'options' => ['nullable', 'array'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-            'placeholder' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $field->update($validated);
+        $field->load('service');
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Field updated',
-            'data' => $field->fresh(),
+            'data' => new ServiceFieldResource($field)
         ]);
     }
 
-    public function destroy(ServiceField $field): JsonResponse
+    public function update(UpdateServiceFieldRequest $request, ServiceField $field)
+    {
+        // Authorization already handled by UpdateServiceFieldRequest::authorize()
+        $validated = $request->validated();
+
+        if (!empty($validated['label']) && $validated['label'] !== $field->label) {
+            $fieldKey = Str::slug($validated['label'], '_');
+            $originalKey = $fieldKey;
+            $counter = 1;
+
+            while (ServiceField::where('service_id', $field->service_id)
+                ->where('field_key', $fieldKey)
+                ->where('id', '!=', $field->id)
+                ->exists()) {
+                $fieldKey = $originalKey . '_' . $counter;
+                $counter++;
+            }
+
+            $validated['field_key'] = $fieldKey;
+        }
+
+        $field->update(array_filter($validated, fn ($value) => !is_null($value)));
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Field updated successfully',
+            'data' => new ServiceFieldResource($field)
+        ]);
+    }
+
+    public function destroy(ServiceField $field)
     {
         $this->authorize('delete', $field);
+
+        if ($field->values()->count() > 0) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Cannot delete field with existing values. Archive instead.'
+            ], 422);
+        }
 
         $field->delete();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Field deleted',
+            'message' => 'Field deleted successfully'
+        ]);
+    }
+
+    public function reorder(Request $request)
+    {
+        $this->authorize('update', ServiceField::class);
+
+        $request->validate([
+            'fields' => 'required|array',
+            'fields.*.id' => 'required|exists:service_fields,id',
+            'fields.*.sort_order' => 'required|integer|min:0',
+        ]);
+
+        foreach ($request->fields as $fieldData) {
+            ServiceField::where('id', $fieldData['id'])
+                ->update(['sort_order' => $fieldData['sort_order']]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Fields reordered successfully'
         ]);
     }
 }

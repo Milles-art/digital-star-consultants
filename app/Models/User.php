@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 
@@ -10,47 +11,100 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    // Role Constants
+    //  Role Constants
+
     const ROLE_ADMIN = 'admin';
     const ROLE_CEO = 'ceo';
     const ROLE_GENERAL_MANAGER = 'gm';
     const ROLE_STAFF = 'staff';
 
     /**
-     * Only safe, non-privileged attributes.
-     * role / is_active / last_login_at are set explicitly after authorization.
+     * The "management" roles. Single source of truth — previously
+     * `whereIn('role', ['admin', 'ceo', 'gm'])` was hand-typed in
+     * UserController, ReportController, AppServiceProvider gates, and two
+     * queue jobs. All of those now use the management()/managementRoles()
+     * helpers below instead.
      */
+    public const MANAGEMENT_ROLES = [
+        self::ROLE_ADMIN,
+        self::ROLE_CEO,
+        self::ROLE_GENERAL_MANAGER,
+    ];
+
+    public const ALL_ROLES = [
+        self::ROLE_ADMIN,
+        self::ROLE_CEO,
+        self::ROLE_GENERAL_MANAGER,
+        self::ROLE_STAFF,
+    ];
+
+    //  Fillable
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'role',
+        'is_active',
+        'last_login_at',
     ];
+
+    //  Hidden
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    //  Casts
+
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'is_active' => 'boolean',
-        'password' => 'hashed',
     ];
+
+    //  Default Values
 
     protected $attributes = [
         'role' => self::ROLE_STAFF,
         'is_active' => true,
     ];
 
-    // Relationships
+    //  Relationships
 
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'processed_by');
     }
 
-    // Role Check Methods
+    //  Scopes
+
+    /**
+     * Admin, CEO, and General Manager users.
+     */
+    public function scopeManagement(Builder $query): Builder
+    {
+        return $query->whereIn('role', self::MANAGEMENT_ROLES);
+    }
+
+    /**
+     * Staff users only.
+     */
+    public function scopeStaff(Builder $query): Builder
+    {
+        return $query->where('role', self::ROLE_STAFF);
+    }
+
+    /**
+     * Anyone who can process submissions (management + staff).
+     */
+    public function scopeCanProcessSubmissions(Builder $query): Builder
+    {
+        return $query->whereIn('role', self::ALL_ROLES);
+    }
+
+    //  Role Check Methods
 
     public function isAdmin(): bool
     {
@@ -79,21 +133,12 @@ class User extends Authenticatable
 
     public function isManagement(): bool
     {
-        return in_array($this->role, [
-            self::ROLE_ADMIN,
-            self::ROLE_CEO,
-            self::ROLE_GENERAL_MANAGER,
-        ], true);
+        return in_array($this->role, self::MANAGEMENT_ROLES, true);
     }
 
     public function canProcessSubmission(): bool
     {
-        return in_array($this->role, [
-            self::ROLE_ADMIN,
-            self::ROLE_CEO,
-            self::ROLE_GENERAL_MANAGER,
-            self::ROLE_STAFF,
-        ], true);
+        return in_array($this->role, self::ALL_ROLES, true);
     }
 
     public function canManageUsers(): bool
@@ -101,21 +146,20 @@ class User extends Authenticatable
         return $this->isManagement();
     }
 
-    // Accessors
+    //  Accessors
 
     public function getRoleLabelAttribute(): string
     {
-        return match ($this->role) {
+        return [
             self::ROLE_ADMIN => 'Administrator',
             self::ROLE_CEO => 'CEO',
             self::ROLE_GENERAL_MANAGER => 'General Manager',
             self::ROLE_STAFF => 'Staff',
-            default => $this->role,
-        };
+        ][$this->role] ?? $this->role;
     }
 
     public function isActive(): bool
     {
-        return (bool) $this->is_active;
+        return $this->is_active;
     }
 }

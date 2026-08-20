@@ -8,9 +8,9 @@ body:
   type: json
   content: "{\r
 
-    \    \"email\": \"admin@example.com\",\r
+    \    \"email\": \"{{admin_email}}\",\r
 
-    \    \"password\": \"password123\"\r
+    \    \"password\": \"{{admin_password}}\"\r
 
     }"
 order: 1786747576331

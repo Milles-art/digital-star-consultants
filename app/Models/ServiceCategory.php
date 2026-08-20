@@ -38,17 +38,29 @@ class ServiceCategory extends Model
     ];
 
     //  Relationships
-    
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');
     }
 
+    /**
+     * NOTE: this relation used to `->with('children')` on itself, which
+     * eager-loads children of children of children... indefinitely, for
+     * every touch of this relation. That's an unbounded recursive query
+     * chain — fine for a 2-level tree, dangerous the moment someone adds a
+     * 3rd/4th level of nesting.
+     *
+     * Load depth explicitly at the call site instead, e.g.:
+     *   ServiceCategory::with('children.children')->get()
+     * or, for typical top-level + one level of children (the current
+     * app usage in Public\ServiceController), just:
+     *   ServiceCategory::with('children')->get()
+     */
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id')
-                    ->orderBy('sort_order')
-                    ->with('children');
+                    ->orderBy('sort_order');
     }
 
     public function services(): HasMany
@@ -61,8 +73,8 @@ class ServiceCategory extends Model
         return $this->services()->active();
     }
 
-    //  Scopes 
-    
+    //  Scopes
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
@@ -73,8 +85,8 @@ class ServiceCategory extends Model
         return $query->whereNull('parent_id');
     }
 
-    //  Helpers 
-    
+    //  Helpers
+
     public function isTopLevel(): bool
     {
         return is_null($this->parent_id);

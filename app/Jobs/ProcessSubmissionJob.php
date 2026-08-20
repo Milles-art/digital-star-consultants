@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\Submission;
 use App\Models\User;
 use App\Notifications\NewSubmissionNotification;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -14,38 +13,64 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessSubmissionJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
-    public int $tries = 3;
+    protected $submission;
 
-    public int $backoff = 60;
+    /**
+     * Number of times the job may be attempted.
+     */
+    public $tries = 3;
 
-    public function __construct(
-        public Submission $submission
-    ) {}
-
-    public function handle(): void
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(Submission $submission)
     {
-        Log::info('Processing submission: ' . $this->submission->reference_number);
-
-        $admins = User::whereIn('role', [
-            User::ROLE_ADMIN,
-            User::ROLE_CEO,
-            User::ROLE_GENERAL_MANAGER,
-        ])->where('is_active', true)->get();
-
-        foreach ($admins as $admin) {
-            $admin->notify(new NewSubmissionNotification($this->submission));
-        }
-
-        Log::info('Submission processed successfully: ' . $this->submission->reference_number);
+        $this->submission = $submission;
     }
 
-    public function failed(?\Throwable $exception): void
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
     {
-        Log::error('ProcessSubmissionJob failed', [
-            'submission' => $this->submission->reference_number ?? null,
-            'error' => $exception?->getMessage(),
-        ]);
+        try {
+            // 1. Log the submission processing
+            Log::info('Processing submission: ' . $this->submission->reference_number);
+
+            // 2. Send notification to admins
+            // Was: User::whereIn('role', ['admin', 'ceo', 'gm'])->get() —
+            // now uses the centralized User::management() scope.
+            $admins = User::management()->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new NewSubmissionNotification($this->submission));
+            }
+
+            // 3. Additional processing can be added here:
+            // - Send SMS notification
+            // - Generate PDF receipt
+            // - Update external systems
+            // - Create calendar event
+            // - Send to third-party API
+
+            Log::info('Submission processed successfully: ' . $this->submission->reference_number);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to process submission: ' . $this->submission->reference_number);
+            Log::error($e->getMessage());
+
+            // Re-throw to trigger retry
+            throw $e;
+        }
+    }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('Job failed for submission: ' . $this->submission->reference_number);
+        Log::error($exception->getMessage());
     }
 }

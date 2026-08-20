@@ -1,6 +1,65 @@
 @extends('layouts.app')
 @section('title', 'Services — Digital Star Consultants')
 @section('content')
-<section class="bg-ink text-white"><div class="shell py-20 lg:py-28"><p class="eyebrow-dark">The service directory</p><h1 class="section-title mt-5 max-w-3xl">Find the right place to start.</h1><p class="mt-6 max-w-2xl text-lg text-slate-300">Clear, practical support for digital, government, and business needs.</p></div></section>
-<section class="shell py-14 lg:py-20"><div class="flex flex-col gap-8 lg:flex-row lg:items-start"><aside class="w-full shrink-0 lg:w-56"><p class="eyebrow">Filter by</p><div class="mt-5 flex flex-wrap gap-2 lg:block lg:space-y-2"> <a class="inline-flex rounded-full px-3 py-2 text-sm font-semibold {{ !$selectedCategory ? 'bg-ink text-white' : 'text-muted hover:bg-white' }}" href="{{ route('public.services.index') }}">All services</a>@foreach($categories as $category)<a class="inline-flex rounded-full px-3 py-2 text-sm font-semibold {{ optional($selectedCategory)->id === data_get($category, 'id') ? 'bg-ink text-white' : 'text-muted hover:bg-white' }}" href="{{ route('public.services.index', ['category' => data_get($category, 'slug')]) }}">{{ data_get($category, 'name') }}</a>@endforeach</div></aside><div class="min-w-0 flex-1"><div class="flex flex-col justify-between gap-4 border-b border-line pb-6 sm:flex-row sm:items-center"><p class="text-sm text-muted">{{ method_exists($services, 'total') ? $services->total() : count($services) }} services available</p><form method="GET" action="{{ route('public.services.index') }}" class="relative"><label class="sr-only" for="service-search">Search services</label><input id="service-search" name="search" value="{{ $search }}" class="field min-w-64 rounded-full !py-3 !pl-4 !pr-12 text-sm" placeholder="Search services" type="search"><button class="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-sky text-blue" aria-label="Search">⌕</button></form></div>@if(isset($serviceGroups) && count($serviceGroups))<div class="mt-8 space-y-12">@foreach($serviceGroups as $group)<div><h2 class="text-xl font-bold">{{ data_get($group, 'name') }}</h2><div class="mt-5 grid gap-4 md:grid-cols-2">@foreach(data_get($group, 'services', []) as $service)@include('services._card', ['service' => $service])@endforeach</div></div>@endforeach</div>@else<div class="mt-8 grid gap-4 md:grid-cols-2">@forelse($services as $service)@include('services._card', ['service' => $service])@empty<div class="rounded-2xl border border-dashed border-line p-10 text-muted">No services match that search. Try a broader phrase.</div>@endforelse</div>@endif@if(method_exists($services, 'links'))<div class="mt-10">{{ $services->withQueryString()->links() }}</div>@endif</div></div></section>
+
+<section class="relative overflow-hidden bg-ink text-white">
+    <div class="hero-mesh absolute inset-0"></div>
+    <div class="shell relative py-20 lg:py-28">
+        <p class="eyebrow-dark">The service directory</p>
+        <h1 class="section-title mt-5 max-w-3xl">Find the right place to start.</h1>
+        <p class="mt-6 max-w-2xl text-lg text-slate-300">Clear, practical support for digital, government, and business needs. Choose a category or search to begin.</p>
+        <div class="mt-10 flex flex-wrap items-center gap-3 text-sm text-slate-400">
+            <span class="flex items-center gap-2"><span class="text-yellow">✓</span> No account needed to submit</span>
+            <span class="flex items-center gap-2"><span class="text-yellow">✓</span> Track with a reference number</span>
+        </div>
+    </div>
+</section>
+
+<section class="shell py-14 lg:py-20">
+    <div class="flex flex-col gap-8 lg:flex-row lg:items-start">
+        <aside class="w-full shrink-0 lg:w-56">
+            <p class="eyebrow">Filter by</p>
+            <div class="mt-5 flex flex-wrap gap-2 lg:block lg:space-y-2">
+                <a class="inline-flex rounded-full px-3 py-2 text-sm font-semibold {{ !$selectedCategory ? 'bg-ink text-white' : 'text-muted hover:bg-white' }}" href="{{ route('public.services.index') }}">All services</a>
+                @foreach($categories as $category)
+                    <a class="inline-flex rounded-full px-3 py-2 text-sm font-semibold {{ optional($selectedCategory)->id === data_get($category, 'id') ? 'bg-ink text-white' : 'text-muted hover:bg-white' }}" href="{{ route('public.services.index', ['category' => data_get($category, 'slug')]) }}">{{ data_get($category, 'name') }}</a>
+                @endforeach
+            </div>
+        </aside>
+        <div class="min-w-0 flex-1">
+            <div class="flex flex-col justify-between gap-4 border-b border-line pb-6 sm:flex-row sm:items-center">
+                <p class="text-sm text-muted">{{ method_exists($services, 'total') ? $services->total() : count($services) }} services available</p>
+                <form method="GET" action="{{ route('public.services.index') }}" class="relative">
+                    <label class="sr-only" for="service-search">Search services</label>
+                    <input id="service-search" name="search" value="{{ $search }}" class="field min-w-64 rounded-full !py-3 !pl-4 !pr-12 text-sm" placeholder="Search services" type="search">
+                    <button class="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-sky text-blue" aria-label="Search">⌕</button>
+                </form>
+            </div>
+            @if(isset($serviceGroups) && count($serviceGroups))
+                <div class="mt-8 space-y-12">
+                    @foreach($serviceGroups as $group)
+                        <div>
+                            <h2 class="text-xl font-bold">{{ data_get($group, 'name') }}</h2>
+                            <div class="mt-5 grid gap-4 md:grid-cols-2">
+                                @foreach(data_get($group, 'services', []) as $service)
+                                    @include('services._card', ['service' => $service])
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="mt-8 grid gap-4 md:grid-cols-2">
+                    @forelse($services as $service)
+                        @include('services._card', ['service' => $service])
+                    @empty
+                        <div class="rounded-2xl border border-dashed border-line p-10 text-muted">No services match that search. Try a broader phrase.</div>
+                    @endforelse
+                </div>
+            @endif
+            @if(method_exists($services, 'links'))<div class="mt-10">{{ $services->withQueryString()->links() }}</div>@endif
+        </div>
+    </div>
+</section>
+
 @endsection

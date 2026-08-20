@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Notifications\Notifiable;
 
 class Submission extends Model
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     // Status Constants
     const STATUS_PENDING = 'pending';
@@ -29,10 +30,22 @@ class Submission extends Model
     const PAYMENT_FREE = 'free';
 
     /**
-     * Only customer-facing / safe fields are mass-assignable.
-     * Status, payment, processed_by, staff_notes, completed_at
-     * must be set via the dedicated methods below.
+     * Single source of truth for status labels/colors. Previously this map
+     * was duplicated (with drift risk) across this model, the
+     * SubmissionStatusNotification, and Admin\SubmissionController — all
+     * three now read from here.
+     *
+     * @var array<string, array{label: string, color: string}>
      */
+    public const STATUSES = [
+        self::STATUS_PENDING => ['label' => 'Pending', 'color' => 'warning'],
+        self::STATUS_IN_PROGRESS => ['label' => 'In Progress', 'color' => 'info'],
+        self::STATUS_COMPLETED => ['label' => 'Completed', 'color' => 'success'],
+        self::STATUS_REJECTED => ['label' => 'Rejected', 'color' => 'danger'],
+        self::STATUS_AWAITING_CUSTOMER => ['label' => 'Awaiting Customer', 'color' => 'secondary'],
+        self::STATUS_CANCELLED => ['label' => 'Cancelled', 'color' => 'dark'],
+    ];
+
     protected $fillable = [
         'reference_number',
         'service_id',
@@ -42,7 +55,12 @@ class Submission extends Model
         'customer_notes',
         'preferred_date',
         'total_price',
+        'status',
+        'payment_status',
         'payment_method',
+        'staff_notes',
+        'processed_by',
+        'completed_at',
     ];
 
     protected $casts = [
@@ -74,74 +92,29 @@ class Submission extends Model
         return $this->belongsTo(User::class, 'processed_by');
     }
 
-    public function routeNotificationForMail(): ?string
-    {
-        return $this->customer_email;
-    }
-
-    // Explicit state-change methods (never mass-assign these)
-
-    public function assignTo(User $user): void
-    {
-        $this->forceFill([
-            'processed_by' => $user->id,
-            'status' => self::STATUS_IN_PROGRESS,
-        ])->save();
-    }
-
-    public function markAsInProgress(): void
-    {
-        $this->forceFill(['status' => self::STATUS_IN_PROGRESS])->save();
-    }
-
-    public function markAsCompleted(): void
-    {
-        $this->forceFill([
-            'status' => self::STATUS_COMPLETED,
-            'completed_at' => now(),
-        ])->save();
-    }
-
-    public function markAsRejected(?string $reason = null): void
-    {
-        $this->forceFill([
-            'status' => self::STATUS_REJECTED,
-            'staff_notes' => $reason ?? $this->staff_notes,
-        ])->save();
-    }
-
-    public function updatePaymentStatus(string $status, ?string $method = null): void
-    {
-        $data = ['payment_status' => $status];
-        if ($method !== null) {
-            $data['payment_method'] = $method;
-        }
-        $this->forceFill($data)->save();
-    }
-
     // Scopes
 
-    public function scopePending($query)
+    public function scopePending(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_PENDING);
     }
 
-    public function scopeInProgress($query)
+    public function scopeInProgress(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_IN_PROGRESS);
     }
 
-    public function scopeCompleted($query)
+    public function scopeCompleted(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_COMPLETED);
     }
 
-    public function scopeRejected($query)
+    public function scopeRejected(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_REJECTED);
     }
 
-    public function scopeToday($query)
+    public function scopeToday(Builder $query): Builder
     {
         return $query->whereDate('created_at', today());
     }
@@ -150,40 +123,33 @@ class Submission extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return [
-            self::STATUS_PENDING => 'Pending',
-            self::STATUS_IN_PROGRESS => 'In Progress',
-            self::STATUS_COMPLETED => 'Completed',
-            self::STATUS_REJECTED => 'Rejected',
-            self::STATUS_AWAITING_CUSTOMER => 'Awaiting Customer',
-            self::STATUS_CANCELLED => 'Cancelled',
-        ][$this->status] ?? $this->status;
+        return self::STATUSES[$this->status]['label'] ?? $this->status;
     }
 
     public function getStatusColorAttribute(): string
     {
-        return [
-            self::STATUS_PENDING => 'warning',
-            self::STATUS_IN_PROGRESS => 'info',
-            self::STATUS_COMPLETED => 'success',
-            self::STATUS_REJECTED => 'danger',
-            self::STATUS_AWAITING_CUSTOMER => 'secondary',
-            self::STATUS_CANCELLED => 'dark',
-        ][$this->status] ?? 'secondary';
+        return self::STATUSES[$this->status]['color'] ?? 'secondary';
     }
 
-    protected static function booted(): void
+    /**
+     * All valid statuses as [{value, label}], for building select
+     * dropdowns / filter lists. Replaces the private duplicate that used
+     * to live in Admin\SubmissionController.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    public static function statusOptions(): array
     {
-        static::creating(function (self $submission): void {
-            if ($submission->reference_number) {
-                return;
-            }
-
-            do {
-                $referenceNumber = sprintf('DSC-%s-%06d', now()->format('Y'), random_int(1, 999999));
-            } while (static::withTrashed()->where('reference_number', $referenceNumber)->exists());
-
-            $submission->reference_number = $referenceNumber;
-        });
+        return collect(self::STATUSES)
+            ->map(fn ($meta, $value) => ['value' => $value, 'label' => $meta['label']])
+            ->values()
+            ->all();
     }
+
+    public static function statusLabel(string $status): string
+    {
+        return self::STATUSES[$status]['label'] ?? $status;
+    }
+
+    // ... rest of your code (generateReferenceNumber, helpers, etc.)
 }

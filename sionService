@@ -1,0 +1,251 @@
+[1mdiff --git a/app/Services/SubmissionService.php b/app/Services/SubmissionService.php[m
+[1mindex e69de29..800f046 100644[m
+[1m--- a/app/Services/SubmissionService.php[m
+[1m+++ b/app/Services/SubmissionService.php[m
+[36m@@ -0,0 +1,246 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace App\Services;[m
+[32m+[m
+[32m+[m[32muse App\Models\Service;[m
+[32m+[m[32muse App\Models\Submission;[m
+[32m+[m[32muse App\Models\SubmissionFieldValue;[m
+[32m+[m[32muse App\Jobs\SendNewSubmissionEmailJob;[m
+[32m+[m[32muse Illuminate\Http\UploadedFile;[m
+[32m+[m[32muse Illuminate\Support\Facades\DB;[m
+[32m+[m[32muse Illuminate\Support\Str;[m
+[32m+[m[32muse Exception;[m
+[32m+[m
+[32m+[m[32mclass SubmissionService[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Create a new submission with field values and secure file handling.[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param  array{customer_name: string, customer_phone: string, customer_email?: string|null, customer_notes?: string|null, preferred_date?: string|null, fields?: array, files?: array<string, UploadedFile>}  $data[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @throws Exception[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function createSubmission(Service $service, array $data): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return DB::transaction(function () use ($service, $data) {[m
+[32m+[m[32m            $submission = Submission::create([[m
+[32m+[m[32m                'service_id' => $service->id,[m
+[32m+[m[32m                'customer_name' => $data['customer_name'],[m
+[32m+[m[32m                'customer_phone' => $data['customer_phone'],[m
+[32m+[m[32m                'customer_email' => $data['customer_email'] ?? null,[m
+[32m+[m[32m                'customer_notes' => $data['customer_notes'] ?? null,[m
+[32m+[m[32m                'preferred_date' => $data['preferred_date'] ?? null,[m
+[32m+[m[32m                'status' => Submission::STATUS_PENDING,[m
+[32m+[m[32m                'payment_status' => Submission::PAYMENT_PENDING,[m
+[32m+[m[32m                // reference_number should be generated in model boot or here[m
+[32m+[m[32m                'reference_number' => $this->generateUniqueReference(),[m
+[32m+[m[32m            ]);[m
+[32m+[m
+[32m+[m[32m            if (! empty($data['fields']) || ! empty($data['files'])) {[m
+[32m+[m[32m                foreach ($service->fields as $field) {[m
+[32m+[m[32m                    $value = $data['fields'][$field->field_key] ?? null;[m
+[32m+[m[32m                    $filePath = null;[m
+[32m+[m
+[32m+[m[32m                    if ($field->field_type === 'file' && isset($data['files'][$field->field_key])) {[m
+[32m+[m[32m                        /** @var UploadedFile $file */[m
+[32m+[m[32m                        $file = $data['files'][$field->field_key];[m
+[32m+[m
+[32m+[m[32m                        // Store on private disk with random name — never public, never original filename[m
+[32m+[m[32m                        $extension = $file->getClientOriginalExtension() ?: 'bin';[m
+[32m+[m[32m                        $filename = Str::uuid()->toString() . '.' . strtolower($extension);[m
+[32m+[m
+[32m+[m[32m                        $filePath = $file->storeAs([m
+[32m+[m[32m                            "submissions/{$submission->id}",[m
+[32m+[m[32m                            $filename,[m
+[32m+[m[32m                            'private'[m
+[32m+[m[32m                        );[m
+[32m+[m[32m                    }[m
+[32m+[m
+[32m+[m[32m                    SubmissionFieldValue::create([[m
+[32m+[m[32m                        'submission_id' => $submission->id,[m
+[32m+[m[32m                        'service_field_id' => $field->id,[m
+[32m+[m[32m                        'value' => is_scalar($value) ? (string) $value : null,[m
+[32m+[m[32m                        'file_path' => $filePath,[m
+[32m+[m[32m                    ]);[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            SendNewSubmissionEmailJob::dispatch($submission);[m
+[32m+[m
+[32m+[m[32m            return $submission->fresh(['service', 'values.field']);[m
+[32m+[m[32m        });[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public function assignToStaff(Submission $submission, int $staffId): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $submission->processed_by = $staffId;[m
+[32m+[m[32m        $submission->save();[m
+[32m+[m
+[32m+[m[32m        return $submission;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public function markAsCompleted(Submission $submission): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $submission->status = Submission::STATUS_COMPLETED;[m
+[32m+[m[32m        $submission->completed_at = now();[m
+[32m+[m[32m        $submission->save();[m
+[32m+[m
+[32m+[m[32m        return $submission;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public function markAsInProgress(Submission $submission): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $submission->status = Submission::STATUS_IN_PROGRESS;[m
+[32m+[m[32m        $submission->save();[m
+[32m+[m
+[32m+[m[32m        return $submission;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public function markAsRejected(Submission $submission, ?string $reason = null): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $submission->status = Submission::STATUS_REJECTED;[m
+[32m+[m[32m        if ($reason !== null) {[m
+[32m+[m[32m            $submission->staff_notes = $reason;[m
+[32m+[m[32m        }[m
+[32m+[m[32m        $submission->save();[m
+[32m+[m
+[32m+[m[32m        return $submission;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    protected function generateUniqueReference(): string[m
+[32m+[m[32m    {[m
+[32m+[m[32m        do {[m
+[32m+[m[32m            $ref = 'DSC-' . strtoupper(Str::random(8));[m
+[32m+[m[32m        } while (Submission::where('reference_number', $ref)->exists());[m
+[32m+[m
+[32m+[m[32m        return $ref;[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace App\Services;[m
+[32m+[m
+[32m+[m[32muse App\Models\Service;[m
+[32m+[m[32muse App\Models\Submission;[m
+[32m+[m[32muse App\Models\SubmissionFieldValue;[m
+[32m+[m[32muse App\Jobs\SendNewSubmissionEmailJob;[m
+[32m+[m[32muse Illuminate\Support\Facades\DB;[m
+[32m+[m[32muse Exception;[m
+[32m+[m
+[32m+[m[32mclass SubmissionService[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Create a new submission with field values[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param Service $service[m
+[32m+[m[32m     * @param array $data[m
+[32m+[m[32m     * @return Submission[m
+[32m+[m[32m     * @throws Exception[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function createSubmission(Service $service, array $data): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return DB::transaction(function () use ($service, $data) {[m
+[32m+[m[32m            try {[m
+[32m+[m[32m                // Create submission[m
+[32m+[m[32m                $submission = Submission::create([[m
+[32m+[m[32m                    'service_id' => $service->id,[m
+[32m+[m[32m                    'customer_name' => $data['customer_name'],[m
+[32m+[m[32m                    'customer_phone' => $data['customer_phone'],[m
+[32m+[m[32m                    'customer_email' => $data['customer_email'] ?? null,[m
+[32m+[m[32m                    'customer_notes' => $data['customer_notes'] ?? null,[m
+[32m+[m[32m                    'preferred_date' => $data['preferred_date'] ?? null,[m
+[32m+[m[32m                    'status' => 'pending',[m
+[32m+[m[32m                ]);[m
+[32m+[m
+[32m+[m[32m                // Store field values[m
+[32m+[m[32m                if (!empty($data['fields'])) {[m
+[32m+[m[32m                    foreach ($service->fields as $field) {[m
+[32m+[m[32m                        $value = $data['fields'][$field->field_key] ?? null;[m
+[32m+[m[32m                        $filePath = null;[m
+[32m+[m
+[32m+[m[32m                        // Handle file upload[m
+[32m+[m[32m                        if ($field->field_type === 'file' && isset($data['files'][$field->field_key])) {[m
+[32m+[m[32m                            $file = $data['files'][$field->field_key];[m
+[32m+[m[32m                            $filePath = $file->store("submissions/{$submission->id}", 'public');[m
+[32m+[m[32m                        }[m
+[32m+[m
+[32m+[m[32m                        SubmissionFieldValue::create([[m
+[32m+[m[32m                            'submission_id' => $submission->id,[m
+[32m+[m[32m                            'service_field_id' => $field->id,[m
+[32m+[m[32m                            'value' => $value,[m
+[32m+[m[32m                            'file_path' => $filePath,[m
+[32m+[m[32m                        ]);[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                // Dispatch job to send email notification[m
+[32m+[m[32m                SendNewSubmissionEmailJob::dispatch($submission);[m
+[32m+[m
+[32m+[m[32m                return $submission;[m
+[32m+[m[32m            } catch (Exception $e) {[m
+[32m+[m[32m                throw new Exception('Failed to create submission: ' . $e->getMessage());[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Assign submission to a staff member[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param Submission $submission[m
+[32m+[m[32m     * @param int $staffId[m
+[32m+[m[32m     * @return Submission[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function assignToStaff(Submission $submission, int $staffId): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $submission->processed_by = $staffId;[m
+[32m+[m[32m        $submission->save();[m
+[32m+[m
+[32m+[m[32m        return $submission;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Mark submission as completed[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param Submission $submission[m
+[32m+[m[32m     * @return Submission[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function markAsCompleted(Submission $submission): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $submission->status = 'completed';[m
+[32m+[m[32m        $submission->completed_at = now();[m
+[32m+[m[32m        $submission->save();[m
+[32m+[m
+[32m+[m[32m        return $submission;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Mark submission as in progress[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param Submission $submission[m
+[32m+[m[32m     * @return Submission[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function markAsInProgress(Submission $submission): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $submission->status = 'in_progress';[m
+[32m+[m[32m        $submission->save();[m
+[32m+[m
+[32m+[m[32m        return $submission;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Mark submission as rejected[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param Submission $submission[m
+[32m+[m[32m     * @param string|null $reason[m
+[32m+[m[32m     * @return Submission[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function markAsRejected(Submission $submission, ?string $reason = null): Submission[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $submission->status = 'rejected';[m
+[32m+[m[32m        $submission->staff_notes = $reason ?? $submission->staff_notes;[m
+[32m+[m[32m        $submission->save();[m
+[32m+[m
+[32m+[m[32m        return $submission;[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m

@@ -3,44 +3,54 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 class PasswordResetController extends Controller
 {
     public function showForgotForm()
     {
-        if (! request()->expectsJson()) {
-            return view('auth.forgot-password');
-        }
-
         return response()->json([
-            'message' => 'Forgot password endpoint. Send POST request with email.',
+            'message' => 'Forgot password endpoint. Send POST request with email.'
         ]);
     }
 
     public function sendResetLink(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email|exists:users,email',
         ]);
 
-        Password::sendResetLink($request->only('email'));
+        $token = Str::random(60);
 
-        return $this->resetLinkResponse($request);
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            [
+                'token' => Hash::make($token),
+                'created_at' => now(),
+            ]
+        );
+
+        // TODO: dispatch a PasswordResetNotification/mailable carrying the
+        // reset URL (url("/reset-password/{$token}?email={$request->email}")).
+        // The token must NEVER be returned in the API response below —
+        // doing so lets anyone who can trigger a reset for an email address
+        // also complete that reset themselves (full account takeover).
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'If an account exists for that email, a password reset link has been sent.',
+        ]);
     }
 
     public function showResetForm($token)
     {
-        if (! request()->expectsJson()) {
-            return view('auth.reset-password', compact('token'));
-        }
-
         return response()->json([
             'message' => 'Reset password endpoint. Send POST request with token, email, and password.',
-            'token' => $token,
+            'token' => $token
         ]);
     }
 
@@ -52,46 +62,26 @@ class PasswordResetController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, string $password): void {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                    'remember_token' => Str::random(60),
-                ])->save();
-            },
-        );
+        $reset = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->first();
 
-        if ($status !== Password::PasswordReset) {
-            if (! $request->expectsJson()) {
-                return back()->withErrors(['token' => 'This password reset link is invalid or expired.']);
-            }
-
+        if (!$reset || !Hash::check($request->token, $reset->token)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Invalid or expired token',
+                'message' => 'Invalid or expired token'
             ], 400);
         }
 
-        if (! $request->expectsJson()) {
-            return redirect()->route('login')->with('success', 'Your password has been reset.');
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Password reset successfully',
+        User::where('email', $request->email)->update([
+            'password' => Hash::make($request->password)
         ]);
-    }
 
-    private function resetLinkResponse(Request $request)
-    {
-        if (! $request->expectsJson()) {
-            return redirect()->route('password.request')->with('success', 'If an account exists for that email, a password reset link has been sent.');
-        }
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'If an account exists for that email, a password reset link has been sent.',
+            'message' => 'Password reset successfully'
         ]);
     }
 }
