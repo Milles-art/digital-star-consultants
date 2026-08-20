@@ -12,30 +12,26 @@ class WelcomeUserNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $user;
-    protected $tempPassword;
+    public function __construct(
+        public User $user,
+        public string $tempPassword
+    ) {}
 
-    public function __construct(User $user, $tempPassword)
-    {
-        $this->user = $user;
-        $this->tempPassword = $tempPassword;
-    }
-
-    public function via($notifiable)
+    public function via(object $notifiable): array
     {
         return ['mail'];
     }
 
-    public function toMail($notifiable)
+    public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Welcome to ' . config('app.name'))
-            ->greeting('Hello ' . $this->user->name . '!')
+            ->subject('Welcome to '.config('app.name'))
+            ->greeting('Hello '.$this->user->name.'!')
             ->line('Your account has been created successfully.')
-            ->line('**Email:** ' . $this->user->email)
-            ->line('**Temporary Password:** ' . $this->tempPassword)
-            ->line('Please login and change your password immediately.')
+            ->line('**Email:** '.$this->user->email)
+            ->line('**Temporary Password:** '.$this->tempPassword)
+            ->line('Please log in and change your password immediately.')
             ->action('Login', url('/login'))
-            ->line('If you have any questions, please contact your administrator.');
+            ->line('If you did not expect this account, contact the administrator.');
     }
 }

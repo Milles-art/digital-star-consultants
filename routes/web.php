@@ -96,6 +96,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/services/{service}', [App\Http\Controllers\Admin\ServiceController::class, 'destroy'])->name('admin.services.destroy');
 
         // Service Fields
+        Route::get('/services/{service}/fields', [App\Http\Controllers\Admin\ServiceFieldController::class, 'index'])->name('admin.service-fields.index');
         Route::post('/services/{service}/fields', [App\Http\Controllers\Admin\ServiceFieldController::class, 'store'])->name('admin.service-fields.store');
         Route::put('/fields/{field}', [App\Http\Controllers\Admin\ServiceFieldController::class, 'update'])->name('admin.service-fields.update');
         Route::delete('/fields/{field}', [App\Http\Controllers\Admin\ServiceFieldController::class, 'destroy'])->name('admin.service-fields.destroy');
@@ -120,6 +121,14 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
         Route::post('/users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('admin.users.toggle-active');
+
+        // Contact messages
+        Route::get('/contact-messages', [App\Http\Controllers\Admin\ContactMessageController::class, 'index'])
+            ->name('admin.contact-messages.index');
+        Route::get('/contact-messages/{contactMessage}', [App\Http\Controllers\Admin\ContactMessageController::class, 'show'])
+            ->name('admin.contact-messages.show');
+        Route::delete('/contact-messages/{contactMessage}', [App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])
+            ->name('admin.contact-messages.destroy');
 
         // Reports
         Route::get('/reports/daily', [App\Http\Controllers\Admin\ReportController::class, 'daily'])->name('admin.reports.daily');
@@ -147,7 +156,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/submissions/{submission}/notes', [App\Http\Controllers\Staff\SubmissionController::class, 'updateNotes'])
             ->name('staff.submissions.notes');
 
-        // Staff can download files of their assigned submissions
         Route::get('/submissions/{submission}/files/{value}', [App\Http\Controllers\Admin\SubmissionFileController::class, 'download'])
             ->name('staff.submissions.files.download');
     });
