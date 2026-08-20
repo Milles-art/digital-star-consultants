@@ -12,30 +12,29 @@ class NewSubmissionNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $submission;
+    public function __construct(
+        public Submission $submission
+    ) {}
 
-    public function __construct(Submission $submission)
-    {
-        $this->submission = $submission;
-    }
-
-    public function via($notifiable)
+    public function via(object $notifiable): array
     {
         return ['mail'];
     }
 
-    public function toMail($notifiable)
+    public function toMail(object $notifiable): MailMessage
     {
+        $email = $this->submission->customer_email ?: 'Not provided';
+
         return (new MailMessage)
-            ->subject('New Service Request: ' . $this->submission->reference_number)
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->subject('New Service Request: '.$this->submission->reference_number)
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('A new service request has been submitted.')
-            ->line('**Reference:** ' . $this->submission->reference_number)
-            ->line('**Customer:** ' . $this->submission->customer_name)
-            ->line('**Service:** ' . ($this->submission->service->name ?? 'N/A'))
-            ->line('**Phone:** ' . $this->submission->customer_phone)
-            ->line('**Email:** ' . $this->submission->customer_email ?? 'Not provided')
-            ->action('View Submission', url('/admin/submissions/' . $this->submission->id))
+            ->line('**Reference:** '.$this->submission->reference_number)
+            ->line('**Customer:** '.$this->submission->customer_name)
+            ->line('**Service:** '.($this->submission->service->name ?? 'N/A'))
+            ->line('**Phone:** '.$this->submission->customer_phone)
+            ->line('**Email:** '.$email)
+            ->action('View Submission', url('/admin/submissions/'.$this->submission->id))
             ->line('Thank you for using our system!');
     }
 }

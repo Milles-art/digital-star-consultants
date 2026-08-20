@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Submission;
 use App\Models\Service;
+use App\Models\Submission;
 use App\Models\User;
-use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -42,6 +41,10 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        if (! request()->expectsJson()) {
+            return view('admin.dashboard', compact('stats', 'recent_submissions'));
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -59,7 +62,7 @@ class DashboardController extends Controller
                         'created_at' => $submission->created_at->format('Y-m-d H:i'),
                     ];
                 }),
-            ]
+            ],
         ]);
     }
 
@@ -81,6 +84,10 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        if (! request()->expectsJson()) {
+            return view('admin.staff-dashboard', compact('stats', 'my_submissions'));
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -97,7 +104,7 @@ class DashboardController extends Controller
                         'created_at' => $submission->created_at->format('Y-m-d H:i'),
                     ];
                 }),
-            ]
+            ],
         ]);
     }
 }

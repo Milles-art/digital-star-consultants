@@ -10,55 +10,48 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    //  Role Constants 
-    
+    // Role Constants
     const ROLE_ADMIN = 'admin';
     const ROLE_CEO = 'ceo';
     const ROLE_GENERAL_MANAGER = 'gm';
     const ROLE_STAFF = 'staff';
 
-    //  Fillable 
-    
+    /**
+     * Only safe, non-privileged attributes.
+     * role / is_active / last_login_at are set explicitly after authorization.
+     */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role',
-        'is_active',
-        'last_login_at',
     ];
 
-    //  Hidden 
-    
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    //  Casts 
-    
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'is_active' => 'boolean',
+        'password' => 'hashed',
     ];
 
-    //  Default Values 
-    
     protected $attributes = [
         'role' => self::ROLE_STAFF,
         'is_active' => true,
     ];
 
-    //  Relationships 
-    
+    // Relationships
+
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'processed_by');
     }
 
-    //  Role Check Methods 
-    
+    // Role Check Methods
+
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
@@ -90,7 +83,7 @@ class User extends Authenticatable
             self::ROLE_ADMIN,
             self::ROLE_CEO,
             self::ROLE_GENERAL_MANAGER,
-        ]);
+        ], true);
     }
 
     public function canProcessSubmission(): bool
@@ -100,32 +93,29 @@ class User extends Authenticatable
             self::ROLE_CEO,
             self::ROLE_GENERAL_MANAGER,
             self::ROLE_STAFF,
-        ]);
+        ], true);
     }
 
     public function canManageUsers(): bool
     {
-        return in_array($this->role, [
-            self::ROLE_ADMIN,
-            self::ROLE_CEO,
-            self::ROLE_GENERAL_MANAGER,
-        ]);
+        return $this->isManagement();
     }
 
-    //  Accessors 
-    
+    // Accessors
+
     public function getRoleLabelAttribute(): string
     {
-        return [
+        return match ($this->role) {
             self::ROLE_ADMIN => 'Administrator',
             self::ROLE_CEO => 'CEO',
             self::ROLE_GENERAL_MANAGER => 'General Manager',
             self::ROLE_STAFF => 'Staff',
-        ][$this->role] ?? $this->role;
+            default => $this->role,
+        };
     }
 
     public function isActive(): bool
     {
-        return $this->is_active;
+        return (bool) $this->is_active;
     }
 }

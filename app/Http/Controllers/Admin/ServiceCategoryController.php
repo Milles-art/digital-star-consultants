@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServiceCategory;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ServiceCategoryController extends Controller
 {
@@ -19,6 +19,10 @@ class ServiceCategoryController extends Controller
         $categories = ServiceCategory::with(['parent', 'children'])
             ->orderBy('sort_order')
             ->get();
+
+        if (! request()->expectsJson()) {
+            return view('admin.categories.index', compact('categories'));
+        }
 
         return response()->json([
             'status' => 'success',
@@ -37,7 +41,7 @@ class ServiceCategoryController extends Controller
                     'children_count' => $category->children->count(),
                     'created_at' => $category->created_at->format('Y-m-d H:i'),
                 ];
-            })
+            }),
         ]);
     }
 
@@ -66,6 +70,10 @@ class ServiceCategoryController extends Controller
             'is_active' => $request->is_active ?? true,
         ]);
 
+        if (! request()->expectsJson()) {
+            return view('admin.categories.show', compact('category'));
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Category created successfully',
@@ -80,7 +88,7 @@ class ServiceCategoryController extends Controller
                 'sort_order' => $category->sort_order,
                 'is_active' => $category->is_active,
                 'created_at' => $category->created_at->format('Y-m-d H:i'),
-            ]
+            ],
         ], 201);
     }
 
@@ -89,14 +97,18 @@ class ServiceCategoryController extends Controller
         $category = ServiceCategory::with(['parent', 'children', 'services'])
             ->find($id);
 
-        if (!$category) {
+        if (! $category) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Category not found'
+                'message' => 'Category not found',
             ], 404);
         }
 
         $this->authorize('view', $category);
+
+        if (! request()->expectsJson()) {
+            return view('admin.categories.show', compact('category'));
+        }
 
         return response()->json([
             'status' => 'success',
@@ -122,7 +134,7 @@ class ServiceCategoryController extends Controller
                 'services_count' => $category->services->count(),
                 'created_at' => $category->created_at->format('Y-m-d H:i'),
                 'updated_at' => $category->updated_at->format('Y-m-d H:i'),
-            ]
+            ],
         ]);
     }
 
@@ -130,10 +142,10 @@ class ServiceCategoryController extends Controller
     {
         $category = ServiceCategory::find($id);
 
-        if (!$category) {
+        if (! $category) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Category not found'
+                'message' => 'Category not found',
             ], 404);
         }
 
@@ -157,7 +169,7 @@ class ServiceCategoryController extends Controller
         }
 
         $category->update(array_filter($data, function ($value) {
-            return !is_null($value);
+            return ! is_null($value);
         }));
 
         return response()->json([
@@ -174,7 +186,7 @@ class ServiceCategoryController extends Controller
                 'sort_order' => $category->sort_order,
                 'is_active' => $category->is_active,
                 'updated_at' => $category->updated_at->format('Y-m-d H:i'),
-            ]
+            ],
         ]);
     }
 
@@ -182,10 +194,10 @@ class ServiceCategoryController extends Controller
     {
         $category = ServiceCategory::find($id);
 
-        if (!$category) {
+        if (! $category) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Category not found'
+                'message' => 'Category not found',
             ], 404);
         }
 
@@ -195,7 +207,7 @@ class ServiceCategoryController extends Controller
         if ($category->children()->count() > 0) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cannot delete category with children. Delete children first.'
+                'message' => 'Cannot delete category with children. Delete children first.',
             ], 422);
         }
 
@@ -203,7 +215,7 @@ class ServiceCategoryController extends Controller
         if ($category->services()->count() > 0) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cannot delete category with services. Delete services first.'
+                'message' => 'Cannot delete category with services. Delete services first.',
             ], 422);
         }
 
@@ -211,7 +223,7 @@ class ServiceCategoryController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Category deleted successfully'
+            'message' => 'Category deleted successfully',
         ]);
     }
 
@@ -219,16 +231,16 @@ class ServiceCategoryController extends Controller
     {
         $category = ServiceCategory::find($id);
 
-        if (!$category) {
+        if (! $category) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Category not found'
+                'message' => 'Category not found',
             ], 404);
         }
 
         $this->authorize('update', $category);
 
-        $category->is_active = !$category->is_active;
+        $category->is_active = ! $category->is_active;
         $category->save();
 
         $status = $category->is_active ? 'activated' : 'deactivated';
@@ -240,7 +252,7 @@ class ServiceCategoryController extends Controller
                 'id' => $category->id,
                 'name' => $category->name,
                 'is_active' => $category->is_active,
-            ]
+            ],
         ]);
     }
 }

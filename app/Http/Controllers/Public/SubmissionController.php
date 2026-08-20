@@ -3,114 +3,48 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Public\StoreSubmissionRequest;
 use App\Models\Service;
 use App\Models\Submission;
-use App\Models\SubmissionFieldValue;
-use App\Models\User;
-use App\Jobs\SendNewSubmissionEmailJob;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Services\SubmissionService;
+use Illuminate\Http\JsonResponse;
 
 class SubmissionController extends Controller
 {
+    public function __construct(
+        private readonly SubmissionService $submissionService
+    ) {}
+
     /**
      * Submit a service request
      * POST /submit
      */
-    public function store(Request $request)
+    public function store(StoreSubmissionRequest $request): JsonResponse
     {
-        $request->validate([
-            'service_id' => 'required|exists:services,id',
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'customer_email' => 'nullable|email|max:255',
-            'customer_notes' => 'nullable|string',
-            'preferred_date' => 'nullable|date',
-            'fields' => 'nullable|array',
-        ]);
+        $service = Service::with('fields')
+            ->where('is_active', true)
+            ->find($request->validated('service_id'));
 
-        $service = Service::with('fields')->find($request->service_id);
-
-        if (!$service || !$service->is_active) {
+        if (! $service) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not available'
+                'message' => 'Service not available',
             ], 404);
         }
 
-        // Validate dynamic fields
-        $fieldRules = [];
-        foreach ($service->fields as $field) {
-            $rules = [];
-
-            if ($field->is_required) {
-                $rules[] = 'required';
-            } else {
-                $rules[] = 'nullable';
-            }
-
-            switch ($field->field_type) {
-                case 'email':
-                    $rules[] = 'email';
-                    break;
-                case 'number':
-                    $rules[] = 'numeric';
-                    break;
-                case 'file':
-                    $rules[] = 'file';
-                    $rules[] = 'max:10240';
-                    break;
-                case 'select':
-                case 'radio':
-                    if ($field->options) {
-                        $rules[] = 'in:' . implode(',', array_keys($field->options));
-                    }
-                    break;
-            }
-
-            $fieldRules["fields.{$field->field_key}"] = $rules;
+        // Build dynamic validation for service-specific fields
+        $fieldRules = $this->buildDynamicFieldRules($service);
+        if (! empty($fieldRules)) {
+            $request->validate($fieldRules);
         }
 
-        $request->validate($fieldRules);
-
-        DB::beginTransaction();
-
         try {
-            // Create submission
-            $submission = Submission::create([
-                'service_id' => $service->id,
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone,
-                'customer_email' => $request->customer_email,
-                'customer_notes' => $request->customer_notes,
-                'preferred_date' => $request->preferred_date,
-                'status' => 'pending',
-            ]);
-
-            // Store field values
-            foreach ($service->fields as $field) {
-                $value = $request->input("fields.{$field->field_key}");
-                $filePath = null;
-
-                // Handle file upload
-                if ($field->field_type === 'file' && $request->hasFile("fields.{$field->field_key}")) {
-                    $file = $request->file("fields.{$field->field_key}");
-                    $filePath = $file->store("submissions/{$submission->id}", 'public');
-                }
-
-                SubmissionFieldValue::create([
-                    'submission_id' => $submission->id,
-                    'service_field_id' => $field->id,
-                    'value' => $value,
-                    'file_path' => $filePath,
-                ]);
-            }
-
-            // Dispatch job to send email notification to admins
-            SendNewSubmissionEmailJob::dispatch($submission);
-
-            DB::commit();
+            $submission = $this->submissionService->createSubmission(
+                $service,
+                array_merge($request->validated(), [
+                    'files' => $request->allFiles()['fields'] ?? $request->allFiles(),
+                ])
+            );
 
             return response()->json([
                 'status' => 'success',
@@ -119,42 +53,36 @@ class SubmissionController extends Controller
                     'reference_number' => $submission->reference_number,
                     'status' => $submission->status,
                     'status_label' => $submission->status_label,
-                    'tracking_url' => url("/track/{$submission->reference_number}"),
-                    'submission' => [
-                        'id' => $submission->id,
-                        'customer_name' => $submission->customer_name,
-                        'customer_phone' => $submission->customer_phone,
-                        'customer_email' => $submission->customer_email,
-                        'service_name' => $service->name,
-                        'created_at' => $submission->created_at->format('Y-m-d H:i'),
-                    ]
-                ]
+                    'customer_name' => $submission->customer_name,
+                    'service_name' => $service->name,
+                    'created_at' => $submission->created_at?->format('Y-m-d H:i'),
+                ],
             ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $e) {
+            report($e);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to create submission: ' . $e->getMessage()
+                'message' => 'Failed to create submission. Please try again later.',
             ], 500);
         }
     }
 
     /**
-     * Track submission by reference number
+     * Track submission by reference number.
+     * Intentionally returns limited public data only (no phone/email/staff notes).
      * GET /track/{reference}
      */
-    public function track($reference)
+    public function track(string $reference): JsonResponse
     {
-        $submission = Submission::with(['service', 'values.field'])
+        $submission = Submission::with(['service:id,name'])
             ->where('reference_number', $reference)
             ->first();
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
@@ -165,24 +93,57 @@ class SubmissionController extends Controller
                 'status' => $submission->status,
                 'status_label' => $submission->status_label,
                 'status_color' => $submission->status_color,
-                'service_name' => $submission->service->name ?? null,
-                'customer_name' => $submission->customer_name,
-                'customer_phone' => $submission->customer_phone,
-                'customer_email' => $submission->customer_email,
-                'preferred_date' => $submission->preferred_date,
-                'created_at' => $submission->created_at->format('Y-m-d H:i'),
-                'completed_at' => $submission->completed_at ? $submission->completed_at->format('Y-m-d H:i') : null,
-                'fields' => $submission->values->map(function ($value) {
-                    return [
-                        'label' => $value->field->label ?? null,
-                        'field_key' => $value->field->field_key ?? null,
-                        'value' => $value->getValueForDisplay(),
-                        'is_file' => $value->isFile(),
-                        'file_url' => $value->file_url,
-                    ];
-                }),
-                'staff_notes' => $submission->staff_notes,
-            ]
+                'service_name' => $submission->service?->name,
+                'preferred_date' => $submission->preferred_date?->format('Y-m-d'),
+                'created_at' => $submission->created_at?->format('Y-m-d H:i'),
+                'completed_at' => $submission->completed_at?->format('Y-m-d H:i'),
+                // PII deliberately omitted for public track endpoint
+            ],
         ]);
+    }
+
+    /**
+     * Build validation rules for dynamic service fields.
+     */
+    protected function buildDynamicFieldRules(Service $service): array
+    {
+        $fieldRules = [];
+
+        foreach ($service->fields as $field) {
+            $rules = [];
+
+            $rules[] = $field->is_required ? 'required' : 'nullable';
+
+            switch ($field->field_type) {
+                case 'email':
+                    $rules[] = 'email';
+                    break;
+                case 'number':
+                    $rules[] = 'numeric';
+                    break;
+                case 'file':
+                    $rules[] = 'file';
+                    $rules[] = 'max:10240'; // 10 MB
+                    $rules[] = 'mimes:jpg,jpeg,png,pdf,doc,docx,webp';
+                    break;
+                case 'select':
+                case 'radio':
+                    if (! empty($field->options) && is_array($field->options)) {
+                        $allowed = array_keys($field->options);
+                        $rules[] = 'in:' . implode(',', $allowed);
+                    }
+                    break;
+                case 'text':
+                case 'textarea':
+                default:
+                    $rules[] = 'string';
+                    $rules[] = 'max:5000';
+                    break;
+            }
+
+            $fieldRules["fields.{$field->field_key}"] = $rules;
+        }
+
+        return $fieldRules;
     }
 }

@@ -4,28 +4,39 @@ namespace App\Jobs;
 
 use App\Models\Submission;
 use App\Notifications\SubmissionAssignedNotification;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SendSubmissionAssignedEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $submission;
+    public int $tries = 3;
 
-    public function __construct(Submission $submission)
+    public int $backoff = 30;
+
+    public function __construct(
+        public Submission $submission
+    ) {}
+
+    public function handle(): void
     {
-        $this->submission = $submission;
+        if (! $this->submission->customer_email) {
+            return;
+        }
+
+        $this->submission->notify(new SubmissionAssignedNotification($this->submission));
     }
 
-    public function handle()
+    public function failed(?\Throwable $exception): void
     {
-        $staff = $this->submission->processedBy;
-
-        if ($staff) {
-            $staff->notify(new SubmissionAssignedNotification($this->submission));
-        }
+        Log::error('SendSubmissionAssignedEmailJob failed', [
+            'submission' => $this->submission->reference_number ?? null,
+            'error' => $exception?->getMessage(),
+        ]);
     }
 }

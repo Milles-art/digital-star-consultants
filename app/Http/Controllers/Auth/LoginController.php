@@ -4,62 +4,57 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    public function showLoginForm()
+    public function showLoginForm(): JsonResponse
     {
         return response()->json([
-            'message' => 'Login endpoint. Send POST request with email and password.'
+            'message' => 'Login endpoint. Send POST request with email and password.',
         ]);
     }
 
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
-        $request->validate([
+        $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
             'remember' => 'nullable|boolean',
         ]);
 
-        // Find user
-        $user = User::where('email', $request->email)->first();
+        $this->ensureIsNotRateLimited($request);
 
-        // Check if user exists
-        if (!$user) {
+        $user = User::where('email', $credentials['email'])->first();
+
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            RateLimiter::hit($this->throttleKey($request));
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Invalid credentials'
+                'message' => 'Invalid credentials',
             ], 401);
         }
 
-        // Check if user is active
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Your account is deactivated. Please contact admin.'
+                'message' => 'Your account is deactivated. Please contact admin.',
             ], 403);
         }
 
-        // Check password
-        if (!Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid credentials'
-            ], 401);
-        }
+        RateLimiter::clear($this->throttleKey($request));
 
-        // Login user
-        Auth::login($user, $request->remember ?? false);
+        Auth::login($user, $request->boolean('remember'));
 
-        // Update last login
-        $user->update(['last_login_at' => now()]);
+        $request->session()->regenerate();
 
-        // Determine redirect based on role
-        $redirect = $this->getRedirectPath($user);
+        $user->forceFill(['last_login_at' => now()])->save();
 
         return response()->json([
             'status' => 'success',
@@ -72,30 +67,45 @@ class LoginController extends Controller
                     'role' => $user->role,
                     'role_label' => $user->role_label,
                 ],
-                'redirect' => $redirect,
-            ]
+                'redirect' => $this->getRedirectPath($user),
+            ],
         ]);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Logged out successfully',
-            'redirect' => '/login'
+            'redirect' => '/login',
         ]);
+    }
+
+    protected function ensureIsNotRateLimited(Request $request): void
+    {
+        $key = $this->throttleKey($request);
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+
+            throw ValidationException::withMessages([
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ])->status(429);
+        }
+    }
+
+    protected function throttleKey(Request $request): string
+    {
+        return strtolower($request->input('email')) . '|' . $request->ip();
     }
 
     private function getRedirectPath(User $user): string
     {
-        if ($user->isManagement()) {
-            return '/admin/dashboard';
-        }
-        
-        return '/staff/submissions';
+        return $user->isManagement() ? '/admin/dashboard' : '/staff/submissions';
     }
 }
