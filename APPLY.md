@@ -1,18 +1,12 @@
-# Round 4 – Feature tests + factories
+# Round 5 – Polish remaining controllers
 
-## What’s included
+## Changes
 
-### Factories
-- `UserFactory` (with `admin()`, `staff()`, `inactive()` states)
-- `ServiceCategoryFactory`
-- `ServiceFactory`
-- `SubmissionFactory` (with `assignedTo()`, `completed()` states)
-
-### Feature tests
-- `PublicSubmissionTest` – public submit, validation, track (no PII leak)
-- `AuthLoginTest` – login success/fail, inactive user, rate limiting
-- `StaffSubmissionAccessTest` – staff only sees assigned submissions, isolation, admin access
-- `MassAssignmentProtectionTest` – role/status cannot be mass-assigned, no temp password leak
+| File | What was fixed |
+|------|----------------|
+| `Auth/RegisterController.php` | Explicit assignment of role/is_active (no longer fillable). No temp password in response. |
+| `Admin/ContactMessageController.php` | Implemented (was empty stub). Management-only. |
+| `Admin/ServiceFieldController.php` | Route model binding, authorize calls, cleaner validation. |
 
 ## Apply
 
@@ -20,26 +14,28 @@
 cd ~/digital-star-consultants
 git checkout fix/security-and-architecture
 
-unzip digital-star-fixes-round4.zip
+unzip digital-star-fixes-round5.zip
 
-cp -r laravel-fixes-round4/database/factories/* database/factories/
-cp -r laravel-fixes-round4/tests/Feature/* tests/Feature/
+cp laravel-fixes-round5/app/Http/Controllers/Auth/RegisterController.php app/Http/Controllers/Auth/
+cp laravel-fixes-round5/app/Http/Controllers/Admin/ContactMessageController.php app/Http/Controllers/Admin/
+cp laravel-fixes-round5/app/Http/Controllers/Admin/ServiceFieldController.php app/Http/Controllers/Admin/
 
-# Make sure models use HasFactory (most already do)
-git add database/factories/ tests/Feature/
+git add app/Http/Controllers/Auth/RegisterController.php \
+        app/Http/Controllers/Admin/ContactMessageController.php \
+        app/Http/Controllers/Admin/ServiceFieldController.php
 
-git commit -m "test: add feature tests for public submit, track PII, auth rate limit, staff isolation, mass assignment"
+git commit -m "fix: polish Register, ContactMessage, ServiceField controllers"
 git push
 ```
 
-## Run the tests
+## Note on routes
 
-```bash
-php artisan test --group=public
-php artisan test --group=auth
-php artisan test --group=staff
-php artisan test --group=security
+If you want contact messages in the admin UI, add these routes under the admin group in `routes/web.php`:
 
-# Or everything
-php artisan test
+```php
+Route::get('/contact-messages', [App\Http\Controllers\Admin\ContactMessageController::class, 'index'])->name('admin.contact-messages.index');
+Route::get('/contact-messages/{contactMessage}', [App\Http\Controllers\Admin\ContactMessageController::class, 'show'])->name('admin.contact-messages.show');
+Route::delete('/contact-messages/{contactMessage}', [App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])->name('admin.contact-messages.destroy');
 ```
+
+Service field routes already exist; they will now use model binding correctly if the route parameters match (`{service}`, `{field}`).
