@@ -1,55 +1,8 @@
-@php
-    $servicesUrl = route('public.services.index');
-    $trackUrl    = url('/track');
-    $contactUrl  = Route::has('public.contact.show') ? route('public.contact.show') : url('/contact');
-@endphp
-
-<footer class="mt-auto border-t border-white/10 bg-[color:var(--color-brand-950)] text-white/70">
-    <div class="shell py-14 md:py-16">
-        <div class="grid gap-10 md:grid-cols-12">
-
-            <div class="md:col-span-5">
-                <div class="flex items-center gap-2.5 text-white">
-                    <span aria-hidden="true" class="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--color-accent-400)] text-[color:var(--color-brand-950)]">
-                        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
-                            <path d="M12 2.5l2.6 6.1 6.6.55-5 4.32 1.5 6.43L12 16.5l-5.7 3.4 1.5-6.43-5-4.32 6.6-.55L12 2.5z"/>
-                        </svg>
-                    </span>
-                    <span class="text-lg font-bold tracking-tight">Digital Star Consultants</span>
-                </div>
-                <p class="mt-4 max-w-sm text-sm leading-relaxed">
-                    Technology consulting and streamlined government &amp; business service requests —
-                    submitted online, tracked transparently, delivered on time.
-                </p>
-            </div>
-
-            <nav class="md:col-span-3" aria-label="Footer navigation">
-                <h2 class="text-xs font-bold uppercase tracking-[0.14em] text-white">Quick links</h2>
-                <ul class="mt-4 space-y-2.5 text-sm">
-                    <li><a class="transition-colors hover:text-[color:var(--color-accent-300)]" href="{{ route('home') }}">Home</a></li>
-                    <li><a class="transition-colors hover:text-[color:var(--color-accent-300)]" href="{{ $servicesUrl }}">Services</a></li>
-                    <li><a class="transition-colors hover:text-[color:var(--color-accent-300)]" href="{{ $trackUrl }}">Track request</a></li>
-                    <li><a class="transition-colors hover:text-[color:var(--color-accent-300)]" href="{{ $contactUrl }}">Contact</a></li>
-                </ul>
-            </nav>
-
-            <div class="md:col-span-4">
-                <h2 class="text-xs font-bold uppercase tracking-[0.14em] text-white">Get started</h2>
-                <p class="mt-4 text-sm leading-relaxed">
-                    No account needed. Pick a service, submit your details, and receive a reference number instantly.
-                </p>
-                <div class="mt-5 flex flex-wrap gap-2">
-                    <a href="{{ $servicesUrl }}" class="btn btn-sm btn-accent">Browse services</a>
-                    <a href="{{ $trackUrl }}" class="btn btn-sm btn-ghost border border-white/20 text-white hover:bg-white/10">Track request</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center">
-            <p>&copy; {{ date('Y') }} Digital Star Consultants. All rights reserved.</p>
-            @guest
-                <a href="{{ route('login') }}" class="transition-colors hover:text-[color:var(--color-accent-300)]">Staff login</a>
-            @endguest
-        </div>
+<footer class="bg-ink text-white">
+    <div class="shell grid gap-12 py-14 md:grid-cols-[1.2fr_.8fr_.8fr] md:py-20">
+        <div><a href="{{ route('home') }}" class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-yellow text-ink"><span class="h-4 w-4 rotate-45 border-2 border-ink"></span></span><span class="text-sm font-bold">Digital Star Consultants</span></a><p class="mt-6 max-w-sm text-sm text-slate-300">Practical digital services for the moments that matter — delivered with clarity, care, and momentum.</p></div>
+        <div><p class="eyebrow-dark">Explore</p><div class="mt-5 space-y-3 text-sm text-slate-300"><a class="block hover:text-white" href="{{ route('public.services.index') }}">All services</a><a class="block hover:text-white" href="{{ url('/track') }}">Track a request</a>@if (Route::has('public.contact.show'))<a class="block hover:text-white" href="{{ route('public.contact.show') }}">Contact us</a>@else<a class="block hover:text-white" href="{{ url('/contact') }}">Contact us</a>@endif</div></div>
+        <div><p class="eyebrow-dark">Get moving</p><p class="mt-5 text-sm leading-7 text-slate-300">Tell us what you need. We’ll help you find the clearest next step.</p><a class="mt-5 inline-flex items-center gap-2 text-sm font-bold text-yellow hover:text-white" href="{{ route('public.services.index') }}">Browse services <span aria-hidden="true">↗</span></a></div>
     </div>
+    <div class="border-t border-white/10"><div class="shell flex flex-col gap-3 py-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between"><span>© {{ date('Y') }} Digital Star Consultants</span><span>Clear answers. Better outcomes.</span></div></div>
 </footer>

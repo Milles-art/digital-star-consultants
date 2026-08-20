@@ -1,12 +1,12 @@
-# Round 5 – Polish remaining controllers
+# Fixed public blades (design from other AI + backend fixes)
 
-## Changes
-
-| File | What was fixed |
-|------|----------------|
-| `Auth/RegisterController.php` | Explicit assignment of role/is_active (no longer fillable). No temp password in response. |
-| `Admin/ContactMessageController.php` | Implemented (was empty stub). Management-only. |
-| `Admin/ServiceFieldController.php` | Route model binding, authorize calls, cleaner validation. |
+## Fixes applied
+1. Tailwind `@source` directives restored in `app.css`
+2. Staff dashboard uses `staff.submissions.index`; management uses `admin.dashboard`
+3. Contact uses `public.contact.show` when available
+4. Track links use `url('/track')` (no fake route names)
+5. Submit form posts to `public.submissions.store` with correct field names
+6. Success reads `data.data.reference_number` (our API shape)
 
 ## Apply
 
@@ -14,28 +14,23 @@
 cd ~/digital-star-consultants
 git checkout fix/security-and-architecture
 
-unzip digital-star-fixes-round5.zip
+unzip digital-star-blades-fixed.zip
 
-cp laravel-fixes-round5/app/Http/Controllers/Auth/RegisterController.php app/Http/Controllers/Auth/
-cp laravel-fixes-round5/app/Http/Controllers/Admin/ContactMessageController.php app/Http/Controllers/Admin/
-cp laravel-fixes-round5/app/Http/Controllers/Admin/ServiceFieldController.php app/Http/Controllers/Admin/
+cp laravel-blades-fixed/resources/css/app.css resources/css/app.css
+cp -r laravel-blades-fixed/resources/views/* resources/views/
 
-git add app/Http/Controllers/Auth/RegisterController.php \
-        app/Http/Controllers/Admin/ContactMessageController.php \
-        app/Http/Controllers/Admin/ServiceFieldController.php
+npm run build
 
-git commit -m "fix: polish Register, ContactMessage, ServiceField controllers"
+git add resources/css/app.css resources/views/
+git commit -m "feat: premium public UI with backend-compatible routes and form"
 git push
 ```
 
-## Note on routes
+## Verify
 
-If you want contact messages in the admin UI, add these routes under the admin group in `routes/web.php`:
-
-```php
-Route::get('/contact-messages', [App\Http\Controllers\Admin\ContactMessageController::class, 'index'])->name('admin.contact-messages.index');
-Route::get('/contact-messages/{contactMessage}', [App\Http\Controllers\Admin\ContactMessageController::class, 'show'])->name('admin.contact-messages.show');
-Route::delete('/contact-messages/{contactMessage}', [App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])->name('admin.contact-messages.destroy');
+```bash
+php artisan serve
+# open /, /services, a service show page, submit a request
+php artisan test --filter=ExampleTest
+php artisan test --filter=PublicServicePagesTest
 ```
-
-Service field routes already exist; they will now use model binding correctly if the route parameters match (`{service}`, `{field}`).
