@@ -4,32 +4,42 @@ namespace App\Jobs;
 
 use App\Models\Submission;
 use App\Notifications\SubmissionRejectedNotification;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SendSubmissionRejectedEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $submission;
-    protected $reason;
+    public int $tries = 3;
 
-    public function __construct(Submission $submission, $reason = null)
+    public int $backoff = 30;
+
+    public function __construct(
+        public Submission $submission,
+        public ?string $reason = null
+    ) {}
+
+    public function handle(): void
     {
-        $this->submission = $submission;
-        $this->reason = $reason;
-    }
-
-    public function handle()
-    {
-        if (blank($this->submission->customer_email)) {
+        if (! $this->submission->customer_email) {
             return;
         }
 
-        $customer = $this->submission;
+        $this->submission->notify(
+            new SubmissionRejectedNotification($this->submission, $this->reason)
+        );
+    }
 
-        $customer->notify(new SubmissionRejectedNotification($this->submission, $this->reason));
+    public function failed(?\Throwable $exception): void
+    {
+        Log::error('SendSubmissionRejectedEmailJob failed', [
+            'submission' => $this->submission->reference_number ?? null,
+            'error' => $exception?->getMessage(),
+        ]);
     }
 }

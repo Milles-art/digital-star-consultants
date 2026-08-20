@@ -15,28 +15,24 @@ class Submission extends Model
 
     // Status Constants
     const STATUS_PENDING = 'pending';
-
     const STATUS_IN_PROGRESS = 'in_progress';
-
     const STATUS_COMPLETED = 'completed';
-
     const STATUS_REJECTED = 'rejected';
-
     const STATUS_AWAITING_CUSTOMER = 'awaiting_customer';
-
     const STATUS_CANCELLED = 'cancelled';
 
     // Payment Constants
     const PAYMENT_PENDING = 'pending';
-
     const PAYMENT_PAID = 'paid';
-
     const PAYMENT_FAILED = 'failed';
-
     const PAYMENT_REFUNDED = 'refunded';
-
     const PAYMENT_FREE = 'free';
 
+    /**
+     * Only customer-facing / safe fields are mass-assignable.
+     * Status, payment, processed_by, staff_notes, completed_at
+     * must be set via the dedicated methods below.
+     */
     protected $fillable = [
         'reference_number',
         'service_id',
@@ -46,12 +42,7 @@ class Submission extends Model
         'customer_notes',
         'preferred_date',
         'total_price',
-        'status',
-        'payment_status',
         'payment_method',
-        'staff_notes',
-        'processed_by',
-        'completed_at',
     ];
 
     protected $casts = [
@@ -88,6 +79,8 @@ class Submission extends Model
         return $this->customer_email;
     }
 
+    // Explicit state-change methods (never mass-assign these)
+
     public function assignTo(User $user): void
     {
         $this->forceFill([
@@ -117,26 +110,35 @@ class Submission extends Model
         ])->save();
     }
 
+    public function updatePaymentStatus(string $status, ?string $method = null): void
+    {
+        $data = ['payment_status' => $status];
+        if ($method !== null) {
+            $data['payment_method'] = $method;
+        }
+        $this->forceFill($data)->save();
+    }
+
     // Scopes
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', self::STATUS_PENDING);
     }
 
     public function scopeInProgress($query)
     {
-        return $query->where('status', 'in_progress');
+        return $query->where('status', self::STATUS_IN_PROGRESS);
     }
 
     public function scopeCompleted($query)
     {
-        return $query->where('status', 'completed');
+        return $query->where('status', self::STATUS_COMPLETED);
     }
 
     public function scopeRejected($query)
     {
-        return $query->where('status', 'rejected');
+        return $query->where('status', self::STATUS_REJECTED);
     }
 
     public function scopeToday($query)
@@ -179,7 +181,7 @@ class Submission extends Model
 
             do {
                 $referenceNumber = sprintf('DSC-%s-%06d', now()->format('Y'), random_int(1, 999999));
-            } while (static::where('reference_number', $referenceNumber)->exists());
+            } while (static::withTrashed()->where('reference_number', $referenceNumber)->exists());
 
             $submission->reference_number = $referenceNumber;
         });

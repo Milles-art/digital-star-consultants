@@ -9,9 +9,11 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Public Routes
+| Public Routes (NO login required)
 |--------------------------------------------------------------------------
 */
+
+Route::get('/', [App\Http\Controllers\Public\HomeController::class, 'index'])->name('home');
 
 Route::get('/services', [App\Http\Controllers\Public\ServiceController::class, 'index'])
     ->name('public.services.index');
@@ -20,23 +22,30 @@ Route::get('/services/{slug}', [App\Http\Controllers\Public\ServiceController::c
     ->name('public.services.show');
 
 Route::post('/submit', [App\Http\Controllers\Public\SubmissionController::class, 'store'])
-    ->middleware('throttle:10,1') // rate-limit public submissions
+    ->middleware('throttle:10,1')
     ->name('public.submissions.store');
 
 Route::get('/track/{reference}', [App\Http\Controllers\Public\SubmissionController::class, 'track'])
     ->middleware('throttle:30,1')
     ->name('public.submissions.track');
 
+// Contact form – public, rate-limited
+Route::get('/contact', [App\Http\Controllers\Public\ContactController::class, 'show'])
+    ->name('public.contact.show');
+Route::post('/contact', [App\Http\Controllers\Public\ContactController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('public.contact.store');
+
 /*
 |--------------------------------------------------------------------------
-| Guest Auth Routes
+| Guest Auth Routes (for staff only)
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])
-        ->middleware('throttle:5,1'); // extra protection (also handled inside controller)
+        ->middleware('throttle:5,1');
 
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register'])
@@ -55,7 +64,7 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated Routes
+| Authenticated Routes (staff / management only)
 |--------------------------------------------------------------------------
 */
 
@@ -99,6 +108,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/submissions/{id}/in-progress', [App\Http\Controllers\Admin\SubmissionController::class, 'markInProgress'])->name('admin.submissions.in-progress');
         Route::post('/submissions/{id}/reject', [App\Http\Controllers\Admin\SubmissionController::class, 'markRejected'])->name('admin.submissions.reject');
 
+        // Private file download (staff only)
+        Route::get('/submissions/{submission}/files/{value}', [App\Http\Controllers\Admin\SubmissionFileController::class, 'download'])
+            ->name('admin.submissions.files.download');
+
         // Users
         Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
         Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');
@@ -115,7 +128,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/overview', [App\Http\Controllers\Admin\ReportController::class, 'overview'])->name('admin.reports.overview');
     });
 
-    // Staff Routes (placeholder – expand as needed)
+    // Staff Routes
     Route::prefix('staff')->middleware(['role:staff'])->group(function () {
         Route::get('/submissions', function () {
             return response()->json([
@@ -123,5 +136,9 @@ Route::middleware(['auth'])->group(function () {
                 'user' => auth()->user()->only(['id', 'name', 'role']),
             ]);
         })->name('staff.submissions');
+
+        // Staff can also download files of submissions assigned to them
+        Route::get('/submissions/{submission}/files/{value}', [App\Http\Controllers\Admin\SubmissionFileController::class, 'download'])
+            ->name('staff.submissions.files.download');
     });
 });
