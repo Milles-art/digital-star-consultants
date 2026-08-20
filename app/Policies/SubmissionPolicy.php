@@ -4,100 +4,70 @@ namespace App\Policies;
 
 use App\Models\Submission;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class SubmissionPolicy
 {
     /**
-     * Determine if the user can view any submissions.
+     * Determine whether the user can view any submissions.
      */
     public function viewAny(User $user): bool
     {
-        // Management can view all, staff can view assigned only
-        return $user->isManagement() || $user->isStaff();
+        return $user->isManagement();
     }
 
     /**
-     * Determine if the user can view a specific submission.
+     * Determine whether the user can view the submission.
      */
     public function view(User $user, Submission $submission): bool
     {
-        // Management can view any submission
-        if ($user->isManagement()) {
-            return true;
-        }
-
-        // Staff can only view submissions assigned to them
-        return $submission->processed_by === $user->id;
+        return $user->isManagement() || $user->id === $submission->processed_by;
     }
 
     /**
-     * Determine if the user can create submissions.
+     * Determine whether the user can create submissions.
      */
     public function create(User $user): bool
     {
-        // Anyone logged in can create submissions (customers)
-        // Staff can also create on behalf of customers
-        return $user->canProcessSubmission();
+        return true; // Public submissions allowed
     }
 
     /**
-     * Determine if the user can update a submission.
+     * Determine whether the user can update the submission.
      */
     public function update(User $user, Submission $submission): bool
     {
-        // Management can update any submission
-        if ($user->isManagement()) {
-            return true;
-        }
-
-        // Staff can only update submissions assigned to them
-        return $submission->processed_by === $user->id;
+        return $user->isManagement();
     }
 
     /**
-     * Determine if the user can delete a submission.
+     * Determine whether the user can delete the submission.
      */
     public function delete(User $user, Submission $submission): bool
     {
-        // Only management can delete submissions
-        return $user->isManagement();
+        return $user->isAdmin();
     }
 
     /**
-     * Determine if the user can assign a submission.
+     * Determine whether the user can assign the submission.
      */
     public function assign(User $user, Submission $submission): bool
     {
-        // Only management can assign submissions
         return $user->isManagement();
     }
 
     /**
-     * Determine if the user can mark a submission as completed.
+     * Determine whether the user can complete the submission.
      */
     public function complete(User $user, Submission $submission): bool
     {
-        // Management can complete any submission
-        if ($user->isManagement()) {
-            return true;
-        }
-
-        // Staff can only complete submissions assigned to them
-        return $submission->processed_by === $user->id;
+        return $user->isManagement() || $user->id === $submission->processed_by;
     }
 
     /**
-     * Determine if the user can reject a submission.
+     * Determine whether the user can reject the submission.
      */
     public function reject(User $user, Submission $submission): bool
     {
-        // Management can reject any submission
-        if ($user->isManagement()) {
-            return true;
-        }
-
-        // Staff can only reject submissions assigned to them
-        return $submission->processed_by === $user->id;
+        return $user->isManagement();
     }
 }
