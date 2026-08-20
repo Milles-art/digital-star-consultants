@@ -33,6 +33,9 @@ if (app()->environment('local') && config('app.debug')) {
 
 // ========== Public Routes (No Auth Required) ==========
 
+// Home
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
 // Services
 Route::get('/services', [PublicServiceController::class, 'index'])->name('public.services.index');
 Route::get('/services/{slug}', [PublicServiceController::class, 'show'])->name('public.services.show');
@@ -143,11 +146,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Staff Routes
     Route::prefix('staff')->middleware(['role:staff', 'throttle:60,1'])->group(function () {
-        Route::get('/submissions', function () {
-            return response()->json([
-                'message' => 'Staff submissions list',
-                'user' => auth()->user()
-            ]);
-        })->name('staff.submissions');
+        Route::get('/submissions', [\App\Http\Controllers\Staff\SubmissionController::class, 'index'])->name('staff.submissions');
+        Route::get('/submissions/{submission}', [\App\Http\Controllers\Staff\SubmissionController::class, 'show'])->name('staff.submissions.show');
+        Route::post('/submissions/{submission}/in-progress', [\App\Http\Controllers\Staff\SubmissionController::class, 'markInProgress'])->name('staff.submissions.in-progress');
+        Route::post('/submissions/{submission}/complete', [\App\Http\Controllers\Staff\SubmissionController::class, 'markCompleted'])->name('staff.submissions.complete');
+        Route::post('/submissions/{submission}/reject', [\App\Http\Controllers\Staff\SubmissionController::class, 'markRejected'])->name('staff.submissions.reject');
+        Route::put('/submissions/{submission}/notes', [\App\Http\Controllers\Staff\SubmissionController::class, 'updateNotes'])->name('staff.submissions.notes');
     });
 });

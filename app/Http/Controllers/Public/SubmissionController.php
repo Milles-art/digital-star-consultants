@@ -62,14 +62,8 @@ class SubmissionController extends Controller
                     'status' => $submission->status,
                     'status_label' => $submission->status_label,
                     'tracking_url' => url("/track/{$submission->reference_number}"),
-                    'submission' => [
-                        'id' => $submission->id,
-                        'customer_name' => $submission->customer_name,
-                        'customer_phone' => $submission->customer_phone,
-                        'customer_email' => $submission->customer_email,
-                        'service_name' => $service->name,
-                        'created_at' => $submission->created_at->format('Y-m-d H:i'),
-                    ],
+                    'customer_name' => $submission->customer_name,
+                    'service_name' => $service->name,
                 ],
             ], 201);
 
@@ -110,8 +104,6 @@ class SubmissionController extends Controller
                 'status_color' => $submission->status_color,
                 'service_name' => $submission->service->name ?? null,
                 'customer_name' => $submission->customer_name,
-                'customer_phone' => $submission->customer_phone,
-                'customer_email' => $submission->customer_email,
                 'preferred_date' => $submission->preferred_date,
                 'created_at' => $submission->created_at->format('Y-m-d H:i'),
                 'completed_at' => $submission->completed_at?->format('Y-m-d H:i'),
@@ -123,7 +115,6 @@ class SubmissionController extends Controller
                         'is_file' => $value->isFile(),
                     ];
                 }),
-                'staff_notes' => $submission->staff_notes,
             ],
         ]);
     }

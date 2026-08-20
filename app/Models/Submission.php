@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Notifications\Notifiable;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Submission extends Model
 {
+    use Notifiable;
     use HasFactory, SoftDeletes;
 
     // Status Constants
@@ -55,12 +58,6 @@ class Submission extends Model
         'customer_notes',
         'preferred_date',
         'total_price',
-        'status',
-        'payment_status',
-        'payment_method',
-        'staff_notes',
-        'processed_by',
-        'completed_at',
     ];
 
     protected $casts = [
@@ -204,5 +201,13 @@ class Submission extends Model
         } while (self::where('reference_number', $candidate)->exists());
 
         return $candidate;
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     */
+    public function routeNotificationForMail(): ?string
+    {
+        return $this->customer_email;
     }
 }
