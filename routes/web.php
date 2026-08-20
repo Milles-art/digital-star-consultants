@@ -74,7 +74,9 @@ Route::post('/logout', [LoginController::class, 'logout'])
 
 Route::middleware(['auth'])->group(function () {
 
-    // Admin / Management routes
+    // --------------------------------------------------
+    // Admin / Management (admin, ceo, gm)
+    // --------------------------------------------------
     Route::prefix('admin')->middleware(['role:admin,ceo,gm'])->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
@@ -98,17 +100,17 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/fields/{field}', [App\Http\Controllers\Admin\ServiceFieldController::class, 'update'])->name('admin.service-fields.update');
         Route::delete('/fields/{field}', [App\Http\Controllers\Admin\ServiceFieldController::class, 'destroy'])->name('admin.service-fields.destroy');
 
-        // Submissions
+        // Submissions (management)
         Route::get('/submissions', [App\Http\Controllers\Admin\SubmissionController::class, 'index'])->name('admin.submissions.index');
-        Route::get('/submissions/{id}', [App\Http\Controllers\Admin\SubmissionController::class, 'show'])->name('admin.submissions.show');
-        Route::put('/submissions/{id}', [App\Http\Controllers\Admin\SubmissionController::class, 'update'])->name('admin.submissions.update');
-        Route::delete('/submissions/{id}', [App\Http\Controllers\Admin\SubmissionController::class, 'destroy'])->name('admin.submissions.destroy');
-        Route::post('/submissions/{id}/assign', [App\Http\Controllers\Admin\SubmissionController::class, 'assign'])->name('admin.submissions.assign');
-        Route::post('/submissions/{id}/complete', [App\Http\Controllers\Admin\SubmissionController::class, 'markCompleted'])->name('admin.submissions.complete');
-        Route::post('/submissions/{id}/in-progress', [App\Http\Controllers\Admin\SubmissionController::class, 'markInProgress'])->name('admin.submissions.in-progress');
-        Route::post('/submissions/{id}/reject', [App\Http\Controllers\Admin\SubmissionController::class, 'markRejected'])->name('admin.submissions.reject');
+        Route::get('/submissions/{submission}', [App\Http\Controllers\Admin\SubmissionController::class, 'show'])->name('admin.submissions.show');
+        Route::put('/submissions/{submission}', [App\Http\Controllers\Admin\SubmissionController::class, 'update'])->name('admin.submissions.update');
+        Route::delete('/submissions/{submission}', [App\Http\Controllers\Admin\SubmissionController::class, 'destroy'])->name('admin.submissions.destroy');
+        Route::post('/submissions/{submission}/assign', [App\Http\Controllers\Admin\SubmissionController::class, 'assign'])->name('admin.submissions.assign');
+        Route::post('/submissions/{submission}/complete', [App\Http\Controllers\Admin\SubmissionController::class, 'markCompleted'])->name('admin.submissions.complete');
+        Route::post('/submissions/{submission}/in-progress', [App\Http\Controllers\Admin\SubmissionController::class, 'markInProgress'])->name('admin.submissions.in-progress');
+        Route::post('/submissions/{submission}/reject', [App\Http\Controllers\Admin\SubmissionController::class, 'markRejected'])->name('admin.submissions.reject');
 
-        // Private file download (staff only)
+        // Private file download
         Route::get('/submissions/{submission}/files/{value}', [App\Http\Controllers\Admin\SubmissionFileController::class, 'download'])
             ->name('admin.submissions.files.download');
 
@@ -128,16 +130,24 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/overview', [App\Http\Controllers\Admin\ReportController::class, 'overview'])->name('admin.reports.overview');
     });
 
-    // Staff Routes
+    // --------------------------------------------------
+    // Staff area (role: staff) – only assigned submissions
+    // --------------------------------------------------
     Route::prefix('staff')->middleware(['role:staff'])->group(function () {
-        Route::get('/submissions', function () {
-            return response()->json([
-                'message' => 'Staff submissions list – implement me',
-                'user' => auth()->user()->only(['id', 'name', 'role']),
-            ]);
-        })->name('staff.submissions');
+        Route::get('/submissions', [App\Http\Controllers\Staff\SubmissionController::class, 'index'])
+            ->name('staff.submissions.index');
+        Route::get('/submissions/{submission}', [App\Http\Controllers\Staff\SubmissionController::class, 'show'])
+            ->name('staff.submissions.show');
+        Route::post('/submissions/{submission}/in-progress', [App\Http\Controllers\Staff\SubmissionController::class, 'markInProgress'])
+            ->name('staff.submissions.in-progress');
+        Route::post('/submissions/{submission}/complete', [App\Http\Controllers\Staff\SubmissionController::class, 'markCompleted'])
+            ->name('staff.submissions.complete');
+        Route::post('/submissions/{submission}/reject', [App\Http\Controllers\Staff\SubmissionController::class, 'markRejected'])
+            ->name('staff.submissions.reject');
+        Route::put('/submissions/{submission}/notes', [App\Http\Controllers\Staff\SubmissionController::class, 'updateNotes'])
+            ->name('staff.submissions.notes');
 
-        // Staff can also download files of submissions assigned to them
+        // Staff can download files of their assigned submissions
         Route::get('/submissions/{submission}/files/{value}', [App\Http\Controllers\Admin\SubmissionFileController::class, 'download'])
             ->name('staff.submissions.files.download');
     });
