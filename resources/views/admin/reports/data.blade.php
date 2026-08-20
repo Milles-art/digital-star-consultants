@@ -1,0 +1,5 @@
+@extends('layouts.admin')
+@section('title', $title.' | Reports')
+@section('heading', $title)
+@section('content')<a href="{{ route('admin.reports.overview') }}" class="text-sm font-semibold text-brand-600">&larr; Reports</a><div class="mt-6 rounded-xl border border-mist-200 bg-white p-6"><dl class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">@foreach($data as $label => $value)@if(!is_array($value) && !is_object($value))<div><dt class="text-sm capitalize text-slate-500">{{ str_replace('_',' ',$label) }}</dt><dd class="mt-1 font-display text-2xl font-extrabold text-brand-600">{{ $value }}</dd></div>@endif @endforeach</dl></div>@if(isset($rows))<div class="mt-6 overflow-x-auto rounded-xl border border-mist-200 bg-white"><table class="w-full text-left text-sm"><thead class="bg-mist-50 text-xs uppercase text-slate-500"><tr>@foreach(array_keys((array) ($rows->first() ?? [])) as $key)<th class="px-5 py-3">{{ str_replace('_',' ',$key) }}</th>@endforeach</tr></thead><tbody class="divide-y divide-mist-200">@foreach($rows as $row)<tr>@foreach((array) $row as $value)<td class="px-5 py-3">{{ $value }}</td>@endforeach</tr>@endforeach</tbody></table></div>@endif
+@endsection

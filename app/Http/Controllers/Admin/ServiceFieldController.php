@@ -14,16 +14,20 @@ class ServiceFieldController extends Controller
     {
         $service = Service::find($serviceId);
 
-        if (!$service) {
+        if (! $service) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not found'
+                'message' => 'Service not found',
             ], 404);
         }
 
         $this->authorize('viewAny', ServiceField::class);
 
         $fields = $service->fields()->orderBy('sort_order')->get();
+
+        if (! request()->expectsJson()) {
+            return view('admin.fields.index', compact('service', 'fields'));
+        }
 
         return response()->json([
             'status' => 'success',
@@ -32,8 +36,8 @@ class ServiceFieldController extends Controller
                     'id' => $service->id,
                     'name' => $service->name,
                 ],
-                'fields' => $fields
-            ]
+                'fields' => $fields,
+            ],
         ]);
     }
 
@@ -41,10 +45,10 @@ class ServiceFieldController extends Controller
     {
         $service = Service::find($serviceId);
 
-        if (!$service) {
+        if (! $service) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not found'
+                'message' => 'Service not found',
             ], 404);
         }
 
@@ -66,7 +70,7 @@ class ServiceFieldController extends Controller
         $counter = 1;
 
         while (ServiceField::where('service_id', $serviceId)->where('field_key', $fieldKey)->exists()) {
-            $fieldKey = $originalKey . '_' . $counter;
+            $fieldKey = $originalKey.'_'.$counter;
             $counter++;
         }
 
@@ -83,10 +87,14 @@ class ServiceFieldController extends Controller
             'sort_order' => $request->sort_order ?? 0,
         ]);
 
+        if (! request()->expectsJson()) {
+            return view('admin.fields.show', compact('field'));
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Field created successfully',
-            'data' => $field
+            'data' => $field,
         ], 201);
     }
 
@@ -94,18 +102,22 @@ class ServiceFieldController extends Controller
     {
         $field = ServiceField::with('service')->find($id);
 
-        if (!$field) {
+        if (! $field) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Field not found'
+                'message' => 'Field not found',
             ], 404);
         }
 
         $this->authorize('view', $field);
 
+        if (! request()->expectsJson()) {
+            return view('admin.fields.show', compact('field'));
+        }
+
         return response()->json([
             'status' => 'success',
-            'data' => $field
+            'data' => $field,
         ]);
     }
 
@@ -113,10 +125,10 @@ class ServiceFieldController extends Controller
     {
         $field = ServiceField::find($id);
 
-        if (!$field) {
+        if (! $field) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Field not found'
+                'message' => 'Field not found',
             ], 404);
         }
 
@@ -141,7 +153,7 @@ class ServiceFieldController extends Controller
             'help_text',
             'default_value',
             'is_required',
-            'sort_order'
+            'sort_order',
         ]);
 
         if ($request->has('label') && $request->label !== $field->label) {
@@ -153,7 +165,7 @@ class ServiceFieldController extends Controller
                 ->where('field_key', $fieldKey)
                 ->where('id', '!=', $field->id)
                 ->exists()) {
-                $fieldKey = $originalKey . '_' . $counter;
+                $fieldKey = $originalKey.'_'.$counter;
                 $counter++;
             }
 
@@ -161,13 +173,13 @@ class ServiceFieldController extends Controller
         }
 
         $field->update(array_filter($data, function ($value) {
-            return !is_null($value);
+            return ! is_null($value);
         }));
 
         return response()->json([
             'status' => 'success',
             'message' => 'Field updated successfully',
-            'data' => $field
+            'data' => $field,
         ]);
     }
 
@@ -175,10 +187,10 @@ class ServiceFieldController extends Controller
     {
         $field = ServiceField::find($id);
 
-        if (!$field) {
+        if (! $field) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Field not found'
+                'message' => 'Field not found',
             ], 404);
         }
 
@@ -187,7 +199,7 @@ class ServiceFieldController extends Controller
         if ($field->values()->count() > 0) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cannot delete field with existing values. Archive instead.'
+                'message' => 'Cannot delete field with existing values. Archive instead.',
             ], 422);
         }
 
@@ -195,7 +207,7 @@ class ServiceFieldController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Field deleted successfully'
+            'message' => 'Field deleted successfully',
         ]);
     }
 
@@ -216,7 +228,7 @@ class ServiceFieldController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Fields reordered successfully'
+            'message' => 'Fields reordered successfully',
         ]);
     }
 }

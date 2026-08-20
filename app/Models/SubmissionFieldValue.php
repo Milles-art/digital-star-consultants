@@ -23,8 +23,8 @@ class SubmissionFieldValue extends Model
         'is_file',
     ];
 
-    //  Relationships 
-    
+    //  Relationships
+
     public function submission(): BelongsTo
     {
         return $this->belongsTo(Submission::class);
@@ -35,14 +35,14 @@ class SubmissionFieldValue extends Model
         return $this->belongsTo(ServiceField::class, 'service_field_id');
     }
 
-    //  Accessors 
-    
+    //  Accessors
+
     public function getDisplayValueAttribute(): string
     {
         if ($this->is_file) {
             return $this->file_path ? basename($this->file_path) : 'No file uploaded';
         }
-        
+
         return $this->value ?? 'Not provided';
     }
 
@@ -53,23 +53,22 @@ class SubmissionFieldValue extends Model
 
     public function getFileUrlAttribute(): ?string
     {
-        if ($this->file_path && Storage::exists($this->file_path)) {
-            return Storage::url($this->file_path);
-        }
         return null;
     }
 
     public function getFileSizeAttribute(): ?string
     {
-        if ($this->file_path && Storage::exists($this->file_path)) {
-            $bytes = Storage::size($this->file_path);
+        if ($this->file_path && Storage::disk('local')->exists($this->file_path)) {
+            $bytes = Storage::disk('local')->size($this->file_path);
+
             return $this->formatFileSize($bytes);
         }
+
         return null;
     }
 
-    //  Helpers 
-    
+    //  Helpers
+
     public function isFile(): bool
     {
         return $this->is_file;
@@ -77,14 +76,15 @@ class SubmissionFieldValue extends Model
 
     public function hasFile(): bool
     {
-        return !is_null($this->file_path) && Storage::exists($this->file_path);
+        return ! is_null($this->file_path) && Storage::disk('local')->exists($this->file_path);
     }
 
     public function deleteFile(): bool
     {
         if ($this->hasFile()) {
-            return Storage::delete($this->file_path);
+            return Storage::disk('local')->delete($this->file_path);
         }
+
         return true;
     }
 
@@ -96,29 +96,31 @@ class SubmissionFieldValue extends Model
 
         if ($this->field && $this->field->isSelectField()) {
             $options = $this->field->getOptionsArray();
+
             return $options[$this->value] ?? $this->value;
         }
 
         return $this->value ?? '';
     }
 
-    //  Mutator 
-    
+    //  Mutator
+
     public function setValueAttribute($value): void
     {
         // If field is select/radio, store the key not the label
-        if ($this->field && $this->field->isSelectField() && !empty($this->field->options)) {
+        if ($this->field && $this->field->isSelectField() && ! empty($this->field->options)) {
             $options = $this->field->getOptionsArray();
             if (in_array($value, $options)) {
                 $this->attributes['value'] = array_search($value, $options);
+
                 return;
             }
         }
         $this->attributes['value'] = $value;
     }
 
-    //  Private Helper 
-    
+    //  Private Helper
+
     private function formatFileSize(int $bytes): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -127,11 +129,12 @@ class SubmissionFieldValue extends Model
             $bytes /= 1024;
             $i++;
         }
-        return round($bytes, 2) . ' ' . $units[$i];
+
+        return round($bytes, 2).' '.$units[$i];
     }
 
-    //  Boot Method 
-    
+    //  Boot Method
+
     protected static function booted(): void
     {
         static::deleting(function ($value) {

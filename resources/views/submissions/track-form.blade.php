@@ -1,0 +1,5 @@
+@extends('layouts.app')
+@section('title', 'Track a request | Digital Star Consultants')
+@section('content')
+<section class="mx-auto max-w-xl px-4 py-20 sm:px-6"><div class="text-center"><p class="text-sm font-bold uppercase tracking-[.2em] text-brand-600">Request tracking</p><h1 class="mt-4 font-display text-4xl font-extrabold">See where your request stands.</h1><p class="mt-4 text-slate-600">Verify your reference number with the phone number or email used for the request.</p></div>@include('partials.alerts')<form method="POST" action="{{ route('public.submissions.track.verify') }}" class="surface-panel mt-8 rounded-2xl p-6">@csrf<label class="text-sm font-semibold">Reference number<input class="field mt-2" name="reference" value="{{ old('reference') }}" required placeholder="DSC-..."></label><label class="mt-5 block text-sm font-semibold">Phone number or email<input class="field mt-2" name="contact" value="{{ old('contact') }}" required placeholder="As submitted with your request"></label><button class="btn btn-blue mt-5 w-full" type="submit">Verify and track request</button></form></section>
+@endsection

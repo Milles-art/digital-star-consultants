@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Submission;
 use App\Models\Service;
+use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
@@ -18,7 +19,8 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', Submission::class);
 
-        $date = $request->date ? date($request->date) : now()->toDateString();
+        $request->validate(['date' => 'nullable|date_format:Y-m-d']);
+        $date = $request->date ?: now()->toDateString();
 
         $stats = [
             'date' => $date,
@@ -31,9 +33,13 @@ class ReportController extends Controller
             'completed_today' => Submission::whereDate('completed_at', $date)->count(),
         ];
 
+        if (! $request->expectsJson()) {
+            return view('admin.reports.data', ['title' => 'Daily report', 'data' => $stats]);
+        }
+
         return response()->json([
             'status' => 'success',
-            'data' => $stats
+            'data' => $stats,
         ]);
     }
 
@@ -44,10 +50,18 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', Submission::class);
 
+        $request->validate([
+            'start_date' => 'nullable|date_format:Y-m-d',
+            'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date',
+        ]);
+
         $start = $request->start_date ?: now()->startOfWeek()->toDateString();
         $end = $request->end_date ?: now()->endOfWeek()->toDateString();
 
-        $submissions = Submission::whereBetween('created_at', [$start, $end])
+        $submissions = Submission::whereBetween('created_at', [
+            Carbon::parse($start)->startOfDay(),
+            Carbon::parse($end)->endOfDay(),
+        ])
             ->select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as count'),
@@ -58,6 +72,18 @@ class ReportController extends Controller
             ->orderBy('date')
             ->get();
 
+        $data = [
+            'start_date' => $start,
+            'end_date' => $end,
+            'total_submissions' => $submissions->sum('count'),
+            'total_completed' => $submissions->sum('completed'),
+            'total_pending' => $submissions->sum('pending'),
+        ];
+
+        if (! $request->expectsJson()) {
+            return view('admin.reports.data', ['title' => 'Weekly report', 'data' => $data, 'rows' => $submissions]);
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -67,7 +93,7 @@ class ReportController extends Controller
                 'total_completed' => $submissions->sum('completed'),
                 'total_pending' => $submissions->sum('pending'),
                 'daily_breakdown' => $submissions,
-            ]
+            ],
         ]);
     }
 
@@ -77,6 +103,11 @@ class ReportController extends Controller
     public function monthly(Request $request)
     {
         $this->authorize('viewAny', Submission::class);
+
+        $request->validate([
+            'month' => 'nullable|integer|min:1|max:12',
+            'year' => 'nullable|integer|min:2000|max:2100',
+        ]);
 
         $month = $request->month ?: now()->month;
         $year = $request->year ?: now()->year;
@@ -93,6 +124,18 @@ class ReportController extends Controller
             ->orderBy('date')
             ->get();
 
+        $data = [
+            'month' => $month,
+            'year' => $year,
+            'total_submissions' => $submissions->sum('count'),
+            'total_completed' => $submissions->sum('completed'),
+            'total_pending' => $submissions->sum('pending'),
+        ];
+
+        if (! $request->expectsJson()) {
+            return view('admin.reports.data', ['title' => 'Monthly report', 'data' => $data, 'rows' => $submissions]);
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -102,7 +145,7 @@ class ReportController extends Controller
                 'total_completed' => $submissions->sum('completed'),
                 'total_pending' => $submissions->sum('pending'),
                 'daily_breakdown' => $submissions,
-            ]
+            ],
         ]);
     }
 
@@ -112,6 +155,11 @@ class ReportController extends Controller
     public function staffPerformance(Request $request)
     {
         $this->authorize('viewAny', Submission::class);
+
+        $request->validate([
+            'start_date' => 'nullable|date_format:Y-m-d',
+            'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date',
+        ]);
 
         $start = $request->start_date ?: now()->startOfMonth()->toDateString();
         $end = $request->end_date ?: now()->endOfMonth()->toDateString();
@@ -123,18 +171,42 @@ class ReportController extends Controller
                 },
                 'submissions as completed_count' => function ($query) use ($start, $end) {
                     $query->whereBetween('created_at', [$start, $end])
-                          ->where('status', 'completed');
+                        ->where('status', 'completed');
                 },
                 'submissions as rejected_count' => function ($query) use ($start, $end) {
                     $query->whereBetween('created_at', [$start, $end])
-                          ->where('status', 'rejected');
+                        ->where('status', 'rejected');
                 },
                 'submissions as pending_count' => function ($query) use ($start, $end) {
                     $query->whereBetween('created_at', [$start, $end])
-                          ->where('status', 'pending');
+                        ->where('status', 'pending');
                 },
             ])
             ->get();
+
+        $data = [
+            'start_date' => $start,
+            'end_date' => $end,
+        ];
+
+        $staffData = $staff->map(function ($user) {
+            $total = $user->total_processed ?? 0;
+            $completed = $user->completed_count ?? 0;
+
+            return [
+                'name' => $user->name,
+                'role' => $user->role,
+                'total_processed' => $total,
+                'completed' => $completed,
+                'rejected' => $user->rejected_count ?? 0,
+                'pending' => $user->pending_count ?? 0,
+                'completion_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
+            ];
+        });
+
+        if (! $request->expectsJson()) {
+            return view('admin.reports.data', ['title' => 'Staff performance', 'data' => $data, 'rows' => $staffData]);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -144,6 +216,7 @@ class ReportController extends Controller
                 'staff' => $staff->map(function ($user) {
                     $total = $user->total_processed ?? 0;
                     $completed = $user->completed_count ?? 0;
+
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
@@ -156,7 +229,7 @@ class ReportController extends Controller
                         'completion_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
                     ];
                 }),
-            ]
+            ],
         ]);
     }
 
@@ -170,23 +243,38 @@ class ReportController extends Controller
         $start = $request->start_date ?: now()->startOfMonth()->toDateString();
         $end = $request->end_date ?: now()->endOfMonth()->toDateString();
 
-        $services = Service::withCount([
+        $services = Service::with('category')->withCount([
             'submissions as total' => function ($query) use ($start, $end) {
                 $query->whereBetween('created_at', [$start, $end]);
             },
             'submissions as completed' => function ($query) use ($start, $end) {
                 $query->whereBetween('created_at', [$start, $end])
-                      ->where('status', 'completed');
+                    ->where('status', 'completed');
             },
             'submissions as pending' => function ($query) use ($start, $end) {
                 $query->whereBetween('created_at', [$start, $end])
-                      ->where('status', 'pending');
+                    ->where('status', 'pending');
             },
         ])
-        ->where('is_active', true)
-        ->having('total', '>', 0)
-        ->orderBy('total', 'desc')
-        ->get();
+            ->where('is_active', true)
+            ->having('total', '>', 0)
+            ->orderBy('total', 'desc')
+            ->get();
+
+        if (! $request->expectsJson()) {
+            return view('admin.reports.data', [
+                'title' => 'Service usage',
+                'data' => ['start_date' => $start, 'end_date' => $end],
+                'rows' => $services->map(fn ($service) => [
+                    'service' => $service->name,
+                    'category' => $service->category->name ?? 'N/A',
+                    'total' => $service->total ?? 0,
+                    'completed' => $service->completed ?? 0,
+                    'pending' => $service->pending ?? 0,
+                    'completion_rate' => $service->total > 0 ? round(($service->completed / $service->total) * 100, 2) : 0,
+                ]),
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -204,7 +292,7 @@ class ReportController extends Controller
                         'completion_rate' => $service->total > 0 ? round(($service->completed / $service->total) * 100, 2) : 0,
                     ];
                 }),
-            ]
+            ],
         ]);
     }
 
@@ -231,6 +319,20 @@ class ReportController extends Controller
             ->select(DB::raw('AVG(TIMESTAMPDIFF(HOUR, created_at, completed_at)) as avg_hours'))
             ->value('avg_hours');
 
+        $data = [
+            'start_date' => $start,
+            'end_date' => $end,
+            'total_submissions' => $total_submissions,
+            'completed_submissions' => $completed_submissions,
+            'pending_submissions' => $pending_submissions,
+            'completion_rate' => $total_submissions > 0 ? round(($completed_submissions / $total_submissions) * 100, 2) : 0,
+            'avg_processing_hours' => round($avg_processing_time ?? 0, 2),
+        ];
+
+        if (! $request->expectsJson()) {
+            return view('admin.reports.overview', $data);
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -241,7 +343,7 @@ class ReportController extends Controller
                 'pending_submissions' => $pending_submissions,
                 'completion_rate' => $total_submissions > 0 ? round(($completed_submissions / $total_submissions) * 100, 2) : 0,
                 'avg_processing_hours' => round($avg_processing_time ?? 0, 2),
-            ]
+            ],
         ]);
     }
 }

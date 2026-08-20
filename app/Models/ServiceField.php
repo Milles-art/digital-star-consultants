@@ -11,8 +11,8 @@ class ServiceField extends Model
 {
     use HasFactory;
 
-    //  Field Type Constants 
-    
+    //  Field Type Constants
+
     const TYPES = [
         'text' => 'Text',
         'textarea' => 'Text Area',
@@ -27,7 +27,6 @@ class ServiceField extends Model
         'radio' => 'Radio Buttons',
         'file' => 'File Upload',
         'hidden' => 'Hidden',
-        'password' => 'Password',
     ];
 
     protected $fillable = [
@@ -55,8 +54,8 @@ class ServiceField extends Model
         'field_type' => 'text',
     ];
 
-    //  Relationships 
-    
+    //  Relationships
+
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
@@ -67,11 +66,25 @@ class ServiceField extends Model
         return $this->hasMany(SubmissionFieldValue::class);
     }
 
-    //  Helpers 
-    
+    //  Helpers
+
     public function isFileField(): bool
     {
         return $this->field_type === 'file';
+    }
+
+    public function isCoreContactField(): bool
+    {
+        return in_array($this->field_key, [
+            'full_name',
+            'customer_name',
+            'email',
+            'email_address',
+            'customer_email',
+            'phone',
+            'phone_number',
+            'customer_phone',
+        ], true);
     }
 
     public function isSelectField(): bool
@@ -94,12 +107,12 @@ class ServiceField extends Model
         return self::TYPES[$this->field_type] ?? $this->field_type;
     }
 
-    //  Validation 
-    
+    //  Validation
+
     public function getValidationRules(): array
     {
         $rules = [];
-        
+
         if ($this->is_required) {
             $rules[] = 'required';
         } else {
@@ -140,8 +153,8 @@ class ServiceField extends Model
         return $rules;
     }
 
-    //  Boot Method 
-    
+    //  Boot Method
+
     protected static function booted(): void
     {
         static::creating(function ($field) {

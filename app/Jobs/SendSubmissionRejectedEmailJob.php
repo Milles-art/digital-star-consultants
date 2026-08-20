@@ -24,6 +24,10 @@ class SendSubmissionRejectedEmailJob implements ShouldQueue
 
     public function handle()
     {
+        if (blank($this->submission->customer_email)) {
+            return;
+        }
+
         $customer = $this->submission;
 
         $customer->notify(new SubmissionRejectedNotification($this->submission, $this->reason));

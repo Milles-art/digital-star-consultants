@@ -22,6 +22,10 @@ class SendSubmissionCompletedEmailJob implements ShouldQueue
 
     public function handle()
     {
+        if (blank($this->submission->customer_email)) {
+            return;
+        }
+
         $customer = $this->submission;
 
         // Send notification to customer

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendWelcomeEmailJob;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -12,8 +13,12 @@ class RegisterController extends Controller
 {
     public function showRegistrationForm()
     {
+        if (! request()->expectsJson()) {
+            return view('auth.register');
+        }
+
         return response()->json([
-            'message' => 'Registration endpoint. Send POST request with user details.'
+            'message' => 'Registration endpoint. Send POST request with user details.',
         ]);
     }
 
@@ -23,7 +28,6 @@ class RegisterController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'role' => 'nullable|in:admin,ceo,gm,staff',
         ]);
 
         // Generate random password (user will reset later)
@@ -34,11 +38,15 @@ class RegisterController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($tempPassword),
-            'role' => $request->role ?? User::ROLE_STAFF,
+            'role' => User::ROLE_STAFF,
             'is_active' => true,
         ]);
 
-        // TODO: Send welcome email with password setup link
+        SendWelcomeEmailJob::dispatch($user, $tempPassword);
+
+        if (! $request->expectsJson()) {
+            return redirect()->route('login')->with('success', 'Your account was created. Check your welcome email for access details.');
+        }
 
         return response()->json([
             'status' => 'success',
@@ -52,9 +60,7 @@ class RegisterController extends Controller
                     'role_label' => $user->role_label,
                     'is_active' => $user->is_active,
                 ],
-                // Remove this in production - for testing only
-                'temp_password' => $tempPassword,
-            ]
+            ],
         ], 201);
     }
 }

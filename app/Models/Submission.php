@@ -6,27 +6,35 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
 class Submission extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes;
 
     // Status Constants
     const STATUS_PENDING = 'pending';
+
     const STATUS_IN_PROGRESS = 'in_progress';
+
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_REJECTED = 'rejected';
+
     const STATUS_AWAITING_CUSTOMER = 'awaiting_customer';
+
     const STATUS_CANCELLED = 'cancelled';
 
     // Payment Constants
     const PAYMENT_PENDING = 'pending';
+
     const PAYMENT_PAID = 'paid';
+
     const PAYMENT_FAILED = 'failed';
+
     const PAYMENT_REFUNDED = 'refunded';
+
     const PAYMENT_FREE = 'free';
 
     protected $fillable = [
@@ -58,8 +66,8 @@ class Submission extends Model
         'payment_status' => self::PAYMENT_PENDING,
     ];
 
-    // Relationships 
-    
+    // Relationships
+
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
@@ -75,7 +83,41 @@ class Submission extends Model
         return $this->belongsTo(User::class, 'processed_by');
     }
 
-    // Scopes 
+    public function routeNotificationForMail(): ?string
+    {
+        return $this->customer_email;
+    }
+
+    public function assignTo(User $user): void
+    {
+        $this->forceFill([
+            'processed_by' => $user->id,
+            'status' => self::STATUS_IN_PROGRESS,
+        ])->save();
+    }
+
+    public function markAsInProgress(): void
+    {
+        $this->forceFill(['status' => self::STATUS_IN_PROGRESS])->save();
+    }
+
+    public function markAsCompleted(): void
+    {
+        $this->forceFill([
+            'status' => self::STATUS_COMPLETED,
+            'completed_at' => now(),
+        ])->save();
+    }
+
+    public function markAsRejected(?string $reason = null): void
+    {
+        $this->forceFill([
+            'status' => self::STATUS_REJECTED,
+            'staff_notes' => $reason ?? $this->staff_notes,
+        ])->save();
+    }
+
+    // Scopes
 
     public function scopePending($query)
     {
@@ -102,8 +144,8 @@ class Submission extends Model
         return $query->whereDate('created_at', today());
     }
 
-    // Accessors 
-    
+    // Accessors
+
     public function getStatusLabelAttribute(): string
     {
         return [
@@ -128,5 +170,18 @@ class Submission extends Model
         ][$this->status] ?? 'secondary';
     }
 
-    // ... rest of your code (generateReferenceNumber, helpers, etc.)
+    protected static function booted(): void
+    {
+        static::creating(function (self $submission): void {
+            if ($submission->reference_number) {
+                return;
+            }
+
+            do {
+                $referenceNumber = sprintf('DSC-%s-%06d', now()->format('Y'), random_int(1, 999999));
+            } while (static::where('reference_number', $referenceNumber)->exists());
+
+            $submission->reference_number = $referenceNumber;
+        });
+    }
 }

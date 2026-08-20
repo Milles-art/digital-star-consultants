@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Submission;
-use App\Models\Service;
-use App\Models\User;
+use App\Jobs\SendStatusUpdateEmailJob;
 use App\Jobs\SendSubmissionAssignedEmailJob;
 use App\Jobs\SendSubmissionCompletedEmailJob;
 use App\Jobs\SendSubmissionRejectedEmailJob;
-use App\Jobs\SendStatusUpdateEmailJob;
-use Illuminate\Http\Request;
+use App\Models\Service;
+use App\Models\Submission;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
 
 class SubmissionController extends Controller
 {
@@ -22,6 +22,10 @@ class SubmissionController extends Controller
         $this->authorize('viewAny', Submission::class);
 
         $query = Submission::with(['service', 'processedBy']);
+
+        if (auth()->user()->isStaff()) {
+            $query->where('processed_by', auth()->id());
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -46,9 +50,9 @@ class SubmissionController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('reference_number', 'LIKE', "%{$request->search}%")
-                  ->orWhere('customer_name', 'LIKE', "%{$request->search}%")
-                  ->orWhere('customer_email', 'LIKE', "%{$request->search}%")
-                  ->orWhere('customer_phone', 'LIKE', "%{$request->search}%");
+                    ->orWhere('customer_name', 'LIKE', "%{$request->search}%")
+                    ->orWhere('customer_email', 'LIKE', "%{$request->search}%")
+                    ->orWhere('customer_phone', 'LIKE', "%{$request->search}%");
             });
         }
 
@@ -57,6 +61,10 @@ class SubmissionController extends Controller
         $services = Service::active()->get();
         $staff = User::whereIn('role', ['admin', 'ceo', 'gm', 'staff'])->get();
         $statuses = $this->getStatuses();
+
+        if (! $request->expectsJson()) {
+            return view('admin.submissions.index', compact('submissions', 'services', 'staff', 'statuses'));
+        }
 
         return response()->json([
             'status' => 'success',
@@ -67,7 +75,7 @@ class SubmissionController extends Controller
                     'staff' => $staff,
                     'statuses' => $statuses,
                 ],
-            ]
+            ],
         ]);
     }
 
@@ -79,18 +87,22 @@ class SubmissionController extends Controller
             'values.field',
         ])->find($id);
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
         $this->authorize('view', $submission);
 
+        if (! request()->expectsJson()) {
+            return view('admin.submissions.show', compact('submission'));
+        }
+
         return response()->json([
             'status' => 'success',
-            'data' => $submission
+            'data' => $submission,
         ]);
     }
 
@@ -98,10 +110,10 @@ class SubmissionController extends Controller
     {
         $submission = Submission::find($id);
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
@@ -128,13 +140,13 @@ class SubmissionController extends Controller
         ]);
 
         $submission->update(array_filter($data, function ($value) {
-            return !is_null($value);
+            return ! is_null($value);
         }));
 
         return response()->json([
             'status' => 'success',
             'message' => 'Submission updated successfully',
-            'data' => $submission
+            'data' => $submission,
         ]);
     }
 
@@ -142,10 +154,10 @@ class SubmissionController extends Controller
     {
         $submission = Submission::find($id);
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
@@ -164,7 +176,7 @@ class SubmissionController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => "Submission assigned to {$staff->name}",
-            'data' => $submission
+            'data' => $submission,
         ]);
     }
 
@@ -172,10 +184,10 @@ class SubmissionController extends Controller
     {
         $submission = Submission::find($id);
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
@@ -188,7 +200,7 @@ class SubmissionController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Submission marked as completed',
-            'data' => $submission
+            'data' => $submission,
         ]);
     }
 
@@ -196,10 +208,10 @@ class SubmissionController extends Controller
     {
         $submission = Submission::find($id);
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
@@ -213,7 +225,7 @@ class SubmissionController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Submission marked as in progress',
-            'data' => $submission
+            'data' => $submission,
         ]);
     }
 
@@ -221,10 +233,10 @@ class SubmissionController extends Controller
     {
         $submission = Submission::find($id);
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
@@ -241,7 +253,7 @@ class SubmissionController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Submission rejected',
-            'data' => $submission
+            'data' => $submission,
         ]);
     }
 
@@ -249,10 +261,10 @@ class SubmissionController extends Controller
     {
         $submission = Submission::find($id);
 
-        if (!$submission) {
+        if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
         }
 
@@ -262,7 +274,7 @@ class SubmissionController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Submission deleted successfully'
+            'message' => 'Submission deleted successfully',
         ]);
     }
 

@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\ServiceCategory;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ServiceController extends Controller
 {
@@ -32,6 +32,11 @@ class ServiceController extends Controller
         }
 
         $services = $query->orderBy('sort_order')->get();
+        $categories = ServiceCategory::active()->topLevel()->orderBy('sort_order')->get();
+
+        if (! $request->expectsJson()) {
+            return view('admin.services.index', compact('services', 'categories'));
+        }
 
         return response()->json([
             'status' => 'success',
@@ -53,7 +58,7 @@ class ServiceController extends Controller
                     'submissions_count' => $service->submissions()->count(),
                     'created_at' => $service->created_at->format('Y-m-d H:i'),
                 ];
-            })
+            }),
         ]);
     }
 
@@ -77,7 +82,7 @@ class ServiceController extends Controller
         $counter = 1;
 
         while (Service::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter;
+            $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
 
@@ -93,10 +98,14 @@ class ServiceController extends Controller
             'is_active' => $request->is_active ?? true,
         ]);
 
+        if (! request()->expectsJson()) {
+            return view('admin.services.show', compact('service'));
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Service created successfully',
-            'data' => $service
+            'data' => $service,
         ], 201);
     }
 
@@ -104,18 +113,22 @@ class ServiceController extends Controller
     {
         $service = Service::with(['category', 'fields'])->find($id);
 
-        if (!$service) {
+        if (! $service) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not found'
+                'message' => 'Service not found',
             ], 404);
         }
 
         $this->authorize('view', $service);
 
+        if (! request()->expectsJson()) {
+            return view('admin.services.show', compact('service'));
+        }
+
         return response()->json([
             'status' => 'success',
-            'data' => $service
+            'data' => $service,
         ]);
     }
 
@@ -123,10 +136,10 @@ class ServiceController extends Controller
     {
         $service = Service::find($id);
 
-        if (!$service) {
+        if (! $service) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not found'
+                'message' => 'Service not found',
             ], 404);
         }
 
@@ -151,7 +164,7 @@ class ServiceController extends Controller
             'duration_minutes',
             'metadata',
             'sort_order',
-            'is_active'
+            'is_active',
         ]);
 
         if ($request->has('name') && $request->name !== $service->name) {
@@ -160,7 +173,7 @@ class ServiceController extends Controller
             $counter = 1;
 
             while (Service::where('slug', $slug)->where('id', '!=', $service->id)->exists()) {
-                $slug = $originalSlug . '-' . $counter;
+                $slug = $originalSlug.'-'.$counter;
                 $counter++;
             }
 
@@ -168,13 +181,13 @@ class ServiceController extends Controller
         }
 
         $service->update(array_filter($data, function ($value) {
-            return !is_null($value);
+            return ! is_null($value);
         }));
 
         return response()->json([
             'status' => 'success',
             'message' => 'Service updated successfully',
-            'data' => $service
+            'data' => $service,
         ]);
     }
 
@@ -182,10 +195,10 @@ class ServiceController extends Controller
     {
         $service = Service::find($id);
 
-        if (!$service) {
+        if (! $service) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not found'
+                'message' => 'Service not found',
             ], 404);
         }
 
@@ -194,14 +207,14 @@ class ServiceController extends Controller
         if ($service->submissions()->count() > 0) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cannot delete service with submissions. Archive instead.'
+                'message' => 'Cannot delete service with submissions. Archive instead.',
             ], 422);
         }
 
         if ($service->fields()->count() > 0) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Cannot delete service with fields. Delete fields first.'
+                'message' => 'Cannot delete service with fields. Delete fields first.',
             ], 422);
         }
 
@@ -209,7 +222,7 @@ class ServiceController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Service deleted successfully'
+            'message' => 'Service deleted successfully',
         ]);
     }
 
@@ -217,16 +230,16 @@ class ServiceController extends Controller
     {
         $service = Service::find($id);
 
-        if (!$service) {
+        if (! $service) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not found'
+                'message' => 'Service not found',
             ], 404);
         }
 
         $this->authorize('update', $service);
 
-        $service->is_active = !$service->is_active;
+        $service->is_active = ! $service->is_active;
         $service->save();
 
         $status = $service->is_active ? 'activated' : 'deactivated';
@@ -238,7 +251,7 @@ class ServiceController extends Controller
                 'id' => $service->id,
                 'name' => $service->name,
                 'is_active' => $service->is_active,
-            ]
+            ],
         ]);
     }
 }

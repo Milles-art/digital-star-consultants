@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendNewSubmissionEmailJob;
 use App\Models\Service;
 use App\Models\Submission;
 use App\Models\SubmissionFieldValue;
-use App\Models\User;
-use App\Jobs\SendNewSubmissionEmailJob;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
+use Illuminate\View\View;
 
 class SubmissionController extends Controller
 {
@@ -18,7 +21,7 @@ class SubmissionController extends Controller
      * Submit a service request
      * POST /submit
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         $request->validate([
             'service_id' => 'required|exists:services,id',
@@ -32,16 +35,20 @@ class SubmissionController extends Controller
 
         $service = Service::with('fields')->find($request->service_id);
 
-        if (!$service || !$service->is_active) {
+        if (! $service || ! $service->is_active) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not available'
+                'message' => 'Service not available',
             ], 404);
         }
 
         // Validate dynamic fields
         $fieldRules = [];
         foreach ($service->fields as $field) {
+            if ($field->isCoreContactField()) {
+                continue;
+            }
+
             $rules = [];
 
             if ($field->is_required) {
@@ -58,13 +65,12 @@ class SubmissionController extends Controller
                     $rules[] = 'numeric';
                     break;
                 case 'file':
-                    $rules[] = 'file';
-                    $rules[] = 'max:10240';
+                    $rules[] = File::types(['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'])->max('10mb');
                     break;
                 case 'select':
                 case 'radio':
                     if ($field->options) {
-                        $rules[] = 'in:' . implode(',', array_keys($field->options));
+                        $rules[] = Rule::in(array_values($field->options));
                     }
                     break;
             }
@@ -85,18 +91,23 @@ class SubmissionController extends Controller
                 'customer_email' => $request->customer_email,
                 'customer_notes' => $request->customer_notes,
                 'preferred_date' => $request->preferred_date,
+                'total_price' => $service->price,
                 'status' => 'pending',
             ]);
 
             // Store field values
             foreach ($service->fields as $field) {
+                if ($field->isCoreContactField()) {
+                    continue;
+                }
+
                 $value = $request->input("fields.{$field->field_key}");
                 $filePath = null;
 
                 // Handle file upload
                 if ($field->field_type === 'file' && $request->hasFile("fields.{$field->field_key}")) {
                     $file = $request->file("fields.{$field->field_key}");
-                    $filePath = $file->store("submissions/{$submission->id}", 'public');
+                    $filePath = $file->store("submissions/{$submission->id}", 'local');
                 }
 
                 SubmissionFieldValue::create([
@@ -111,6 +122,14 @@ class SubmissionController extends Controller
             SendNewSubmissionEmailJob::dispatch($submission);
 
             DB::commit();
+
+            if (! $request->expectsJson()) {
+                $request->session()->put("tracking_access.{$submission->reference_number}", true);
+
+                return redirect()
+                    ->route('public.submissions.track', $submission->reference_number)
+                    ->with('success', 'Your request has been submitted. Keep your reference number for tracking.');
+            }
 
             return response()->json([
                 'status' => 'success',
@@ -127,35 +146,90 @@ class SubmissionController extends Controller
                         'customer_email' => $submission->customer_email,
                         'service_name' => $service->name,
                         'created_at' => $submission->created_at->format('Y-m-d H:i'),
-                    ]
-                ]
+                    ],
+                ],
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
 
+            report($e);
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to create submission: ' . $e->getMessage()
+                'message' => 'We could not submit your request right now. Please try again.',
             ], 500);
         }
     }
 
-    /**
-     * Track submission by reference number
-     * GET /track/{reference}
-     */
-    public function track($reference)
+    public function trackingForm(): View
     {
+        return view('submissions.track-form');
+    }
+
+    public function verifyTracking(Request $request): RedirectResponse|JsonResponse
+    {
+        $validated = $request->validate([
+            'reference' => 'required|string|max:32',
+            'contact' => 'required|string|max:255',
+        ]);
+
+        $submission = Submission::query()
+            ->where('reference_number', $validated['reference'])
+            ->first();
+
+        if (! $submission || ! $this->contactMatches($submission, $validated['contact'])) {
+            if (! $request->expectsJson()) {
+                return back()->withErrors(['reference' => 'We could not verify that request. Check your reference and contact detail.']);
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'We could not verify that request.',
+            ], 404);
+        }
+
+        $request->session()->put("tracking_access.{$submission->reference_number}", true);
+
+        if (! $request->expectsJson()) {
+            return redirect()->route('public.submissions.track', $submission->reference_number);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'tracking_url' => route('public.submissions.track', $submission->reference_number),
+            ],
+        ]);
+    }
+
+    public function track(Request $request, string $reference): JsonResponse|RedirectResponse|View
+    {
+        if (! $request->user() && ! $request->session()->get("tracking_access.{$reference}")) {
+            return redirect()
+                ->route('public.submissions.track.form')
+                ->withErrors(['reference' => 'Verify your request with your reference and contact detail first.']);
+        }
+
         $submission = Submission::with(['service', 'values.field'])
             ->where('reference_number', $reference)
             ->first();
 
-        if (!$submission) {
+        if (! $submission) {
+            $request->session()->forget("tracking_access.{$reference}");
+
+            if (! $request->expectsJson()) {
+                return redirect()->route('public.submissions.track.form')->withErrors(['reference' => 'We could not find that request.']);
+            }
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found'
+                'message' => 'Submission not found',
             ], 404);
+        }
+
+        if (! $request->expectsJson()) {
+            return view('submissions.track', compact('submission'));
         }
 
         return response()->json([
@@ -166,23 +240,19 @@ class SubmissionController extends Controller
                 'status_label' => $submission->status_label,
                 'status_color' => $submission->status_color,
                 'service_name' => $submission->service->name ?? null,
-                'customer_name' => $submission->customer_name,
-                'customer_phone' => $submission->customer_phone,
-                'customer_email' => $submission->customer_email,
                 'preferred_date' => $submission->preferred_date,
                 'created_at' => $submission->created_at->format('Y-m-d H:i'),
                 'completed_at' => $submission->completed_at ? $submission->completed_at->format('Y-m-d H:i') : null,
-                'fields' => $submission->values->map(function ($value) {
-                    return [
-                        'label' => $value->field->label ?? null,
-                        'field_key' => $value->field->field_key ?? null,
-                        'value' => $value->getValueForDisplay(),
-                        'is_file' => $value->isFile(),
-                        'file_url' => $value->file_url,
-                    ];
-                }),
                 'staff_notes' => $submission->staff_notes,
-            ]
+            ],
         ]);
+    }
+
+    private function contactMatches(Submission $submission, string $contact): bool
+    {
+        $contact = mb_strtolower(trim($contact));
+
+        return $contact === mb_strtolower($submission->customer_phone)
+            || ($submission->customer_email && $contact === mb_strtolower($submission->customer_email));
     }
 }
