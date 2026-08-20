@@ -3,289 +3,364 @@
 @section('title', $service->name.' — Digital Star Consultants')
 @section('meta_description', $service->description ?? 'Submit a request for '.$service->name)
 
-@section('content')
-    <section class="border-b border-ink-100 bg-white">
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <nav class="mb-4 text-sm text-ink-500" aria-label="Breadcrumb">
-                <a href="{{ route('public.services.index') }}" class="hover:text-brand-700">Services</a>
-                <span class="mx-1.5">/</span>
-                @if ($service->category)
-                    <a href="{{ route('public.services.index', ['category' => $service->category->slug]) }}" class="hover:text-brand-700">
-                        {{ $service->category->name }}
-                    </a>
-                    <span class="mx-1.5">/</span>
-                @endif
-                <span class="text-ink-800">{{ $service->name }}</span>
-            </nav>
+@php
+    $price = $service->formatted_price ?? ($service->price ? 'TSh '.number_format($service->price, 0) : 'Free');
+@endphp
 
-            <div class="flex flex-wrap items-start justify-between gap-4">
-                <div class="max-w-2xl">
-                    <h1 class="font-display text-3xl font-bold text-ink-900 sm:text-4xl">{{ $service->name }}</h1>
-                    @if ($service->description)
-                        <p class="mt-3 text-ink-600 leading-relaxed">{{ $service->description }}</p>
-                    @endif
-                </div>
-                <div class="rounded-2xl border border-ink-200 bg-ink-50 px-5 py-4 text-right">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-ink-500">Price</p>
-                    <p class="font-display text-xl font-bold text-ink-900">
-                        {{ $service->formatted_price ?? ($service->price ? 'TSh '.number_format($service->price, 0) : 'Free') }}
-                    </p>
-                    @if ($service->duration ?? null)
-                        <p class="mt-1 text-xs text-ink-500">{{ $service->duration }}</p>
-                    @endif
-                </div>
+@section('content')
+<section class="border-b border-[color:var(--color-line)] bg-white">
+    <div class="shell py-8 md:py-10">
+        <nav class="mb-4 text-sm text-[color:var(--color-ink-faint)]" aria-label="Breadcrumb">
+            <a href="{{ route('public.services.index') }}" class="hover:text-[color:var(--color-brand-700)]">Services</a>
+            <span class="mx-1.5">/</span>
+            @if ($service->category)
+                <a href="{{ route('public.services.index', ['category' => $service->category->slug]) }}"
+                   class="hover:text-[color:var(--color-brand-700)]">{{ $service->category->name }}</a>
+                <span class="mx-1.5">/</span>
+            @endif
+            <span class="text-[color:var(--color-ink)]">{{ $service->name }}</span>
+        </nav>
+
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="max-w-2xl">
+                <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $service->name }}</h1>
+                @if ($service->description)
+                    <p class="mt-3 leading-relaxed text-[color:var(--color-ink-soft)]">{{ $service->description }}</p>
+                @endif
+            </div>
+            <div class="rounded-2xl border border-[color:var(--color-line)] bg-[color:var(--color-surface-muted)] px-5 py-4 text-right">
+                <p class="text-xs font-semibold uppercase tracking-wider text-[color:var(--color-ink-faint)]">Price</p>
+                <p class="text-xl font-bold">{{ $price }}</p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div class="grid gap-10 lg:grid-cols-5">
-            {{-- Form --}}
-            <div class="lg:col-span-3">
-                <div class="surface-card p-6 sm:p-8" style="transform:none;box-shadow:0 1px 2px rgba(15,23,42,.04)">
-                    <h2 class="font-display text-xl font-bold text-ink-900">Start your request</h2>
-                    <p class="mt-1 text-sm text-ink-600">Fill in your details. You’ll get a reference number to track status.</p>
+<section class="shell section !pt-10">
+    <div class="grid gap-10 lg:grid-cols-12">
+        <div class="lg:col-span-7 xl:col-span-8">
+            <div id="dsc-form-wrap" class="card p-6 sm:p-8">
+                <h2 class="text-xl font-bold tracking-tight">Start your request</h2>
+                <p class="mt-1 text-sm text-[color:var(--color-ink-soft)]">
+                    Fill in your details. You’ll get a reference number to track status.
+                </p>
 
-                    <div id="form-alert" class="mt-4 hidden rounded-xl px-4 py-3 text-sm" role="status"></div>
+                <div id="dsc-form-error" class="mt-4 hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert"></div>
 
-                    <form id="submission-form" class="mt-6 space-y-5" enctype="multipart/form-data">
-                        @csrf
-                        <input type="hidden" name="service_id" value="{{ $service->id }}">
+                <form id="dsc-request-form"
+                      action="{{ route('public.submissions.store') }}"
+                      method="POST"
+                      enctype="multipart/form-data"
+                      class="mt-6 space-y-6"
+                      novalidate>
+                    @csrf
+                    <input type="hidden" name="service_id" value="{{ $service->id }}">
 
-                        <div class="grid gap-5 sm:grid-cols-2">
+                    <fieldset>
+                        <legend class="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--color-brand-600)]">
+                            Your details
+                        </legend>
+                        <div class="mt-4 grid gap-5 sm:grid-cols-2">
                             <div>
-                                <label class="form-label" for="customer_name">Full name *</label>
-                                <input type="text" name="customer_name" id="customer_name" required maxlength="255" class="form-input">
-                                <p class="form-error hidden" data-error="customer_name"></p>
+                                <label for="customer_name" class="field-label">Full name <span class="text-red-600">*</span></label>
+                                <input type="text" id="customer_name" name="customer_name" required maxlength="255"
+                                       autocomplete="name" class="field-input" data-field-name="customer_name">
+                                <span class="field-error" data-error-for="customer_name"></span>
                             </div>
                             <div>
-                                <label class="form-label" for="customer_phone">Phone *</label>
-                                <input type="text" name="customer_phone" id="customer_phone" required maxlength="20" class="form-input" placeholder="+255...">
-                                <p class="form-error hidden" data-error="customer_phone"></p>
+                                <label for="customer_phone" class="field-label">Phone <span class="text-red-600">*</span></label>
+                                <input type="text" id="customer_phone" name="customer_phone" required maxlength="20"
+                                       autocomplete="tel" placeholder="+255…" class="field-input" data-field-name="customer_phone">
+                                <span class="field-error" data-error-for="customer_phone"></span>
+                            </div>
+                            <div>
+                                <label for="customer_email" class="field-label">Email</label>
+                                <input type="email" id="customer_email" name="customer_email" maxlength="255"
+                                       autocomplete="email" class="field-input" data-field-name="customer_email">
+                                <span class="field-error" data-error-for="customer_email"></span>
+                            </div>
+                            <div>
+                                <label for="preferred_date" class="field-label">Preferred date</label>
+                                <input type="date" id="preferred_date" name="preferred_date"
+                                       min="{{ date('Y-m-d') }}" class="field-input" data-field-name="preferred_date">
+                                <span class="field-error" data-error-for="preferred_date"></span>
                             </div>
                         </div>
+                    </fieldset>
 
-                        <div class="grid gap-5 sm:grid-cols-2">
-                            <div>
-                                <label class="form-label" for="customer_email">Email</label>
-                                <input type="email" name="customer_email" id="customer_email" maxlength="255" class="form-input">
-                                <p class="form-error hidden" data-error="customer_email"></p>
-                            </div>
-                            <div>
-                                <label class="form-label" for="preferred_date">Preferred date</label>
-                                <input type="date" name="preferred_date" id="preferred_date" class="form-input" min="{{ date('Y-m-d') }}">
-                                <p class="form-error hidden" data-error="preferred_date"></p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="form-label" for="customer_notes">Notes</label>
-                            <textarea name="customer_notes" id="customer_notes" rows="3" maxlength="2000" class="form-input" placeholder="Anything we should know…"></textarea>
-                            <p class="form-error hidden" data-error="customer_notes"></p>
-                        </div>
-
-                        {{-- Dynamic fields from service --}}
-                        @if ($service->fields->isNotEmpty())
-                            <div class="border-t border-ink-100 pt-5">
-                                <h3 class="mb-4 text-sm font-semibold uppercase tracking-wider text-ink-500">Additional details</h3>
-                                <div class="space-y-4">
-                                    @foreach ($service->fields as $field)
-                                        <div>
-                                            <label class="form-label" for="field_{{ $field->field_key }}">
-                                                {{ $field->label }}
-                                                @if ($field->is_required)<span class="text-red-500">*</span>@endif
+                    @if ($service->fields->isNotEmpty())
+                        <fieldset class="border-t border-[color:var(--color-line)] pt-6">
+                            <legend class="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--color-brand-600)]">
+                                Additional details
+                            </legend>
+                            <div class="mt-4 space-y-5">
+                                @foreach ($service->fields as $field)
+                                    @php
+                                        $key = $field->field_key;
+                                        $label = $field->label;
+                                        $type = $field->field_type;
+                                        $required = (bool) $field->is_required;
+                                        $ph = $field->placeholder ?? '';
+                                        $options = $field->options ?? [];
+                                        $inputName = 'fields['.$key.']';
+                                        $inputId = 'field_'.$key;
+                                        $errKey = 'fields.'.$key;
+                                    @endphp
+                                    <div>
+                                        @if ($type === 'radio')
+                                            <fieldset>
+                                                <legend class="field-label">
+                                                    {{ $label }}
+                                                    @if ($required)<span class="text-red-600">*</span>@endif
+                                                </legend>
+                                                <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                                                    @foreach ($options as $optKey => $option)
+                                                        @php
+                                                            $val = is_array($option) ? ($option['value'] ?? $option['label'] ?? $optKey) : (is_string($optKey) ? $optKey : $option);
+                                                            $txt = is_array($option) ? ($option['label'] ?? $option['value'] ?? $optKey) : $option;
+                                                        @endphp
+                                                        <label class="field-choice">
+                                                            <input type="radio" name="{{ $inputName }}" value="{{ $val }}"
+                                                                   @if($required) required @endif
+                                                                   data-field-name="{{ $errKey }}"
+                                                                   class="mt-0.5 h-4 w-4 accent-[color:var(--color-brand-600)]">
+                                                            <span>{{ $txt }}</span>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                                <span class="field-error" data-error-for="{{ $errKey }}"></span>
+                                            </fieldset>
+                                        @elseif ($type === 'checkbox')
+                                            <label class="field-choice" for="{{ $inputId }}">
+                                                <input type="hidden" name="{{ $inputName }}" value="0">
+                                                <input type="checkbox" id="{{ $inputId }}" name="{{ $inputName }}" value="1"
+                                                       @if($required) required @endif
+                                                       data-field-name="{{ $errKey }}"
+                                                       class="mt-0.5 h-4 w-4 accent-[color:var(--color-brand-600)]">
+                                                <span class="font-medium">
+                                                    {{ $label }}
+                                                    @if($required)<span class="text-red-600">*</span>@endif
+                                                </span>
+                                            </label>
+                                            <span class="field-error" data-error-for="{{ $errKey }}"></span>
+                                        @else
+                                            <label for="{{ $inputId }}" class="field-label">
+                                                {{ $label }}
+                                                @if($required)<span class="text-red-600">*</span>@endif
                                             </label>
 
-                                            @switch($field->field_type)
+                                            @switch($type)
                                                 @case('textarea')
-                                                    <textarea
-                                                        name="fields[{{ $field->field_key }}]"
-                                                        id="field_{{ $field->field_key }}"
-                                                        rows="3"
-                                                        class="form-input"
-                                                        @if($field->is_required) required @endif
-                                                        placeholder="{{ $field->placeholder ?? '' }}"
-                                                    ></textarea>
+                                                    <textarea id="{{ $inputId }}" name="{{ $inputName }}" rows="3"
+                                                              @if($required) required @endif placeholder="{{ $ph }}"
+                                                              data-field-name="{{ $errKey }}" class="field-input resize-y"></textarea>
                                                     @break
-
                                                 @case('select')
-                                                    <select
-                                                        name="fields[{{ $field->field_key }}]"
-                                                        id="field_{{ $field->field_key }}"
-                                                        class="form-input"
-                                                        @if($field->is_required) required @endif
-                                                    >
-                                                        <option value="">Select…</option>
-                                                        @foreach (($field->options ?? []) as $optKey => $optLabel)
-                                                            <option value="{{ is_int($optKey) ? $optLabel : $optKey }}">
-                                                                {{ is_array($optLabel) ? ($optLabel['label'] ?? $optKey) : $optLabel }}
-                                                            </option>
+                                                    <select id="{{ $inputId }}" name="{{ $inputName }}"
+                                                            @if($required) required @endif
+                                                            data-field-name="{{ $errKey }}" class="field-input">
+                                                        <option value="">{{ $ph ?: 'Select…' }}</option>
+                                                        @foreach ($options as $optKey => $option)
+                                                            @php
+                                                                $val = is_array($option) ? ($option['value'] ?? $option['label'] ?? $optKey) : (is_string($optKey) ? $optKey : $option);
+                                                                $txt = is_array($option) ? ($option['label'] ?? $option['value'] ?? $optKey) : $option;
+                                                            @endphp
+                                                            <option value="{{ $val }}">{{ $txt }}</option>
                                                         @endforeach
                                                     </select>
                                                     @break
-
                                                 @case('file')
-                                                    <input
-                                                        type="file"
-                                                        name="fields[{{ $field->field_key }}]"
-                                                        id="field_{{ $field->field_key }}"
-                                                        class="form-input"
-                                                        @if($field->is_required) required @endif
-                                                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.webp"
-                                                    >
+                                                    <input type="file" id="{{ $inputId }}" name="{{ $inputName }}"
+                                                           @if($required) required @endif
+                                                           accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.webp"
+                                                           data-field-name="{{ $errKey }}" class="field-file">
                                                     @break
-
                                                 @case('number')
-                                                    <input
-                                                        type="number"
-                                                        name="fields[{{ $field->field_key }}]"
-                                                        id="field_{{ $field->field_key }}"
-                                                        class="form-input"
-                                                        @if($field->is_required) required @endif
-                                                        placeholder="{{ $field->placeholder ?? '' }}"
-                                                    >
+                                                    <input type="number" id="{{ $inputId }}" name="{{ $inputName }}"
+                                                           @if($required) required @endif placeholder="{{ $ph }}" step="any"
+                                                           data-field-name="{{ $errKey }}" class="field-input">
                                                     @break
-
                                                 @case('email')
-                                                    <input
-                                                        type="email"
-                                                        name="fields[{{ $field->field_key }}]"
-                                                        id="field_{{ $field->field_key }}"
-                                                        class="form-input"
-                                                        @if($field->is_required) required @endif
-                                                        placeholder="{{ $field->placeholder ?? '' }}"
-                                                    >
+                                                    <input type="email" id="{{ $inputId }}" name="{{ $inputName }}"
+                                                           @if($required) required @endif placeholder="{{ $ph }}"
+                                                           data-field-name="{{ $errKey }}" class="field-input">
                                                     @break
-
                                                 @case('date')
-                                                    <input
-                                                        type="date"
-                                                        name="fields[{{ $field->field_key }}]"
-                                                        id="field_{{ $field->field_key }}"
-                                                        class="form-input"
-                                                        @if($field->is_required) required @endif
-                                                    >
+                                                    <input type="date" id="{{ $inputId }}" name="{{ $inputName }}"
+                                                           @if($required) required @endif
+                                                           data-field-name="{{ $errKey }}" class="field-input">
                                                     @break
-
                                                 @default
-                                                    <input
-                                                        type="text"
-                                                        name="fields[{{ $field->field_key }}]"
-                                                        id="field_{{ $field->field_key }}"
-                                                        class="form-input"
-                                                        @if($field->is_required) required @endif
-                                                        placeholder="{{ $field->placeholder ?? '' }}"
-                                                    >
+                                                    <input type="text" id="{{ $inputId }}" name="{{ $inputName }}"
+                                                           @if($required) required @endif placeholder="{{ $ph }}"
+                                                           data-field-name="{{ $errKey }}" class="field-input">
                                             @endswitch
-
-                                            <p class="form-error hidden" data-error="fields.{{ $field->field_key }}"></p>
-                                        </div>
-                                    @endforeach
-                                </div>
+                                            <span class="field-error" data-error-for="{{ $errKey }}"></span>
+                                        @endif
+                                    </div>
+                                @endforeach
                             </div>
-                        @endif
+                        </fieldset>
+                    @endif
 
-                        <button type="submit" id="submit-btn" class="btn-primary w-full sm:w-auto">
-                            Submit request
+                    <fieldset class="border-t border-[color:var(--color-line)] pt-6">
+                        <legend class="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--color-brand-600)]">
+                            Anything else?
+                        </legend>
+                        <div class="mt-4">
+                            <label for="customer_notes" class="field-label">Additional notes</label>
+                            <textarea id="customer_notes" name="customer_notes" rows="3"
+                                      placeholder="Anything we should know…"
+                                      data-field-name="customer_notes" class="field-input resize-y"></textarea>
+                            <span class="field-error" data-error-for="customer_notes"></span>
+                        </div>
+                    </fieldset>
+
+                    <div class="flex flex-col gap-3 border-t border-[color:var(--color-line)] pt-6 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="text-xs text-[color:var(--color-ink-faint)]">
+                            By submitting, you agree to be contacted about this request.
+                        </p>
+                        <button type="submit" id="dsc-submit" class="btn btn-lg btn-primary sm:shrink-0">
+                            <span data-submit-label>Submit request</span>
                         </button>
-                    </form>
-
-                    {{-- Success state --}}
-                    <div id="success-panel" class="mt-6 hidden rounded-2xl border border-green-200 bg-green-50 p-6">
-                        <h3 class="font-display text-lg font-bold text-green-900">Request submitted</h3>
-                        <p class="mt-1 text-sm text-green-800">Save your reference number to track status.</p>
-                        <p class="mt-4 font-display text-2xl font-bold tracking-wide text-green-900" id="ref-number"></p>
-                        <a href="#" id="track-link" class="btn-primary mt-4 inline-flex text-sm">Track this request</a>
                     </div>
-                </div>
+                </form>
             </div>
 
-            {{-- Sidebar --}}
-            <aside class="lg:col-span-2">
-                <div class="sticky top-24 space-y-4">
-                    <div class="rounded-2xl border border-ink-200 bg-white p-5">
-                        <h3 class="font-display text-base font-semibold text-ink-900">What happens next?</h3>
-                        <ol class="mt-3 space-y-3 text-sm text-ink-600">
-                            <li class="flex gap-3"><span class="font-bold text-brand-600">1</span> We receive your request and assign a reference number.</li>
-                            <li class="flex gap-3"><span class="font-bold text-brand-600">2</span> Our team reviews the details.</li>
-                            <li class="flex gap-3"><span class="font-bold text-brand-600">3</span> We contact you if anything else is needed.</li>
-                            <li class="flex gap-3"><span class="font-bold text-brand-600">4</span> You track progress anytime with your reference.</li>
-                        </ol>
-                    </div>
-                </div>
-            </aside>
+            <div id="dsc-success" class="mt-6 hidden rounded-2xl border border-emerald-200 bg-emerald-50 p-6" role="status">
+                <h3 class="text-lg font-bold text-emerald-900">Request submitted</h3>
+                <p class="mt-1 text-sm text-emerald-800">Save your reference number to track status.</p>
+                <p class="mt-4 text-2xl font-extrabold tracking-wide text-emerald-900" id="dsc-reference"></p>
+                <a href="#" id="dsc-track-link" class="btn btn-primary mt-4 inline-flex text-sm">Track this request</a>
+            </div>
         </div>
-    </section>
+
+        <aside class="lg:col-span-5 xl:col-span-4">
+            <div class="lg:sticky lg:top-24 space-y-5">
+                <div class="card p-6">
+                    <h2 class="text-base font-bold tracking-tight">Request summary</h2>
+                    <dl class="mt-5 space-y-4 text-sm">
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-[color:var(--color-ink-faint)]">Service</dt>
+                            <dd class="text-right font-semibold">{{ $service->name }}</dd>
+                        </div>
+                        @if ($service->category)
+                            <div class="flex justify-between gap-4">
+                                <dt class="text-[color:var(--color-ink-faint)]">Category</dt>
+                                <dd class="text-right font-semibold">{{ $service->category->name }}</dd>
+                            </div>
+                        @endif
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-[color:var(--color-ink-faint)]">Price</dt>
+                            <dd class="text-right font-semibold">{{ $price }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-[color:var(--color-ink-faint)]">Account</dt>
+                            <dd class="text-right font-semibold">Not required</dd>
+                        </div>
+                    </dl>
+                    <div class="divider my-6"></div>
+                    <ul class="space-y-3 text-sm text-[color:var(--color-ink-soft)]">
+                        @foreach (['Instant reference number', 'Live status tracking', 'Dedicated consultant assigned'] as $benefit)
+                            <li class="flex items-start gap-2.5">
+                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--color-brand-500)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.1 13.3L5 10.2l1.3-1.3 1.8 1.8 5.6-5.6L15 6.4z"/></svg>
+                                <span>{{ $benefit }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
 @endsection
 
 @push('scripts')
 <script>
-document.getElementById('submission-form')?.addEventListener('submit', async function (e) {
-    e.preventDefault();
+(function () {
+    var form = document.getElementById('dsc-request-form');
+    if (!form) return;
 
-    const form = e.target;
-    const btn = document.getElementById('submit-btn');
-    const alertBox = document.getElementById('form-alert');
-    const successPanel = document.getElementById('success-panel');
+    var wrap = document.getElementById('dsc-form-wrap');
+    var successBox = document.getElementById('dsc-success');
+    var refEl = document.getElementById('dsc-reference');
+    var trackLink = document.getElementById('dsc-track-link');
+    var formError = document.getElementById('dsc-form-error');
+    var submitBtn = document.getElementById('dsc-submit');
+    var btnLabel = submitBtn.querySelector('[data-submit-label]');
+    var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+    var csrfToken = tokenMeta ? tokenMeta.getAttribute('content') : '';
 
-    // Clear previous errors
-    form.querySelectorAll('[data-error]').forEach(el => {
-        el.classList.add('hidden');
-        el.textContent = '';
-    });
-    alertBox.classList.add('hidden');
+    function clearErrors() {
+        formError.classList.add('hidden');
+        formError.textContent = '';
+        form.querySelectorAll('[data-error-for]').forEach(function (el) { el.textContent = ''; });
+        form.querySelectorAll('[aria-invalid="true"]').forEach(function (el) { el.removeAttribute('aria-invalid'); });
+    }
 
-    btn.disabled = true;
-    btn.textContent = 'Submitting…';
+    function showErrors(errors) {
+        Object.keys(errors).forEach(function (key) {
+            var messages = errors[key];
+            var message = Array.isArray(messages) ? messages[0] : String(messages);
+            var slot = form.querySelector('[data-error-for="' + key + '"]');
+            var control = form.querySelector('[data-field-name="' + key + '"], [name="' + key + '"]');
+            if (slot) slot.textContent = message;
+            if (control) control.setAttribute('aria-invalid', 'true');
+        });
+        formError.textContent = 'Please fix the highlighted fields.';
+        formError.classList.remove('hidden');
+    }
 
-    try {
-        const formData = new FormData(form);
-        const res = await fetch('{{ route('public.submissions.store') }}', {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        clearErrors();
+        submitBtn.disabled = true;
+        if (btnLabel) btnLabel.textContent = 'Submitting…';
+
+        fetch(form.action, {
             method: 'POST',
+            body: new FormData(form),
+            credentials: 'same-origin',
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: formData,
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-            if (res.status === 422 && data.errors) {
-                Object.entries(data.errors).forEach(([key, messages]) => {
-                    const el = form.querySelector(`[data-error="${key}"]`);
-                    if (el) {
-                        el.textContent = Array.isArray(messages) ? messages[0] : messages;
-                        el.classList.remove('hidden');
-                    }
-                });
-                alertBox.textContent = 'Please fix the highlighted fields.';
-                alertBox.className = 'mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800';
-                alertBox.classList.remove('hidden');
-            } else {
-                alertBox.textContent = data.message || 'Something went wrong. Please try again.';
-                alertBox.className = 'mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800';
-                alertBox.classList.remove('hidden');
+                'X-CSRF-TOKEN': csrfToken
             }
-            return;
-        }
-
-        // Success
-        form.classList.add('hidden');
-        successPanel.classList.remove('hidden');
-        const ref = data.data?.reference_number || '';
-        document.getElementById('ref-number').textContent = ref;
-        document.getElementById('track-link').href = '/track/' + encodeURIComponent(ref);
-
-    } catch (err) {
-        alertBox.textContent = 'Network error. Please check your connection and try again.';
-        alertBox.className = 'mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800';
-        alertBox.classList.remove('hidden');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Submit request';
-    }
-});
+        })
+        .then(function (res) {
+            return res.json().then(function (data) {
+                return { ok: res.ok, status: res.status, data: data };
+            }).catch(function () {
+                return { ok: res.ok, status: res.status, data: {} };
+            });
+        })
+        .then(function (result) {
+            if (result.status === 422) {
+                showErrors((result.data && result.data.errors) || {});
+                return;
+            }
+            if (!result.ok) {
+                formError.textContent = (result.data && result.data.message) || 'Something went wrong. Please try again.';
+                formError.classList.remove('hidden');
+                return;
+            }
+            var d = result.data || {};
+            var reference = (d.data && d.data.reference_number) || d.reference_number || '';
+            refEl.textContent = reference || '—';
+            trackLink.href = '/track/' + encodeURIComponent(reference);
+            wrap.classList.add('hidden');
+            successBox.classList.remove('hidden');
+            successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        })
+        .catch(function () {
+            formError.textContent = 'Network error. Please check your connection.';
+            formError.classList.remove('hidden');
+        })
+        .finally(function () {
+            submitBtn.disabled = false;
+            if (btnLabel) btnLabel.textContent = 'Submit request';
+        });
+    });
+})();
 </script>
 @endpush
