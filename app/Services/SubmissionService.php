@@ -11,19 +11,10 @@ use Exception;
 
 class SubmissionService
 {
-    /**
-     * Create a new submission with field values
-     *
-     * @param Service $service
-     * @param array $data
-     * @return Submission
-     * @throws Exception
-     */
     public function createSubmission(Service $service, array $data): Submission
     {
         return DB::transaction(function () use ($service, $data) {
             try {
-                // Create submission
                 $submission = Submission::create([
                     'service_id' => $service->id,
                     'customer_name' => $data['customer_name'],
@@ -34,13 +25,11 @@ class SubmissionService
                     'status' => 'pending',
                 ]);
 
-                // Store field values
                 if (!empty($data['fields'])) {
                     foreach ($service->fields as $field) {
                         $value = $data['fields'][$field->field_key] ?? null;
                         $filePath = null;
 
-                        // Handle file upload
                         if ($field->field_type === 'file' && isset($data['files'][$field->field_key])) {
                             $file = $data['files'][$field->field_key];
                             $filePath = $file->store("submissions/{$submission->id}", 'private');
@@ -55,7 +44,6 @@ class SubmissionService
                     }
                 }
 
-                // Dispatch job to send email notification
                 SendNewSubmissionEmailJob::dispatch($submission);
 
                 return $submission;
@@ -65,13 +53,6 @@ class SubmissionService
         });
     }
 
-    /**
-     * Assign submission to a staff member
-     *
-     * @param Submission $submission
-     * @param int $staffId
-     * @return Submission
-     */
     public function assignToStaff(Submission $submission, int $staffId): Submission
     {
         $submission->processed_by = $staffId;
@@ -80,12 +61,6 @@ class SubmissionService
         return $submission;
     }
 
-    /**
-     * Mark submission as completed
-     *
-     * @param Submission $submission
-     * @return Submission
-     */
     public function markAsCompleted(Submission $submission): Submission
     {
         $submission->status = 'completed';
@@ -95,12 +70,6 @@ class SubmissionService
         return $submission;
     }
 
-    /**
-     * Mark submission as in progress
-     *
-     * @param Submission $submission
-     * @return Submission
-     */
     public function markAsInProgress(Submission $submission): Submission
     {
         $submission->status = 'in_progress';
@@ -109,13 +78,6 @@ class SubmissionService
         return $submission;
     }
 
-    /**
-     * Mark submission as rejected
-     *
-     * @param Submission $submission
-     * @param string|null $reason
-     * @return Submission
-     */
     public function markAsRejected(Submission $submission, ?string $reason = null): Submission
     {
         $submission->status = 'rejected';
