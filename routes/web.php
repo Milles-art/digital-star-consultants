@@ -1,118 +1,150 @@
 <?php
 
-namespace Database\Seeders;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\{
+    DashboardController,
+    ServiceCategoryController,
+    ServiceController,
+    ServiceFieldController,
+    SubmissionController as AdminSubmissionController,
+    SubmissionFileController,
+    UserController,
+    ReportController,
+    ContactMessageController,
+};
+use App\Http\Controllers\Public\{
+    ServiceController as PublicServiceController,
+    SubmissionController as PublicSubmissionController,
+    HomeController,
+    ContactController,
+};
+use App\Http\Controllers\Auth\{
+    LoginController,
+    RegisterController,
+    PasswordResetController,
+};
 
-use App\Models\Service;
-use App\Models\ServiceCategory;
-use App\Models\Submission;
-use App\Models\User;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
-class DatabaseSeeder extends Seeder
-{
-    public function run(): void
-    {
-        // Guard: this seeder creates demo accounts. NEVER let it run in production.
-        if (app()->environment('production')) {
-            $this->command?->error('DatabaseSeeder skipped: refusing to seed demo accounts in production.');
-            return;
-        }
+// ========== Public Routes (No Auth Required) ==========
 
-        // --------------------------------------------------
-        // Core users (explicit assignment – role not fillable)
-        // --------------------------------------------------
-        // SECURITY: these are strong random passwords for local/staging only.
-        // Change them immediately after seeding, or use php artisan tinker to reset.
-        $admin  = $this->createUser('Admin User', 'admin@digitalstar.local',  User::ROLE_ADMIN,            'Adm1n!Dsc2026#Xq9');
-        $ceo    = $this->createUser('CEO User',   'ceo@digitalstar.local',    User::ROLE_CEO,              'Ceo1!Dsc2026#Yp8');
-        $gm     = $this->createUser('GM User',    'gm@digitalstar.local',     User::ROLE_GENERAL_MANAGER,  'Gm1!Dsc2026#Zo7');
-        $staff1 = $this->createUser('Staff One',  'staff1@digitalstar.local', User::ROLE_STAFF,            'Stf1!Dsc2026#Wn6');
-        $staff2 = $this->createUser('Staff Two',  'staff2@digitalstar.local', User::ROLE_STAFF,            'Stf2!Dsc2026#Vm5');
+// Home
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-        // --------------------------------------------------
-        // Categories + Services (demo data)
-        // --------------------------------------------------
-        $categories = [
-            'Business Registration' => ['BRELA Company Name Search', 'Business License Application'],
-            'Tax & TRA' => ['TIN Application', 'VAT Registration'],
-            'Immigration & Travel' => ['Passport Assistance', 'Visa Support'],
-            'IT Consultancy' => ['Website Setup', 'Email Hosting'],
-            'Printing & Graphics' => ['Business Cards', 'Banner Design'],
-        ];
+// Services
+Route::get('/services', [PublicServiceController::class, 'index'])->name('public.services.index');
+Route::get('/services/{slug}', [PublicServiceController::class, 'show'])->name('public.services.show');
 
-        foreach ($categories as $catName => $services) {
-            $category = ServiceCategory::firstOrCreate(
-                ['slug' => Str::slug($catName)],
-                [
-                    'name' => $catName,
-                    'description' => $catName.' services',
-                    'is_active' => true,
-                    'sort_order' => 0,
-                ]
-            );
+// Submissions
+Route::post('/submit', [PublicSubmissionController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('public.submissions.store');
+Route::get('/track/{reference}', [PublicSubmissionController::class, 'track'])
+    ->middleware('throttle:30,1')
+    ->name('public.submissions.track');
 
-            foreach ($services as $index => $serviceName) {
-                Service::firstOrCreate(
-                    ['slug' => Str::slug($serviceName)],
-                    [
-                        'service_category_id' => $category->id,
-                        'name' => $serviceName,
-                        'description' => 'Professional '.$serviceName.' service',
-                        'price' => rand(10000, 150000),
-                        'is_active' => true,
-                        'sort_order' => $index,
-                        'duration_minutes' => 60,
-                    ]
-                );
-            }
-        }
+// Contact
+Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('public.contact.store');
 
-        // --------------------------------------------------
-        // Sample submissions
-        // --------------------------------------------------
-        $activeServices = Service::where('is_active', true)->get();
+// ========== Guest Routes (No Auth Required) ==========
 
-        if ($activeServices->isNotEmpty()) {
-            // Pending (unassigned)
-            Submission::factory()->count(3)->create([
-                'service_id' => $activeServices->random()->id,
-                'status' => Submission::STATUS_PENDING,
-            ]);
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1');
 
-            // Assigned to staff1
-            Submission::factory()->count(2)->assignedTo($staff1)->create([
-                'service_id' => $activeServices->random()->id,
-            ]);
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
 
-            // Assigned to staff2 + completed
-            Submission::factory()->count(2)->assignedTo($staff2)->completed()->create([
-                'service_id' => $activeServices->random()->id,
-            ]);
-        }
+Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+    ->middleware('throttle:5,1')
+    ->name('password.email');
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])
+    ->middleware('throttle:5,1')
+    ->name('password.update');
 
-        $this->command?->info('Seeded 5 demo users with strong passwords.');
-        $this->command?->warn('Run `php artisan user:reset-password {email}` if you forget them.');
-    }
+// ========== Authenticated Routes ==========
 
-    protected function createUser(string $name, string $email, string $role, string $password): User
-    {
-        $user = User::where('email', $email)->first();
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-        if ($user) {
-            return $user;
-        }
+// ========== Protected Routes (Auth Required) ==========
 
-        $user = new User();
-        $user->name = $name;
-        $user->email = $email;
-        $user->password = Hash::make($password);
-        $user->role = $role;
-        $user->is_active = true;
-        $user->email_verified_at = now();
-        $user->save();
+Route::middleware(['auth'])->group(function () {
 
-        return $user;
-    }
-}
+    // Admin Routes (Management only) — with global throttle
+    Route::middleware(['role:admin,ceo,gm', 'throttle:120,1'])
+        ->prefix('admin')
+        ->group(function () {
+
+        // Dashboard
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+        Route::get('/users/stats', [UserController::class, 'stats'])->name('admin.users.stats');
+
+        // Categories
+        Route::get('/categories', [ServiceCategoryController::class, 'index'])->name('admin.categories.index');
+        Route::post('/categories', [ServiceCategoryController::class, 'store'])->name('admin.categories.store');
+        Route::get('/categories/{category}', [ServiceCategoryController::class, 'show'])->name('admin.categories.show');
+        Route::put('/categories/{category}', [ServiceCategoryController::class, 'update'])->name('admin.categories.update');
+        Route::delete('/categories/{category}', [ServiceCategoryController::class, 'destroy'])->name('admin.categories.destroy');
+        Route::post('/categories/{category}/toggle-active', [ServiceCategoryController::class, 'toggleActive'])->name('admin.categories.toggle-active');
+
+        // Services
+        Route::get('/services', [ServiceController::class, 'index'])->name('admin.services.index');
+        Route::post('/services', [ServiceController::class, 'store'])->name('admin.services.store');
+        Route::get('/services/{service}', [ServiceController::class, 'show'])->name('admin.services.show');
+        Route::put('/services/{service}', [ServiceController::class, 'update'])->name('admin.services.update');
+        Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('admin.services.destroy');
+        Route::post('/services/{service}/toggle-active', [ServiceController::class, 'toggleActive'])->name('admin.services.toggle-active');
+
+        // Service Fields
+        Route::get('/services/{service}/fields', [ServiceFieldController::class, 'index'])->name('admin.fields.index');
+        Route::post('/services/{service}/fields', [ServiceFieldController::class, 'store'])->name('admin.fields.store');
+        Route::get('/fields/{field}', [ServiceFieldController::class, 'show'])->name('admin.fields.show');
+        Route::put('/fields/{field}', [ServiceFieldController::class, 'update'])->name('admin.fields.update');
+        Route::delete('/fields/{field}', [ServiceFieldController::class, 'destroy'])->name('admin.fields.destroy');
+        Route::post('/fields/reorder', [ServiceFieldController::class, 'reorder'])->name('admin.fields.reorder');
+
+        // Submissions
+        Route::get('/submissions', [AdminSubmissionController::class, 'index'])->name('admin.submissions.index');
+        Route::get('/submissions/{submission}', [AdminSubmissionController::class, 'show'])->name('admin.submissions.show');
+        Route::put('/submissions/{submission}', [AdminSubmissionController::class, 'update'])->name('admin.submissions.update');
+        Route::delete('/submissions/{submission}', [AdminSubmissionController::class, 'destroy'])->name('admin.submissions.destroy');
+        Route::post('/submissions/{submission}/assign', [AdminSubmissionController::class, 'assign'])->name('admin.submissions.assign');
+        Route::post('/submissions/{submission}/complete', [AdminSubmissionController::class, 'markCompleted'])->name('admin.submissions.complete');
+        Route::post('/submissions/{submission}/in-progress', [AdminSubmissionController::class, 'markInProgress'])->name('admin.submissions.in-progress');
+        Route::post('/submissions/{submission}/reject', [AdminSubmissionController::class, 'markRejected'])->name('admin.submissions.reject');
+
+        // File downloads
+        Route::get('/submissions/{submission}/files/{value}', [SubmissionFileController::class, 'download'])->name('admin.submissions.files.download');
+
+        // Users
+        Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+        Route::post('/users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('admin.users.toggle-active');
+
+        // Reports
+        Route::get('/reports/daily', [ReportController::class, 'daily'])->name('admin.reports.daily');
+        Route::get('/reports/weekly', [ReportController::class, 'weekly'])->name('admin.reports.weekly');
+        Route::get('/reports/monthly', [ReportController::class, 'monthly'])->name('admin.reports.monthly');
+        Route::get('/reports/staff-performance', [ReportController::class, 'staffPerformance'])->name('admin.reports.staff-performance');
+        Route::get('/reports/service-usage', [ReportController::class, 'serviceUsage'])->name('admin.reports.service-usage');
+        Route::get('/reports/overview', [ReportController::class, 'overview'])->name('admin.reports.overview');
+
+        // Contact Messages
+        Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('admin.contact-messages.index');
+        Route::get('/contact-messages/{message}', [ContactMessageController::class, 'show'])->name('admin.contact-messages.show');
+    });
+
+    // Staff Routes
+    Route::prefix('staff')->middleware(['role:staff', 'throttle:60,1'])->group(function () {
+        Route::get('/submissions', [\App\Http\Controllers\Staff\SubmissionController::class, 'index'])->name('staff.submissions');
+        Route::get('/submissions/{submission}', [\App\Http\Controllers\Staff\SubmissionController::class, 'show'])->name('staff.submissions.show');
+        Route::post('/submissions/{submission}/in-progress', [\App\Http\Controllers\Staff\SubmissionController::class, 'markInProgress'])->name('staff.submissions.in-progress');
+        Route::post('/submissions/{submission}/complete', [\App\Http\Controllers\Staff\SubmissionController::class, 'markCompleted'])->name('staff.submissions.complete');
+        Route::post('/submissions/{submission}/reject', [\App\Http\Controllers\Staff\SubmissionController::class, 'markRejected'])->name('staff.submissions.reject');
+        Route::put('/submissions/{submission}/notes', [\App\Http\Controllers\Staff\SubmissionController::class, 'updateNotes'])->name('staff.submissions.notes');
+    });
+});
