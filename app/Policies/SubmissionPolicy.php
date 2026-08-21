@@ -48,4 +48,10 @@ class SubmissionPolicy
     {
         return $user->isManagement();
     }
+
+    public function process(User $user, Submission $submission): bool
+    {
+        return $user->isManagement()
+            || ($user->is_active && $user->id === $submission->processed_by);
+    }
 }

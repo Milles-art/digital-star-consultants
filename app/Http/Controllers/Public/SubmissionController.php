@@ -3,31 +3,24 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSubmissionRequest;
 use App\Models\Service;
 use App\Models\Submission;
-use App\Services\SubmissionService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class SubmissionController extends Controller
 {
-    public function __construct(
-        private SubmissionService $submissionService
-    ) {}
+    protected $submissionService;
 
-    public function store(Request $request): JsonResponse
+    public function __construct(\App\Services\SubmissionService $submissionService)
     {
-        $request->validate([
-            'service_id' => 'required|exists:services,id',
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'customer_email' => 'nullable|email|max:255',
-            'customer_notes' => 'nullable|string',
-            'preferred_date' => 'nullable|date',
-            'fields' => 'nullable|array',
-        ]);
+        $this->submissionService = $submissionService;
+    }
 
+    public function store(StoreSubmissionRequest $request): JsonResponse
+    {
         $service = Service::with('fields')->find($request->service_id);
 
         if (! $service || ! $service->is_active) {
@@ -44,15 +37,17 @@ class SubmissionController extends Controller
         $request->validate($fieldRules);
 
         try {
-            $submission = $this->submissionService->createSubmission($service, [
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone,
-                'customer_email' => $request->customer_email,
-                'customer_notes' => $request->customer_notes,
-                'preferred_date' => $request->preferred_date,
-                'fields' => $request->input('fields', []),
-                'files' => $request->file('fields', []),
-            ]);
+            $submission = DB::transaction(function () use ($service, $request) {
+                return $this->submissionService->createSubmission($service, [
+                    'customer_name' => $request->customer_name,
+                    'customer_phone' => $request->customer_phone,
+                    'customer_email' => $request->customer_email,
+                    'customer_notes' => $request->customer_notes,
+                    'preferred_date' => $request->preferred_date,
+                    'fields' => $request->input('fields', []),
+                    'files' => $request->file('fields', []),
+                ]);
+            });
 
             return response()->json([
                 'status' => 'success',
@@ -70,7 +65,6 @@ class SubmissionController extends Controller
         } catch (\Exception $e) {
             Log::error('Submission creation failed', [
                 'exception' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
                 'service_id' => $service->id,
                 'ip' => $request->ip(),
             ]);

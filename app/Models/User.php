@@ -11,20 +11,11 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    //  Role Constants
-
     const ROLE_ADMIN = 'admin';
     const ROLE_CEO = 'ceo';
     const ROLE_GENERAL_MANAGER = 'gm';
     const ROLE_STAFF = 'staff';
 
-    /**
-     * The "management" roles. Single source of truth — previously
-     * `whereIn('role', ['admin', 'ceo', 'gm'])` was hand-typed in
-     * UserController, ReportController, AppServiceProvider gates, and two
-     * queue jobs. All of those now use the management()/managementRoles()
-     * helpers below instead.
-     */
     public const MANAGEMENT_ROLES = [
         self::ROLE_ADMIN,
         self::ROLE_CEO,
@@ -38,23 +29,17 @@ class User extends Authenticatable
         self::ROLE_STAFF,
     ];
 
-    //  Fillable
-
     protected $fillable = [
         'name',
         'email',
-        'password',
+        'role',
         'last_login_at',
     ];
-
-    //  Hidden
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
-
-    //  Casts
 
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -62,47 +47,30 @@ class User extends Authenticatable
         'is_active' => 'boolean',
     ];
 
-    //  Default Values
-
     protected $attributes = [
         'role' => self::ROLE_STAFF,
         'is_active' => true,
     ];
-
-    //  Relationships
 
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'processed_by');
     }
 
-    //  Scopes
-
-    /**
-     * Admin, CEO, and General Manager users.
-     */
     public function scopeManagement(Builder $query): Builder
     {
         return $query->whereIn('role', self::MANAGEMENT_ROLES);
     }
 
-    /**
-     * Staff users only.
-     */
     public function scopeStaff(Builder $query): Builder
     {
         return $query->where('role', self::ROLE_STAFF);
     }
 
-    /**
-     * Anyone who can process submissions (management + staff).
-     */
     public function scopeCanProcessSubmissions(Builder $query): Builder
     {
         return $query->whereIn('role', self::ALL_ROLES);
     }
-
-    //  Role Check Methods
 
     public function isAdmin(): bool
     {
@@ -143,8 +111,6 @@ class User extends Authenticatable
     {
         return $this->isManagement();
     }
-
-    //  Accessors
 
     public function getRoleLabelAttribute(): string
     {

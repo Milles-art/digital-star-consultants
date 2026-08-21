@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use App\Jobs\SendWelcomeEmailJob;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -52,22 +53,16 @@ class UserController extends Controller
             'role' => 'nullable|in:admin,ceo,gm,staff',
         ]);
 
-        $tempPassword = Str::random(12);
+        $tempPassword = Str::random(16);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($tempPassword),
-            'role' => $request->role ?? User::ROLE_STAFF,
-            'is_active' => true,
-        ]);
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->role = $request->role ?? User::ROLE_STAFF;
+        $user->is_active = true;
+        $user->password = Hash::make($tempPassword);
+        $user->save();
 
-        // Dispatch job to send welcome email — this is the ONLY place the
-        // temp password is delivered. It must never be returned in the API
-        // response (see the same fix already applied in
-        // Auth\PasswordResetController) — an admin's browser history/logs/
-        // any XSS on this page would otherwise capture a brand-new staff
-        // account's credentials in plaintext.
         SendWelcomeEmailJob::dispatch($user, $tempPassword);
 
         return response()->json([
@@ -90,11 +85,7 @@ class UserController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $data = $request->only(['name', 'email', 'role', 'is_active']);
-
-        $user->update(array_filter($data, function ($value) {
-            return !is_null($value);
-        }));
+        $user->update($request->only(['name', 'email', 'role', 'is_active']));
 
         return response()->json([
             'status' => 'success',

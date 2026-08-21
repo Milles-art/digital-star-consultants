@@ -3,22 +3,23 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\UpdateSubmissionRequest;
-use App\Http\Resources\SubmissionResource;
+use App\Http\Requests\UpdateSubmissionRequest;
 use App\Http\Resources\ServiceResource;
+use App\Http\Resources\SubmissionResource;
 use App\Http\Resources\UserResource;
-use App\Models\Submission;
-use App\Models\Service;
-use App\Models\User;
+use App\Jobs\SendStatusUpdateEmailJob;
 use App\Jobs\SendSubmissionAssignedEmailJob;
 use App\Jobs\SendSubmissionCompletedEmailJob;
 use App\Jobs\SendSubmissionRejectedEmailJob;
-use App\Jobs\SendStatusUpdateEmailJob;
+use App\Models\Service;
+use App\Models\Submission;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SubmissionController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Submission::class);
 
@@ -45,11 +46,12 @@ class SubmissionController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('reference_number', 'LIKE', "%{$request->search}%")
-                  ->orWhere('customer_name', 'LIKE', "%{$request->search}%")
-                  ->orWhere('customer_email', 'LIKE', "%{$request->search}%")
-                  ->orWhere('customer_phone', 'LIKE', "%{$request->search}%");
+            $search = '%' . $request->search . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('reference_number', 'LIKE', $search)
+                    ->orWhere('customer_name', 'LIKE', $search)
+                    ->orWhere('customer_email', 'LIKE', $search)
+                    ->orWhere('customer_phone', 'LIKE', $search);
             });
         }
 
@@ -73,7 +75,6 @@ class SubmissionController extends Controller
                 'filters' => [
                     'services' => ServiceResource::collection($services),
                     'staff' => UserResource::collection($staff),
-                    // Single source of truth — see Submission::statusOptions()
                     'statuses' => Submission::statusOptions(),
                 ],
             ]
@@ -97,18 +98,11 @@ class SubmissionController extends Controller
         $this->authorize('update', $submission);
 
         $validated = $request->validated();
-
-        // BUGFIX: UpdateSubmissionRequest validates 'status', but the
-        // previous version of this method never included 'status' in the
-        // $request->only([...]) list used to build the update payload —
-        // so a validated status change from an admin was silently
-        // dropped and never persisted. Also fires the same status-change
-        // notification the dedicated markInProgress()/markCompleted()/
-        // markRejected() endpoints send, so customers stay informed
-        // however the status was changed.
         $oldStatus = $submission->status;
 
-        $submission->update(array_filter($validated, fn ($value) => !is_null($value)));
+        $submission->update($request->only([
+            'status', 'staff_notes', 'total_price', 'preferred_date', 'processed_by'
+        ]));
 
         if (isset($validated['status']) && $validated['status'] !== $oldStatus) {
             SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);

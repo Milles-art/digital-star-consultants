@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Service;
 use App\Models\Submission;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,9 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', Submission::class);
 
-        $date = $request->date ? date($request->date) : now()->toDateString();
+        $date = $request->date
+            ? Carbon::parse($request->date)->toDateString()
+            : now()->toDateString();
 
         $stats = [
             'date' => $date,
@@ -38,16 +42,18 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', Submission::class);
 
-        $start = $request->start_date ?: now()->startOfWeek()->toDateString();
-        $end = $request->end_date ?: now()->endOfWeek()->toDateString();
+        $start = Carbon::parse($request->start_date ?: now()->startOfWeek());
+        $end = Carbon::parse($request->end_date ?: now()->endOfWeek());
 
-        $submissions = $this->dailyBreakdown($start, $end);
+        $this->clampDateRange($start, $end);
+
+        $submissions = $this->dailyBreakdown($start->toDateString(), $end->toDateString());
 
         return response()->json([
             'status' => 'success',
             'data' => [
-                'start_date' => $start,
-                'end_date' => $end,
+                'start_date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
                 'total_submissions' => $submissions->sum('count'),
                 'total_completed' => $submissions->sum('completed'),
                 'total_pending' => $submissions->sum('pending'),
@@ -63,10 +69,12 @@ class ReportController extends Controller
         $month = $request->month ?: now()->month;
         $year = $request->year ?: now()->year;
 
-        $start = now()->setDate($year, $month, 1)->startOfMonth()->toDateString();
-        $end = now()->setDate($year, $month, 1)->endOfMonth()->toDateString();
+        $start = now()->setDate($year, $month, 1)->startOfMonth();
+        $end = now()->setDate($year, $month, 1)->endOfMonth();
 
-        $submissions = $this->dailyBreakdown($start, $end);
+        $this->clampDateRange($start, $end);
+
+        $submissions = $this->dailyBreakdown($start->toDateString(), $end->toDateString());
 
         return response()->json([
             'status' => 'success',
@@ -99,8 +107,10 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', Submission::class);
 
-        $start = $request->start_date ?: now()->startOfMonth()->toDateString();
-        $end = $request->end_date ?: now()->endOfMonth()->toDateString();
+        $start = Carbon::parse($request->start_date ?: now()->startOfMonth());
+        $end = Carbon::parse($request->end_date ?: now()->endOfMonth());
+
+        $this->clampDateRange($start, $end);
 
         $staff = User::whereIn('role', User::ALL_ROLES)
             ->withCount([
@@ -125,8 +135,8 @@ class ReportController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => [
-                'start_date' => $start,
-                'end_date' => $end,
+                'start_date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
                 'staff' => $staff->map(function ($user) {
                     $total = $user->total_processed ?? 0;
                     $completed = $user->completed_count ?? 0;
@@ -151,10 +161,12 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', Submission::class);
 
-        $start = $request->start_date ?: now()->startOfMonth()->toDateString();
-        $end = $request->end_date ?: now()->endOfMonth()->toDateString();
+        $start = Carbon::parse($request->start_date ?: now()->startOfMonth());
+        $end = Carbon::parse($request->end_date ?: now()->endOfMonth());
 
-        $services = \App\Models\Service::withCount([
+        $this->clampDateRange($start, $end);
+
+        $services = Service::withCount([
             'submissions as total' => function ($query) use ($start, $end) {
                 $query->whereBetween('created_at', [$start, $end]);
             },
@@ -175,8 +187,8 @@ class ReportController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => [
-                'start_date' => $start,
-                'end_date' => $end,
+                'start_date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
                 'services' => $services->map(function ($service) {
                     return [
                         'id' => $service->id,
@@ -198,8 +210,10 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', Submission::class);
 
-        $start = $request->start_date ?: now()->startOfMonth()->toDateString();
-        $end = $request->end_date ?: now()->endOfMonth()->toDateString();
+        $start = Carbon::parse($request->start_date ?: now()->startOfMonth());
+        $end = Carbon::parse($request->end_date ?: now()->endOfMonth());
+
+        $this->clampDateRange($start, $end);
 
         $totalSubmissions = Submission::whereBetween('created_at', [$start, $end])->count();
         $completedSubmissions = Submission::whereBetween('created_at', [$start, $end])
@@ -241,8 +255,8 @@ class ReportController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => [
-                'start_date' => $start,
-                'end_date' => $end,
+                'start_date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
                 'total_submissions' => $totalSubmissions,
                 'completed_submissions' => $completedSubmissions,
                 'pending_submissions' => $pendingSubmissions,
@@ -252,5 +266,12 @@ class ReportController extends Controller
                 'avg_processing_hours' => round($avgHours, 2),
             ],
         ]);
+    }
+
+    private function clampDateRange(Carbon &$start, Carbon &$end): void
+    {
+        if ($start->diffInDays($end) > 90) {
+            $end = $start->copy()->addDays(90);
+        }
     }
 }
