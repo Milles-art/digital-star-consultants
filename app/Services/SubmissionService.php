@@ -43,7 +43,7 @@ class SubmissionService
                         // Handle file upload
                         if ($field->field_type === 'file' && isset($data['files'][$field->field_key])) {
                             $file = $data['files'][$field->field_key];
-                            $filePath = $file->store("submissions/{$submission->id}", 'public');
+                            $filePath = $file->store("submissions/{$submission->id}", 'private');
                         }
 
                         SubmissionFieldValue::create([

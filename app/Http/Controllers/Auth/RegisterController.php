@@ -28,7 +28,13 @@ class RegisterController extends Controller
 
         $tempPassword = Str::random(12);
 
-        $user = User::create([
+        $user = User::create($request->only(['name', 'email', 'phone']));
+        $user->password = Hash::make($tempPassword);
+        $user->role = User::ROLE_STAFF;
+        $user->is_active = true;
+        $user->save();
+        // OLD LINE BELOW — REMOVE:
+        // $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
