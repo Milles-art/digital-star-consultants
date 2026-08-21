@@ -33,15 +33,6 @@ class RegisterController extends Controller
         $user->role = User::ROLE_STAFF;
         $user->is_active = true;
         $user->save();
-        // OLD LINE BELOW — REMOVE:
-        // $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($tempPassword),
-            'role' => User::ROLE_STAFF,
-            'is_active' => true,
-        ]);
 
         return response()->json([
             'status' => 'success',
