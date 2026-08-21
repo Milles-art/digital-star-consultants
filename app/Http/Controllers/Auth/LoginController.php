@@ -5,27 +5,39 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function showLoginForm(): JsonResponse
+    /**
+     * Show the login form in the browser, or a short JSON hint for API clients.
+     */
+    public function showLoginForm(Request $request): View|JsonResponse
     {
-        return response()->json([
-            'message' => 'Login endpoint. Send POST request with email and password.',
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Login endpoint. Send POST request with email and password.',
+            ]);
+        }
+
+        return view('auth.login');
     }
 
-    public function login(Request $request): JsonResponse
+    /**
+     * Authenticate the user (browser redirect or JSON for API / AJAX).
+     */
+    public function login(Request $request): JsonResponse|RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-            'remember' => 'nullable|boolean',
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+            'remember' => ['nullable', 'boolean'],
         ]);
 
         $this->ensureIsNotRateLimited($request);
@@ -35,55 +47,74 @@ class LoginController extends Controller
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit($this->throttleKey($request));
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid credentials',
-            ], 401);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid credentials',
+                ], 401);
+            }
+
+            throw ValidationException::withMessages([
+                'email' => 'Invalid credentials.',
+            ]);
         }
 
         if (! $user->is_active) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Your account is deactivated. Please contact admin.',
-            ], 403);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Your account is deactivated. Please contact admin.',
+                ], 403);
+            }
+
+            throw ValidationException::withMessages([
+                'email' => 'Your account is deactivated. Please contact admin.',
+            ]);
         }
 
         RateLimiter::clear($this->throttleKey($request));
 
         Auth::login($user, $request->boolean('remember'));
-
         $request->session()->regenerate();
-
         $user->forceFill(['last_login_at' => now()])->save();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Logged in successfully',
-            'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'role_label' => $user->role_label,
+        $redirect = $this->getRedirectPath($user);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Logged in successfully',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role,
+                        'role_label' => $user->role_label ?? null,
+                    ],
+                    'redirect' => $redirect,
                 ],
-                'redirect' => $this->getRedirectPath($user),
-            ],
-        ]);
+            ]);
+        }
+
+        return redirect()->intended($redirect);
     }
 
-    public function logout(Request $request): JsonResponse
+    public function logout(Request $request): JsonResponse|RedirectResponse
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Logged out successfully',
-            'redirect' => '/login',
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Logged out successfully',
+                'redirect' => '/login',
+            ]);
+        }
+
+        return redirect()->route('login');
     }
 
     protected function ensureIsNotRateLimited(Request $request): void
@@ -101,11 +132,13 @@ class LoginController extends Controller
 
     protected function throttleKey(Request $request): string
     {
-        return strtolower($request->input('email')) . '|' . $request->ip();
+        return strtolower((string) $request->input('email')).'|'.$request->ip();
     }
 
     private function getRedirectPath(User $user): string
     {
-        return $user->isManagement() ? '/admin/dashboard' : '/staff/submissions';
+        return $user->isManagement()
+            ? '/admin/dashboard'
+            : '/staff/submissions';
     }
 }
