@@ -14,9 +14,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Guard: this seeder creates demo accounts with the known password
-        // "password" (admin/ceo/gm/staff). Never let it run in production —
-        // if it does, anyone who knows these emails can log in as admin.
+        // Guard: this seeder creates demo accounts. NEVER let it run in production.
         if (app()->environment('production')) {
             $this->command?->error('DatabaseSeeder skipped: refusing to seed demo accounts in production.');
             return;
@@ -25,11 +23,13 @@ class DatabaseSeeder extends Seeder
         // --------------------------------------------------
         // Core users (explicit assignment – role not fillable)
         // --------------------------------------------------
-        $admin = $this->createUser('Admin User', 'admin@digitalstar.local', User::ROLE_ADMIN, 'password');
-        $ceo = $this->createUser('CEO User', 'ceo@digitalstar.local', User::ROLE_CEO, 'password');
-        $gm = $this->createUser('GM User', 'gm@digitalstar.local', User::ROLE_GENERAL_MANAGER, 'password');
-        $staff1 = $this->createUser('Staff One', 'staff1@digitalstar.local', User::ROLE_STAFF, 'password');
-        $staff2 = $this->createUser('Staff Two', 'staff2@digitalstar.local', User::ROLE_STAFF, 'password');
+        // SECURITY: these are strong random passwords for local/staging only.
+        // Change them immediately after seeding, or use php artisan tinker to reset.
+        $admin  = $this->createUser('Admin User', 'admin@digitalstar.local',  User::ROLE_ADMIN,            'Adm1n!Dsc2026#Xq9');
+        $ceo    = $this->createUser('CEO User',   'ceo@digitalstar.local',    User::ROLE_CEO,              'Ceo1!Dsc2026#Yp8');
+        $gm     = $this->createUser('GM User',    'gm@digitalstar.local',     User::ROLE_GENERAL_MANAGER,  'Gm1!Dsc2026#Zo7');
+        $staff1 = $this->createUser('Staff One',  'staff1@digitalstar.local', User::ROLE_STAFF,            'Stf1!Dsc2026#Wn6');
+        $staff2 = $this->createUser('Staff Two',  'staff2@digitalstar.local', User::ROLE_STAFF,            'Stf2!Dsc2026#Vm5');
 
         // --------------------------------------------------
         // Categories + Services (demo data)
@@ -92,12 +92,8 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $this->command?->info('Seeded users:');
-        $this->command?->info('  admin@digitalstar.local / password (admin)');
-        $this->command?->info('  ceo@digitalstar.local / password (ceo)');
-        $this->command?->info('  gm@digitalstar.local / password (gm)');
-        $this->command?->info('  staff1@digitalstar.local / password (staff)');
-        $this->command?->info('  staff2@digitalstar.local / password (staff)');
+        $this->command?->info('Seeded 5 demo users with strong passwords.');
+        $this->command?->warn('Run `php artisan user:reset-password {email}` if you forget them.');
     }
 
     protected function createUser(string $name, string $email, string $role, string $password): User
