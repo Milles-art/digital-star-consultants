@@ -7,7 +7,6 @@ use App\Http\Requests\StoreSubmissionRequest;
 use App\Models\Service;
 use App\Models\Submission;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class SubmissionController extends Controller
@@ -37,17 +36,15 @@ class SubmissionController extends Controller
         $request->validate($fieldRules);
 
         try {
-            $submission = DB::transaction(function () use ($service, $request) {
-                return $this->submissionService->createSubmission($service, [
-                    'customer_name' => $request->customer_name,
-                    'customer_phone' => $request->customer_phone,
-                    'customer_email' => $request->customer_email,
-                    'customer_notes' => $request->customer_notes,
-                    'preferred_date' => $request->preferred_date,
-                    'fields' => $request->input('fields', []),
-                    'files' => $request->file('fields', []),
-                ]);
-            });
+            $submission = $this->submissionService->createSubmission($service, [
+                'customer_name' => $request->customer_name,
+                'customer_phone' => $request->customer_phone,
+                'customer_email' => $request->customer_email,
+                'customer_notes' => $request->customer_notes,
+                'preferred_date' => $request->preferred_date,
+                'fields' => $request->input('fields', []),
+                'files' => $request->file('fields', []),
+            ]);
 
             return response()->json([
                 'status' => 'success',
