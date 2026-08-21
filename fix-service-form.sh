@@ -1,3 +1,4 @@
+cat > resources/views/services/show.blade.php << 'SHOWEOF'
 @extends('layouts.app')
 @section('title', data_get($service, 'name', 'Service request').' — Digital Star Consultants')
 @section('content')
@@ -116,6 +117,11 @@
         </div>
     </div>
 </section>
+SHOWEOF
+echo "✅ Part 1 written"
+
+# Continue the file
+cat >> resources/views/services/show.blade.php << 'SHOWEOF2'
 
 {{-- ===== FORM SECTION ===== --}}
 <section class="py-12 lg:py-16 bg-slate-50">
@@ -248,6 +254,11 @@
                                 </div>
                             </div>
                         </div>
+SHOWEOF2
+echo "✅ Part 2 written"
+
+# Continue with dynamic field sections
+cat >> resources/views/services/show.blade.php << 'SHOWEOF3'
 
                         {{-- Dynamic Service Fields --}}
                         @foreach($groupedFields as $groupKey => $groupFields)
@@ -390,6 +401,11 @@
         </div>
     </div>
 </section>
+SHOWEOF3
+echo "✅ Part 3 written"
+
+# Continue with modal and scripts
+cat >> resources/views/services/show.blade.php << 'SHOWEOF4'
 
 {{-- Success Modal --}}
 <div id="successModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
@@ -451,3 +467,32 @@ document.getElementById('submissionForm').addEventListener('submit', async funct
 @endpush
 
 @endsection
+SHOWEOF4
+echo "✅ Part 4 written — services/show.blade.php complete!"
+
+echo ""
+echo "============================================================"
+echo "🎨 Service form redesign complete!"
+echo "============================================================"
+echo ""
+echo "What changed:"
+echo "  • Agency auto-detection (TRA, BRELA, RITA, Police, Immigration)"
+echo "  • Color-coded agency badges with official names"
+echo "  • Fields auto-grouped into 5 sections:"
+echo "      - Personal Information"
+echo "      - Identification Details"
+echo "      - Contact Information"
+echo "      - Application Details"
+echo "      - Required Documents"
+echo "  • Document checklist preview in sidebar"
+echo "  • All 8 field types supported: text, textarea, select, radio, checkbox, file, date, number, email, tel"
+echo "  • Drag-and-drop file uploads with visual feedback"
+echo "  • Tanzania-specific placeholders (NIDA, TIN, phone formats)"
+echo ""
+echo "Next steps:"
+echo "  1. Run tests:   php artisan test --compact"
+echo "  2. Build assets: npm run build"
+echo "  3. Commit:      git add -A"
+echo "                  git commit -m 'design: service form with agency detection and field grouping'"
+echo "                  git push origin digital-star-consultants"
+echo ""
