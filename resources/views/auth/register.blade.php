@@ -1,5 +1,0 @@
-@extends('layouts.app')
-@section('title', 'Register | Digital Star Consultants')
-@section('content')
-<section class="mx-auto max-w-md px-4 py-16 sm:px-6"><div class="text-center"><p class="text-sm font-bold uppercase tracking-[.2em] text-brand-600">Team access</p><h1 class="mt-3 font-display text-3xl font-extrabold">Create a team account.</h1><p class="mt-4 text-sm leading-6 text-slate-600">New accounts start with staff access. A manager can update permissions after reviewing the account.</p></div>@include('partials.alerts')<form method="POST" action="{{ route('register') }}" class="surface-panel mt-8 rounded-2xl p-6">@csrf<label class="block text-sm font-semibold">Name<input class="field mt-2" name="name" value="{{ old('name') }}" required></label><label class="mt-5 block text-sm font-semibold">Email<input class="field mt-2" type="email" name="email" value="{{ old('email') }}" required></label><button class="btn btn-blue mt-6 w-full" type="submit">Create staff account</button></form></section>
-@endsection

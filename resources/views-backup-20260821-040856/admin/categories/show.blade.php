@@ -1,5 +1,0 @@
-@extends('layouts.admin')
-@section('title', $category->name.' | Categories')
-@section('heading', $category->name)
-@section('content')<a href="{{ route('admin.categories.index') }}" class="text-sm font-semibold text-brand-600">&larr; Categories</a><div class="mt-6 grid gap-5 md:grid-cols-2"><div class="rounded-xl border border-mist-200 bg-white p-6"><p class="text-sm text-slate-500">Slug</p><p class="mt-1 font-semibold">{{ $category->slug }}</p><p class="mt-5 text-sm text-slate-500">Description</p><p class="mt-1 text-sm">{{ $category->description ?: 'No description.' }}</p><p class="mt-5 text-sm text-slate-500">Status</p><p class="mt-1 font-semibold">{{ $category->is_active ? 'Active' : 'Inactive' }}</p></div><div class="rounded-xl border border-mist-200 bg-white p-6"><h2 class="font-display font-bold">Services</h2><ul class="mt-4 space-y-2 text-sm">@forelse($category->services as $service)<li><a href="{{ route('admin.services.show', $service->id) }}" class="text-brand-600">{{ $service->name }}</a></li>@empty<li class="text-slate-500">No services in this category.</li>@endforelse</ul></div></div>
-@endsection
