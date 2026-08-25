@@ -16,10 +16,11 @@ use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class SubmissionController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', Submission::class);
 
@@ -60,6 +61,16 @@ class SubmissionController extends Controller
         $services = Service::active()->get();
         $staff = User::whereIn('role', User::ALL_ROLES)->get();
 
+        if (! $request->expectsJson()) {
+            return view('admin.submissions.index', [
+                'submissions' => $submissions,
+                'services' => $services,
+                'staff' => $staff,
+                'statuses' => Submission::statusOptions(),
+                'filters' => $request->only(['status', 'service_id', 'staff_id', 'date_from', 'date_to', 'search']),
+            ]);
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -81,11 +92,19 @@ class SubmissionController extends Controller
         ]);
     }
 
-    public function show(Submission $submission)
+    public function show(Submission $submission): View|JsonResponse
     {
         $this->authorize('view', $submission);
 
         $submission->load(['service', 'processedBy', 'values.field']);
+
+        if (! request()->expectsJson()) {
+            return view('admin.submissions.show', [
+                'submission' => $submission,
+                'staff' => User::canProcessSubmissions()->orderBy('name')->get(),
+                'statuses' => Submission::statusOptions(),
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',

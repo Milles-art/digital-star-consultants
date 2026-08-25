@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class ReportController extends Controller
 {
@@ -206,9 +207,16 @@ class ReportController extends Controller
         ]);
     }
 
-    public function overview(Request $request): JsonResponse
+    public function overview(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', Submission::class);
+
+        if (! $request->expectsJson()) {
+            return view('admin.reports.index', [
+                'defaultStart' => now()->startOfMonth()->toDateString(),
+                'defaultEnd' => now()->toDateString(),
+            ]);
+        }
 
         $start = Carbon::parse($request->start_date ?: now()->startOfMonth());
         $end = Carbon::parse($request->end_date ?: now()->endOfMonth());

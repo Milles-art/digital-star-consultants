@@ -7,12 +7,15 @@ use App\Http\Requests\Admin\StoreServiceRequest;
 use App\Http\Requests\Admin\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
+use App\Models\ServiceCategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class ServiceController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', Service::class);
 
@@ -31,6 +34,15 @@ class ServiceController extends Controller
         }
 
         $services = $query->orderBy('sort_order')->get();
+        $categories = ServiceCategory::orderBy('sort_order')->orderBy('name')->get();
+
+        if (! $request->expectsJson()) {
+            return view('admin.services.index', [
+                'services' => $services,
+                'categories' => $categories,
+                'filters' => $request->only(['category_id', 'is_active', 'search']),
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',

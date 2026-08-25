@@ -24,7 +24,6 @@ class ContactMessageController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', $search)
                     ->orWhere('email', 'like', $search)
-                    ->orWhere('subject', 'like', $search)
                     ->orWhere('message', 'like', $search);
             });
         }
@@ -42,10 +41,8 @@ class ContactMessageController extends Controller
                     'id' => $msg->id,
                     'name' => $msg->name,
                     'email' => $msg->email,
-                    'phone' => $msg->phone,
-                    'subject' => $msg->subject,
                     'message' => $msg->message,
-                    'is_read' => $msg->is_read,
+                    'is_read' => $msg->read_at !== null,
                     'created_at' => $msg->created_at?->format('Y-m-d H:i'),
                 ];
             }),
@@ -66,10 +63,8 @@ class ContactMessageController extends Controller
                 'id' => $contactMessage->id,
                 'name' => $contactMessage->name,
                 'email' => $contactMessage->email,
-                'phone' => $contactMessage->phone,
-                'subject' => $contactMessage->subject,
                 'message' => $contactMessage->message,
-                'is_read' => $contactMessage->is_read,
+                'is_read' => $contactMessage->read_at !== null,
                 'created_at' => $contactMessage->created_at?->format('Y-m-d H:i'),
             ],
         ]);

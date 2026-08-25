@@ -5,16 +5,26 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function showLoginForm(): JsonResponse
+    public function showLoginForm(): View|JsonResponse|RedirectResponse
     {
+        if (auth()->check()) {
+            return redirect($this->getRedirectPath(auth()->user()));
+        }
+
+        if (! request()->expectsJson()) {
+            return view('auth.login');
+        }
+
         return response()->json([
             'message' => 'Login endpoint. Send POST request with email and password.',
         ]);
@@ -72,12 +82,16 @@ class LoginController extends Controller
         ]);
     }
 
-    public function logout(Request $request): JsonResponse
+    public function logout(Request $request): JsonResponse|RedirectResponse
     {
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if (! $request->expectsJson()) {
+            return redirect()->route('login');
+        }
 
         return response()->json([
             'status' => 'success',

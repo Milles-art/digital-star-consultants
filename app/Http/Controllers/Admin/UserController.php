@@ -10,14 +10,33 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(): View|JsonResponse
     {
         $this->authorize('viewAny', User::class);
 
         $users = User::latest()->get();
+
+        if (! request()->expectsJson()) {
+            return view('admin.users.index', [
+                'users' => $users,
+                'stats' => [
+                    'total' => User::count(),
+                    'active' => User::where('is_active', true)->count(),
+                    'staff' => User::staff()->count(),
+                    'management' => User::management()->count(),
+                ],
+                'roles' => [
+                    User::ROLE_ADMIN => 'Administrator',
+                    User::ROLE_CEO => 'CEO',
+                    User::ROLE_GENERAL_MANAGER => 'General Manager',
+                    User::ROLE_STAFF => 'Staff',
+                ],
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',

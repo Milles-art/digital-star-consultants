@@ -8,16 +8,28 @@ use App\Http\Requests\Admin\UpdateServiceFieldRequest;
 use App\Http\Resources\ServiceFieldResource;
 use App\Models\Service;
 use App\Models\ServiceField;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class ServiceFieldController extends Controller
 {
-    public function index(Service $service)
+    public function index(Service $service): View|JsonResponse
     {
         $this->authorize('viewAny', ServiceField::class);
 
         $fields = $service->fields()->orderBy('sort_order')->get();
+
+        if (! request()->expectsJson()) {
+            $service->load('category');
+
+            return view('admin.fields.index', [
+                'service' => $service,
+                'fields' => $fields,
+                'fieldTypes' => ServiceField::TYPES,
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',

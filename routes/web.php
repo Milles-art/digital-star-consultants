@@ -131,11 +131,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/monthly', [ReportController::class, 'monthly'])->name('admin.reports.monthly');
         Route::get('/reports/staff-performance', [ReportController::class, 'staffPerformance'])->name('admin.reports.staff-performance');
         Route::get('/reports/service-usage', [ReportController::class, 'serviceUsage'])->name('admin.reports.service-usage');
+        Route::get('/reports', [ReportController::class, 'overview'])->name('admin.reports.index');
         Route::get('/reports/overview', [ReportController::class, 'overview'])->name('admin.reports.overview');
 
         // Contact Messages
         Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('admin.contact-messages.index');
-        Route::get('/contact-messages/{message}', [ContactMessageController::class, 'show'])->name('admin.contact-messages.show');
+        Route::get('/contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])->name('admin.contact-messages.show');
+        Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('admin.contact-messages.destroy');
     });
 
     // Staff Routes

@@ -7,11 +7,13 @@ use App\Http\Requests\Admin\StoreServiceCategoryRequest;
 use App\Http\Requests\Admin\UpdateServiceCategoryRequest;
 use App\Http\Resources\ServiceCategoryResource;
 use App\Models\ServiceCategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class ServiceCategoryController extends Controller
 {
-    public function index()
+    public function index(): View|JsonResponse
     {
         $this->authorize('viewAny', ServiceCategory::class);
 
@@ -19,6 +21,13 @@ class ServiceCategoryController extends Controller
             ->withCount('children')
             ->orderBy('sort_order')
             ->get();
+
+        if (! request()->expectsJson()) {
+            return view('admin.categories.index', [
+                'categories' => $categories,
+                'parentCategories' => ServiceCategory::topLevel()->orderBy('name')->get(),
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',
