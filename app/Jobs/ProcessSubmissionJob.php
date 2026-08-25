@@ -2,9 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\Submission;
 use App\Models\User;
-use App\Notifications\NewSubmissionNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,36 +14,36 @@ class ProcessSubmissionJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public $submission;
 
-    public int $backoff = 60;
-
-    public function __construct(
-        public Submission $submission
-    ) {}
+    public function __construct($submission)
+    {
+        $this->submission = $submission;
+    }
 
     public function handle(): void
     {
-        Log::info('Processing submission: ' . $this->submission->reference_number);
+        try {
+            Log::info('Processing submission: ' . $this->submission->reference_number);
 
-        $admins = User::whereIn('role', [
-            User::ROLE_ADMIN,
-            User::ROLE_CEO,
-            User::ROLE_GENERAL_MANAGER,
-        ])->where('is_active', true)->get();
+            $admins = User::management()->get();
+            foreach ($admins as $admin) {
+                dispatch(new SendAdminNotificationJob($admin, $this->submission));
+            }
 
-        foreach ($admins as $admin) {
-            $admin->notify(new NewSubmissionNotification($this->submission));
+            Log::info('Submission processed successfully: ' . $this->submission->reference_number);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to process submission: ' . $this->submission->reference_number);
+            Log::error($e->getMessage());
+
+            throw $e;
         }
-
-        Log::info('Submission processed successfully: ' . $this->submission->reference_number);
     }
 
-    public function failed(?\Throwable $exception): void
+    public function failed(\Throwable $exception): void
     {
-        Log::error('ProcessSubmissionJob failed', [
-            'submission' => $this->submission->reference_number ?? null,
-            'error' => $exception?->getMessage(),
-        ]);
+        Log::error('Job failed for submission: ' . $this->submission->reference_number);
+        Log::error($exception->getMessage());
     }
 }

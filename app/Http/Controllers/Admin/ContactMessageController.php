@@ -13,23 +13,18 @@ class ContactMessageController extends Controller
 {
     use AuthorizesRequests;
 
-    /**
-     * List contact messages (management only).
-     */
     public function index(Request $request): View|JsonResponse
     {
-        // Only management can view contact messages
         abort_unless(auth()->user()?->isManagement(), 403);
 
         $query = ContactMessage::query()->latest();
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = '%' . $request->search . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('subject', 'like', "%{$search}%")
-                    ->orWhere('message', 'like', "%{$search}%");
+                $q->where('name', 'like', $search)
+                    ->orWhere('email', 'like', $search)
+                    ->orWhere('message', 'like', $search);
             });
         }
 
@@ -41,13 +36,19 @@ class ContactMessageController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $messages,
+            'data' => $messages->through(function (ContactMessage $msg) {
+                return [
+                    'id' => $msg->id,
+                    'name' => $msg->name,
+                    'email' => $msg->email,
+                    'message' => $msg->message,
+                    'is_read' => $msg->read_at !== null,
+                    'created_at' => $msg->created_at?->format('Y-m-d H:i'),
+                ];
+            }),
         ]);
     }
 
-    /**
-     * Show a single contact message.
-     */
     public function show(ContactMessage $contactMessage): View|JsonResponse
     {
         abort_unless(auth()->user()?->isManagement(), 403);
@@ -58,13 +59,17 @@ class ContactMessageController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $contactMessage,
+            'data' => [
+                'id' => $contactMessage->id,
+                'name' => $contactMessage->name,
+                'email' => $contactMessage->email,
+                'message' => $contactMessage->message,
+                'is_read' => $contactMessage->read_at !== null,
+                'created_at' => $contactMessage->created_at?->format('Y-m-d H:i'),
+            ],
         ]);
     }
 
-    /**
-     * Delete a contact message.
-     */
     public function destroy(ContactMessage $contactMessage): JsonResponse
     {
         abort_unless(auth()->user()?->isManagement(), 403);

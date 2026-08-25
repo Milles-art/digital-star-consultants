@@ -1,5 +1,40 @@
-@extends('layouts.app')
+@extends('layouts.guest')
+
 @section('title', 'Reset password | Digital Star Consultants')
+
 @section('content')
-<section class="mx-auto max-w-md px-4 py-16 sm:px-6"><div class="text-center"><p class="text-sm font-bold uppercase tracking-[.2em] text-brand-600">Account recovery</p><h1 class="mt-3 font-display text-3xl font-extrabold">Choose a new password.</h1></div>@include('partials.alerts')<form method="POST" action="{{ route('password.update') }}" class="surface-panel mt-8 rounded-2xl p-6">@csrf<input type="hidden" name="token" value="{{ $token }}"><label class="block text-sm font-semibold">Email<input class="field mt-2" type="email" name="email" value="{{ request('email') }}" required></label><label class="mt-5 block text-sm font-semibold">New password<input class="field mt-2" type="password" name="password" required></label><label class="mt-5 block text-sm font-semibold">Confirm password<input class="field mt-2" type="password" name="password_confirmation" required></label><button class="btn btn-blue mt-6 w-full" type="submit">Update password</button></form></section>
+<div class="logo">
+    <span class="mark">DS</span>
+    <strong>Digital Star</strong>
+</div>
+<h1>Set new password</h1>
+<p class="sub">Choose a strong password for your account.</p>
+
+@if ($errors->any())
+    <div class="err">
+        @foreach ($errors->all() as $error)
+            <div>{{ $error }}</div>
+        @endforeach
+    </div>
+@endif
+
+<form method="POST" action="{{ route('password.update') }}">
+    @csrf
+    <input type="hidden" name="token" value="{{ $token }}">
+
+    <label for="email">Email</label>
+    <input id="email" type="email" name="email" value="{{ old('email', request('email')) }}" required autocomplete="username">
+
+    <label for="password">New password</label>
+    <input id="password" type="password" name="password" required autocomplete="new-password">
+
+    <label for="password_confirmation">Confirm password</label>
+    <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password">
+
+    <button class="btn" type="submit">Reset password</button>
+</form>
+
+<p class="foot">
+    <a href="{{ route('login') }}">Back to login</a>
+</p>
 @endsection

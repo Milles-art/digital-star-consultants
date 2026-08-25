@@ -35,22 +35,13 @@ class SubmissionStatusNotification extends Notification implements ShouldQueue
             ->greeting('Hello ' . $this->submission->customer_name . '!')
             ->line('Your service request status has been updated.')
             ->line('**Reference:** ' . $this->submission->reference_number)
-            ->line('**Old Status:** ' . $this->getStatusLabel($this->oldStatus))
-            ->line('**New Status:** ' . $this->getStatusLabel($this->newStatus))
+            // Labels now sourced from Submission::STATUSES, the single
+            // source of truth (was previously duplicated here as a
+            // private array that could drift out of sync).
+            ->line('**Old Status:** ' . Submission::statusLabel($this->oldStatus))
+            ->line('**New Status:** ' . Submission::statusLabel($this->newStatus))
             ->line('**Service:** ' . ($this->submission->service->name ?? 'N/A'))
             ->action('Track Submission', url('/track/' . $this->submission->reference_number))
             ->line('Thank you for using our services!');
-    }
-
-    private function getStatusLabel($status)
-    {
-        return [
-            'pending' => 'Pending',
-            'in_progress' => 'In Progress',
-            'completed' => 'Completed',
-            'rejected' => 'Rejected',
-            'awaiting_customer' => 'Awaiting Customer',
-            'cancelled' => 'Cancelled',
-        ][$status] ?? $status;
     }
 }

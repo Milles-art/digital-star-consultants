@@ -1,5 +1,45 @@
-@extends('layouts.admin')
-@section('title', 'My dashboard | Digital Star Consultants')
-@section('heading', 'My dashboard')
-@section('content')<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">@foreach($stats as $label => $value)<div class="rounded-xl border border-mist-200 bg-white p-5"><p class="text-sm capitalize text-slate-500">{{ str_replace('_',' ',$label) }}</p><p class="mt-2 font-display text-3xl font-extrabold text-brand-600">{{ $value }}</p></div>@endforeach</div><div class="mt-8 rounded-xl border border-mist-200 bg-white p-5"><h2 class="font-display font-bold">Assigned submissions</h2><div class="mt-4 space-y-3">@forelse($my_submissions as $submission)<a href="{{ route('public.submissions.track', $submission->reference_number) }}" class="flex items-center justify-between rounded-lg bg-mist-50 p-4 text-sm"><span><strong>{{ $submission->reference_number }}</strong><span class="ml-3 text-slate-500">{{ $submission->service->name ?? 'N/A' }}</span></span><span class="capitalize text-brand-600">{{ str_replace('_',' ',$submission->status) }}</span></a>@empty<p class="text-sm text-slate-500">No assigned submissions.</p>@endforelse</div></div>
+@extends('layouts.admin', ['title' => 'My Work Queue', 'eyebrow' => 'Staff'])
+
+@section('content')
+    <section class="admin-panel reveal">
+        <div class="admin-panel-header">
+            <div>
+                <p class="admin-kicker">Assigned work</p>
+                <h2 class="admin-panel-title">Submissions assigned to you</h2>
+            </div>
+        </div>
+
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse (($submissions ?? $my_submissions) as $submission)
+                        <tr>
+                            <td><a class="admin-link" href="{{ route('staff.submissions.show', $submission) }}">{{ $submission->reference_number }}</a></td>
+                            <td>{{ $submission->customer_name }}</td>
+                            <td>{{ $submission->service?->name ?? 'N/A' }}</td>
+                            <td><span class="admin-badge is-{{ $submission->status_color }}">{{ $submission->status_label }}</span></td>
+                            <td>{{ $submission->created_at?->format('M d, Y H:i') }}</td>
+                            <td class="text-right"><a class="admin-button admin-button-muted" href="{{ route('staff.submissions.show', $submission) }}">Open</a></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6">@include('admin.partials.empty', ['message' => 'No assigned submissions yet.'])</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @isset($submissions)
+            <div class="mt-6">{{ $submissions->links() }}</div>
+        @endisset
+    </section>
 @endsection

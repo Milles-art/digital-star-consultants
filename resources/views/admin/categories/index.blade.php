@@ -1,5 +1,79 @@
-@extends('layouts.admin')
-@section('title', 'Categories | Digital Star Consultants')
-@section('heading', 'Service categories')
-@section('content')<div class="flex flex-wrap items-center justify-between gap-3"><p class="text-sm text-slate-500">Organize the services customers can request.</p><button class="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white" onclick="document.getElementById('category-form').classList.toggle('hidden')">New category</button></div><form id="category-form" method="POST" action="{{ route('admin.categories.store') }}" class="surface-panel mt-5 hidden rounded-xl border border-mist-200 bg-white p-5"><h2 class="font-display font-bold">Create category</h2>@csrf<div class="mt-4 grid gap-4 sm:grid-cols-2"><input class="rounded-lg border border-mist-200 p-3 text-sm" name="name" required placeholder="Category name"><input class="rounded-lg border border-mist-200 p-3 text-sm" name="description" placeholder="Short description"></div><button class="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white">Save category</button></form><div class="mt-6 overflow-x-auto rounded-xl border border-mist-200 bg-white"><table class="w-full min-w-[700px] text-left text-sm"><thead class="bg-mist-50 text-xs uppercase text-slate-500"><tr><th class="px-5 py-3">Name</th><th class="px-5 py-3">Parent</th><th class="px-5 py-3">Services</th><th class="px-5 py-3">Status</th><th class="px-5 py-3"></th></tr></thead><tbody class="divide-y divide-mist-200">@forelse($categories as $category)<tr><td class="px-5 py-3 font-semibold">{{ $category->name }}</td><td class="px-5 py-3 text-slate-500">{{ $category->parent->name ?? 'Top level' }}</td><td class="px-5 py-3">{{ $category->services_count ?? $category->services->count() }}</td><td class="px-5 py-3">{{ $category->is_active ? 'Active' : 'Inactive' }}</td><td class="px-5 py-3 text-right"><a class="font-semibold text-brand-600" href="{{ route('admin.categories.show', $category->id) }}">Open</a></td></tr>@empty<tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">No categories found.</td></tr>@endforelse</tbody></table></div>
+@extends('layouts.admin', ['title' => 'Service Categories', 'eyebrow' => 'Catalog'])
+
+@section('content')
+    <div class="admin-two-column">
+        <section class="admin-panel reveal">
+            <div class="admin-panel-header">
+                <div>
+                    <p class="admin-kicker">Categories</p>
+                    <h2 class="admin-panel-title">{{ $categories->count() }} catalog groups</h2>
+                </div>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Parent</th>
+                            <th>Children</th>
+                            <th>Status</th>
+                            <th>Order</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($categories as $category)
+                            <tr>
+                                <td>
+                                    <span class="block font-bold text-ink">{{ $category->name }}</span>
+                                    <span class="text-xs text-muted">{{ $category->description }}</span>
+                                </td>
+                                <td>{{ $category->parent?->name ?? 'Top level' }}</td>
+                                <td>{{ $category->children_count }}</td>
+                                <td><span class="admin-badge {{ $category->is_active ? 'is-success' : 'is-secondary' }}">{{ $category->is_active ? 'Active' : 'Inactive' }}</span></td>
+                                <td>{{ $category->sort_order }}</td>
+                                <td class="text-right">
+                                    <div class="admin-actions">
+                                        <form method="POST" action="{{ route('admin.categories.toggle-active', $category) }}" data-ajax data-success-reload>
+                                            @csrf
+                                            <button class="admin-button admin-button-muted" type="submit">{{ $category->is_active ? 'Pause' : 'Activate' }}</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('admin.categories.destroy', $category) }}" data-ajax data-success-reload data-confirm="Delete this category?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="admin-button admin-button-danger" type="submit">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6">@include('admin.partials.empty', ['message' => 'No categories yet.'])</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <aside class="admin-panel reveal-delay">
+            <h2 class="admin-panel-title">New category</h2>
+            <form method="POST" action="{{ route('admin.categories.store') }}" class="admin-form-stack" data-ajax data-success-reload>
+                @csrf
+                <label class="admin-label" for="name">Name</label>
+                <input class="admin-field" id="name" name="name" required>
+                <label class="admin-label" for="description">Description</label>
+                <textarea class="admin-field" id="description" name="description" rows="3"></textarea>
+                <label class="admin-label" for="parent_id">Parent</label>
+                <select class="admin-field" id="parent_id" name="parent_id">
+                    <option value="">Top level</option>
+                    @foreach ($parentCategories as $parent)
+                        <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                    @endforeach
+                </select>
+                <label class="admin-label" for="sort_order">Sort order</label>
+                <input class="admin-field" id="sort_order" name="sort_order" type="number" min="0" value="0">
+                <button class="admin-button admin-button-dark" type="submit">Create category</button>
+            </form>
+        </aside>
+    </div>
 @endsection

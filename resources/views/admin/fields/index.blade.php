@@ -1,5 +1,66 @@
-@extends('layouts.admin')
-@section('title', 'Fields | '.$service->name)
-@section('heading', 'Fields · '.$service->name)
-@section('content')<a href="{{ route('admin.services.show', $service->id) }}" class="text-sm font-semibold text-brand-600">&larr; Service</a><form method="POST" action="{{ route('admin.fields.store', $service->id) }}" class="mt-6 rounded-xl border border-mist-200 bg-white p-5">@csrf<h2 class="font-display font-bold">Add field</h2><div class="mt-4 grid gap-4 md:grid-cols-3"><input class="rounded-lg border border-mist-200 p-3 text-sm" name="label" required placeholder="Field label"><select class="rounded-lg border border-mist-200 p-3 text-sm" name="field_type" required><option value="text">Text</option><option value="textarea">Textarea</option><option value="email">Email</option><option value="number">Number</option><option value="date">Date</option><option value="select">Select</option><option value="file">File</option></select><label class="flex items-center gap-2 text-sm"><input type="checkbox" name="is_required" value="1" checked> Required</label></div><button class="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white">Add field</button></form><div class="mt-6 space-y-3">@forelse($fields as $field)<a href="{{ route('admin.fields.show', $field->id) }}" class="flex items-center justify-between rounded-xl border border-mist-200 bg-white p-5"><span><strong>{{ $field->label }}</strong><span class="ml-3 text-sm text-slate-500">{{ $field->field_key }}</span></span><span class="text-sm text-slate-500">{{ $field->field_type }}{{ $field->is_required ? ' · required' : '' }}</span></a>@empty<p class="text-sm text-slate-500">No application fields configured.</p>@endforelse</div>
+@extends('layouts.admin', ['title' => 'Fields: '.$service->name, 'eyebrow' => 'Form builder'])
+
+@section('content')
+    <div class="admin-two-column">
+        <section class="admin-panel reveal">
+            <div class="admin-panel-header">
+                <div>
+                    <p class="admin-kicker">{{ $service->category?->name ?? 'Service' }}</p>
+                    <h2 class="admin-panel-title">{{ $fields->count() }} fields</h2>
+                </div>
+                <a class="admin-button admin-button-muted" href="{{ route('admin.services.index') }}">Back to services</a>
+            </div>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead><tr><th>Label</th><th>Key</th><th>Type</th><th>Required</th><th>Order</th><th></th></tr></thead>
+                    <tbody>
+                        @forelse ($fields as $field)
+                            <tr>
+                                <td><span class="font-bold text-ink">{{ $field->label }}</span><span class="block text-xs text-muted">{{ $field->help_text }}</span></td>
+                                <td>{{ $field->field_key }}</td>
+                                <td>{{ $field->type_label }}</td>
+                                <td><span class="admin-badge {{ $field->is_required ? 'is-warning' : 'is-secondary' }}">{{ $field->is_required ? 'Required' : 'Optional' }}</span></td>
+                                <td>{{ $field->sort_order }}</td>
+                                <td class="text-right">
+                                    <form method="POST" action="{{ route('admin.fields.destroy', $field) }}" data-ajax data-success-reload data-confirm="Delete this field?">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="admin-button admin-button-danger" type="submit">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6">@include('admin.partials.empty', ['message' => 'No fields have been added for this service.'])</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <aside class="admin-panel reveal-delay">
+            <h2 class="admin-panel-title">Add field</h2>
+            <form method="POST" action="{{ route('admin.fields.store', $service) }}" class="admin-form-stack" data-ajax data-success-reload>
+                @csrf
+                <label class="admin-label" for="label">Label</label>
+                <input class="admin-field" id="label" name="label" required>
+                <label class="admin-label" for="field_type">Type</label>
+                <select class="admin-field" id="field_type" name="field_type" required>
+                    @foreach ($fieldTypes as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <label class="admin-label" for="placeholder">Placeholder</label>
+                <input class="admin-field" id="placeholder" name="placeholder">
+                <label class="admin-label" for="help_text">Help text</label>
+                <textarea class="admin-field" id="help_text" name="help_text" rows="2"></textarea>
+                <label class="admin-label" for="options">Options</label>
+                <textarea class="admin-field" id="options" name="options_text" rows="3" data-options-list placeholder="One option per line for select, radio, or checkbox fields"></textarea>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div><label class="admin-label" for="field_sort_order">Sort</label><input class="admin-field" id="field_sort_order" name="sort_order" type="number" min="0" value="0"></div>
+                    <label class="admin-check"><input type="checkbox" name="is_required" value="1" checked> Required</label>
+                </div>
+                <button class="admin-button admin-button-dark" type="submit">Create field</button>
+            </form>
+        </aside>
+    </div>
 @endsection

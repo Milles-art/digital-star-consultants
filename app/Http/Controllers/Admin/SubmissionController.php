@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateSubmissionRequest;
+use App\Http\Resources\ServiceResource;
+use App\Http\Resources\SubmissionResource;
+use App\Http\Resources\UserResource;
 use App\Jobs\SendStatusUpdateEmailJob;
 use App\Jobs\SendSubmissionAssignedEmailJob;
 use App\Jobs\SendSubmissionCompletedEmailJob;
@@ -10,18 +14,12 @@ use App\Jobs\SendSubmissionRejectedEmailJob;
 use App\Models\Service;
 use App\Models\Submission;
 use App\Models\User;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SubmissionController extends Controller
 {
-    use AuthorizesRequests;
-
-    /**
-     * List submissions (management only).
-     */
     public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', Submission::class);
@@ -31,54 +29,69 @@ class SubmissionController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+
         if ($request->filled('service_id')) {
             $query->where('service_id', $request->service_id);
         }
+
         if ($request->filled('staff_id')) {
             $query->where('processed_by', $request->staff_id);
         }
+
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
+
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
+
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = '%' . $request->search . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('reference_number', 'like', "%{$search}%")
-                    ->orWhere('customer_name', 'like', "%{$search}%")
-                    ->orWhere('customer_email', 'like', "%{$search}%")
-                    ->orWhere('customer_phone', 'like', "%{$search}%");
+                $q->where('reference_number', 'LIKE', $search)
+                    ->orWhere('customer_name', 'LIKE', $search)
+                    ->orWhere('customer_email', 'LIKE', $search)
+                    ->orWhere('customer_phone', 'LIKE', $search);
             });
         }
 
-        $submissions = $query->latest()->paginate($request->integer('per_page', 20));
-        $services = Service::active()->get(['id', 'name']);
-        $staff = User::whereIn('role', [
-            User::ROLE_ADMIN,
-            User::ROLE_CEO,
-            User::ROLE_GENERAL_MANAGER,
-            User::ROLE_STAFF,
-        ])->where('is_active', true)->get(['id', 'name', 'role']);
-        $statuses = $this->getStatuses();
+        $submissions = $query->latest()->paginate($request->per_page ?? 20);
+
+        $services = Service::active()->get();
+        $staff = User::whereIn('role', User::ALL_ROLES)->get();
 
         if (! $request->expectsJson()) {
-            return view('admin.submissions.index', compact('submissions', 'services', 'staff', 'statuses'));
+            return view('admin.submissions.index', [
+                'submissions' => $submissions,
+                'services' => $services,
+                'staff' => $staff,
+                'statuses' => Submission::statusOptions(),
+                'filters' => $request->only(['status', 'service_id', 'staff_id', 'date_from', 'date_to', 'search']),
+            ]);
         }
 
         return response()->json([
             'status' => 'success',
             'data' => [
-                'submissions' => $submissions,
-                'filters' => compact('services', 'staff', 'statuses'),
-            ],
+                'submissions' => [
+                    'data' => SubmissionResource::collection($submissions->items()),
+                    'meta' => [
+                        'current_page' => $submissions->currentPage(),
+                        'last_page' => $submissions->lastPage(),
+                        'per_page' => $submissions->perPage(),
+                        'total' => $submissions->total(),
+                    ],
+                ],
+                'filters' => [
+                    'services' => ServiceResource::collection($services),
+                    'staff' => UserResource::collection($staff),
+                    'statuses' => Submission::statusOptions(),
+                ],
+            ]
         ]);
     }
 
-    /**
-     * Show a single submission.
-     */
     public function show(Submission $submission): View|JsonResponse
     {
         $this->authorize('view', $submission);
@@ -86,71 +99,50 @@ class SubmissionController extends Controller
         $submission->load(['service', 'processedBy', 'values.field']);
 
         if (! request()->expectsJson()) {
-            return view('admin.submissions.show', compact('submission'));
+            return view('admin.submissions.show', [
+                'submission' => $submission,
+                'staff' => User::canProcessSubmissions()->orderBy('name')->get(),
+                'statuses' => Submission::statusOptions(),
+            ]);
         }
 
         return response()->json([
             'status' => 'success',
-            'data' => $submission,
+            'data' => new SubmissionResource($submission)
         ]);
     }
 
-    /**
-     * Update customer-facing fields or staff notes.
-     */
-    public function update(Request $request, Submission $submission): JsonResponse
+    public function update(UpdateSubmissionRequest $request, Submission $submission)
     {
         $this->authorize('update', $submission);
 
-        $validated = $request->validate([
-            'customer_name' => 'nullable|string|max:255',
-            'customer_phone' => 'nullable|string|max:20',
-            'customer_email' => 'nullable|email|max:255',
-            'customer_notes' => 'nullable|string|max:2000',
-            'preferred_date' => 'nullable|date',
-            'total_price' => 'nullable|numeric|min:0',
-            'staff_notes' => 'nullable|string|max:5000',
-        ]);
+        $validated = $request->validated();
+        $oldStatus = $submission->status;
 
-        // Explicit assignment – staff_notes is not mass-assignable
-        foreach (['customer_name', 'customer_phone', 'customer_email', 'customer_notes', 'preferred_date', 'total_price'] as $field) {
-            if (array_key_exists($field, $validated) && $validated[$field] !== null) {
-                $submission->{$field} = $validated[$field];
-            }
+        $submission->update($request->only([
+            'status', 'staff_notes', 'total_price', 'preferred_date', 'processed_by'
+        ]));
+
+        if (isset($validated['status']) && $validated['status'] !== $oldStatus) {
+            SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
         }
-
-        if (array_key_exists('staff_notes', $validated)) {
-            $submission->forceFill(['staff_notes' => $validated['staff_notes']]);
-        }
-
-        $submission->save();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Submission updated successfully',
-            'data' => $submission->fresh(['service', 'processedBy']),
+            'data' => new SubmissionResource($submission)
         ]);
     }
 
-    /**
-     * Assign submission to a staff member.
-     */
-    public function assign(Request $request, Submission $submission): JsonResponse
+    public function assign(Request $request, Submission $submission)
     {
         $this->authorize('assign', $submission);
 
-        $validated = $request->validate([
+        $request->validate([
             'staff_id' => 'required|exists:users,id',
         ]);
 
-        $staff = User::findOrFail($validated['staff_id']);
-
-        if (! $staff->canProcessSubmission()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Selected user cannot process submissions',
-            ], 422);
-        }
+        $staff = User::find($request->staff_id);
 
         $submission->assignTo($staff);
 
@@ -159,28 +151,26 @@ class SubmissionController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => "Submission assigned to {$staff->name}",
-            'data' => $submission->fresh(['processedBy']),
+            'data' => new SubmissionResource($submission)
         ]);
     }
 
-    public function markCompleted(Submission $submission): JsonResponse
+    public function markCompleted(Submission $submission)
     {
         $this->authorize('complete', $submission);
 
-        $oldStatus = $submission->status;
         $submission->markAsCompleted();
 
         SendSubmissionCompletedEmailJob::dispatch($submission);
-        SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Submission marked as completed',
-            'data' => $submission,
+            'data' => new SubmissionResource($submission)
         ]);
     }
 
-    public function markInProgress(Submission $submission): JsonResponse
+    public function markInProgress(Submission $submission)
     {
         $this->authorize('update', $submission);
 
@@ -192,32 +182,30 @@ class SubmissionController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Submission marked as in progress',
-            'data' => $submission,
+            'data' => new SubmissionResource($submission)
         ]);
     }
 
-    public function markRejected(Request $request, Submission $submission): JsonResponse
+    public function markRejected(Request $request, Submission $submission)
     {
         $this->authorize('reject', $submission);
 
-        $validated = $request->validate([
-            'reason' => 'nullable|string|max:2000',
+        $request->validate([
+            'reason' => 'nullable|string',
         ]);
 
-        $oldStatus = $submission->status;
-        $submission->markAsRejected($validated['reason'] ?? null);
+        $submission->markAsRejected($request->reason);
 
-        SendSubmissionRejectedEmailJob::dispatch($submission, $validated['reason'] ?? null);
-        SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
+        SendSubmissionRejectedEmailJob::dispatch($submission, $request->reason);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Submission rejected',
-            'data' => $submission,
+            'data' => new SubmissionResource($submission)
         ]);
     }
 
-    public function destroy(Submission $submission): JsonResponse
+    public function destroy(Submission $submission)
     {
         $this->authorize('delete', $submission);
 
@@ -225,19 +213,7 @@ class SubmissionController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Submission deleted successfully',
+            'message' => 'Submission deleted successfully'
         ]);
-    }
-
-    private function getStatuses(): array
-    {
-        return [
-            ['value' => Submission::STATUS_PENDING, 'label' => 'Pending'],
-            ['value' => Submission::STATUS_IN_PROGRESS, 'label' => 'In Progress'],
-            ['value' => Submission::STATUS_COMPLETED, 'label' => 'Completed'],
-            ['value' => Submission::STATUS_REJECTED, 'label' => 'Rejected'],
-            ['value' => Submission::STATUS_AWAITING_CUSTOMER, 'label' => 'Awaiting Customer'],
-            ['value' => Submission::STATUS_CANCELLED, 'label' => 'Cancelled'],
-        ];
     }
 }

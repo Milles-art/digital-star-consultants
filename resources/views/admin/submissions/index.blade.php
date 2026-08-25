@@ -1,5 +1,76 @@
-@extends('layouts.admin')
-@section('title', 'Submissions | Digital Star Consultants')
-@section('heading', 'Submissions')
-@section('content')<form method="GET" class="grid gap-3 rounded-xl border border-mist-200 bg-white p-5 md:grid-cols-[1fr_180px_auto]"><input class="rounded-lg border border-mist-200 p-3 text-sm" name="search" value="{{ request('search') }}" placeholder="Reference, customer, email or phone"><select class="rounded-lg border border-mist-200 p-3 text-sm" name="status"><option value="">All statuses</option>@foreach($statuses as $status)<option value="{{ $status['value'] }}" @selected(request('status') === $status['value'])>{{ $status['label'] }}</option>@endforeach</select><button class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white">Filter</button></form><div class="mt-6 overflow-x-auto rounded-xl border border-mist-200 bg-white"><table class="w-full min-w-[850px] text-left text-sm"><thead class="bg-mist-50 text-xs uppercase text-slate-500"><tr><th class="px-5 py-3">Reference</th><th class="px-5 py-3">Customer</th><th class="px-5 py-3">Service</th><th class="px-5 py-3">Assigned to</th><th class="px-5 py-3">Status</th><th class="px-5 py-3">Created</th></tr></thead><tbody class="divide-y divide-mist-200">@forelse($submissions as $submission)<tr><td class="px-5 py-3"><a class="font-semibold text-brand-600" href="{{ route('admin.submissions.show', $submission->id) }}">{{ $submission->reference_number }}</a></td><td class="px-5 py-3">{{ $submission->customer_name }}</td><td class="px-5 py-3">{{ $submission->service->name ?? 'N/A' }}</td><td class="px-5 py-3">{{ $submission->processedBy->name ?? 'Unassigned' }}</td><td class="px-5 py-3 capitalize">{{ str_replace('_',' ',$submission->status) }}</td><td class="px-5 py-3 text-slate-500">{{ $submission->created_at->format('d M Y') }}</td></tr>@empty<tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">No submissions found.</td></tr>@endforelse</tbody></table></div><div class="mt-5">{{ $submissions->withQueryString()->links() }}</div>
+@extends('layouts.admin', ['title' => 'Submissions', 'eyebrow' => 'Work queue'])
+
+@section('content')
+    <section class="admin-panel reveal">
+        <form method="GET" action="{{ route('admin.submissions.index') }}" class="admin-filter-grid">
+            <input class="admin-field" type="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search reference, customer, email, phone">
+            <select class="admin-field" name="status">
+                <option value="">All statuses</option>
+                @foreach ($statuses as $status)
+                    <option value="{{ $status['value'] }}" @selected(($filters['status'] ?? '') === $status['value'])>{{ $status['label'] }}</option>
+                @endforeach
+            </select>
+            <select class="admin-field" name="service_id">
+                <option value="">All services</option>
+                @foreach ($services as $service)
+                    <option value="{{ $service->id }}" @selected((string) ($filters['service_id'] ?? '') === (string) $service->id)>{{ $service->name }}</option>
+                @endforeach
+            </select>
+            <select class="admin-field" name="staff_id">
+                <option value="">All owners</option>
+                @foreach ($staff as $member)
+                    <option value="{{ $member->id }}" @selected((string) ($filters['staff_id'] ?? '') === (string) $member->id)>{{ $member->name }}</option>
+                @endforeach
+            </select>
+            <input class="admin-field" type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}">
+            <input class="admin-field" type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}">
+            <button class="admin-button admin-button-dark" type="submit">Filter</button>
+            <a href="{{ route('admin.submissions.index') }}" class="admin-button admin-button-muted">Reset</a>
+        </form>
+    </section>
+
+    <section class="admin-panel reveal-delay">
+        <div class="admin-panel-header">
+            <div>
+                <p class="admin-kicker">Requests</p>
+                <h2 class="admin-panel-title">{{ number_format($submissions->total()) }} submissions</h2>
+            </div>
+        </div>
+
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Assigned</th>
+                        <th>Preferred</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($submissions as $submission)
+                        <tr>
+                            <td><a class="admin-link" href="{{ route('admin.submissions.show', $submission) }}">{{ $submission->reference_number }}</a></td>
+                            <td>
+                                <span class="block font-bold text-ink">{{ $submission->customer_name }}</span>
+                                <span class="text-xs text-muted">{{ $submission->customer_email }}</span>
+                            </td>
+                            <td>{{ $submission->service?->name ?? 'N/A' }}</td>
+                            <td><span class="admin-badge is-{{ $submission->status_color }}">{{ $submission->status_label }}</span></td>
+                            <td>{{ $submission->processedBy?->name ?? 'Unassigned' }}</td>
+                            <td>{{ $submission->preferred_date?->format('M d, Y') ?? 'Any time' }}</td>
+                            <td class="text-right"><a class="admin-button admin-button-muted" href="{{ route('admin.submissions.show', $submission) }}">Open</a></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7">@include('admin.partials.empty', ['message' => 'No submissions match these filters.'])</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6">{{ $submissions->links() }}</div>
+    </section>
 @endsection

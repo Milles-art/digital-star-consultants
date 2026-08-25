@@ -27,6 +27,7 @@ class ServiceField extends Model
         'radio' => 'Radio Buttons',
         'file' => 'File Upload',
         'hidden' => 'Hidden',
+        'password' => 'Password',
     ];
 
     protected $fillable = [
@@ -73,23 +74,9 @@ class ServiceField extends Model
         return $this->field_type === 'file';
     }
 
-    public function isCoreContactField(): bool
-    {
-        return in_array($this->field_key, [
-            'full_name',
-            'customer_name',
-            'email',
-            'email_address',
-            'customer_email',
-            'phone',
-            'phone_number',
-            'customer_phone',
-        ], true);
-    }
-
     public function isSelectField(): bool
     {
-        return in_array($this->field_type, ['select', 'radio', 'checkbox']);
+        return in_array($this->field_type, ['select', 'radio', 'checkbox'], true);
     }
 
     public function hasOptions(): bool
@@ -109,6 +96,14 @@ class ServiceField extends Model
 
     //  Validation
 
+    /**
+     * The single source of truth for how a dynamic field validates.
+     * Previously Public\SubmissionController::store() reimplemented an
+     * almost-identical switch statement inline instead of calling this —
+     * the two could (and did) drift: this method's 'file' case was
+     * missing a MIME whitelist that the controller had to patch in
+     * separately. Now the controller calls this directly.
+     */
     public function getValidationRules(): array
     {
         $rules = [];
@@ -141,6 +136,11 @@ class ServiceField extends Model
             case 'file':
                 $rules[] = 'file';
                 $rules[] = 'max:10240'; // 10MB
+                // Restrict to expected document/image types. Public,
+                // unauthenticated file upload with no MIME whitelist is a
+                // real risk — adjust this list to whatever document types
+                // the business actually accepts (IDs, certificates, photos).
+                $rules[] = 'mimes:pdf,jpg,jpeg,png,doc,docx';
                 break;
             case 'select':
             case 'radio':

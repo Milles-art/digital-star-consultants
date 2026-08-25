@@ -1,58 +1,63 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Digital Star Consultants
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel application for Digital Star Consultants (Mbagala, Dar es Salaam) — an IT/internet cafe, printing & design, stationery, and tech consultancy business.
 
-## About Laravel
+## What this app does
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Public site** — customers browse services and submit a service request with no account or login required (`GET /services`, `POST /submit`). Each submission gets a tracking reference customers can use to check status (`GET /track/{reference}`) without exposing their phone/email.
+- **Staff/admin panel** — session-authenticated, role-gated (`admin`, `ceo`, `gm`, `staff`) area for managing service categories, services, dynamic per-service form fields, and incoming submissions (assign, mark in-progress/completed/rejected, download uploaded files).
+- **Dynamic forms** — each service defines its own set of fields (`ServiceField`) so, e.g., a passport service can require a National ID field that a printing service doesn't need. Validation rules live in `ServiceField::getValidationRules()` as the single source of truth for both the public submit endpoint and the admin panel.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Roles
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Role  | Access |
+|-------|--------|
+| admin / ceo / gm | Full admin panel: categories, services, fields, submissions, users, reports |
+| staff | Submissions assigned to them only |
+| (public) | Browse services, submit a request, track by reference — no account |
 
-## Learning Laravel
+Staff/admin accounts are created only by an authenticated admin/ceo/gm via `POST /admin/users` (`Admin\UserController::store`), which assigns a role, dispatches a welcome email with login instructions, and never returns the temp password in the API response. There is no public self-registration route.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Local setup
 
 ```bash
-composer require laravel/boost --dev
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
 
-php artisan boost:install
+# configure DB in .env, then:
+php artisan migrate
+php artisan db:seed   # local/staging only — refuses to run when APP_ENV=production
+
+npm run dev            # or: npm run build
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Seeded demo accounts (local/staging only — see `PRODUCTION_CHECKLIST.md` for why these must not exist in production):
 
-## Contributing
+| Email | Password | Role |
+|-------|----------|------|
+| admin@digitalstar.local | password | admin |
+| ceo@digitalstar.local | password | ceo |
+| gm@digitalstar.local | password | gm |
+| staff1@digitalstar.local | password | staff |
+| staff2@digitalstar.local | password | staff |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Tests
 
-## Code of Conduct
+```bash
+php artisan test
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Covers auth, public submission flow, public service pages, staff submission access scoping, and mass-assignment protection on the `User` model.
 
-## Security Vulnerabilities
+## Before deploying
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+See `PRODUCTION_CHECKLIST.md` — environment, security, performance, and data steps to run through before go-live. `AGENTS.md` has notes for AI coding agents working in this codebase.
 
-## License
+## Stack
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- PHP 8.3, Laravel 13
+- MySQL (XAMPP locally)
+- Vite + Tailwind for the asset pipeline

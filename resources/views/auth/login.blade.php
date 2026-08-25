@@ -1,5 +1,41 @@
-@extends('layouts.app')
-@section('title', 'Log in | Digital Star Consultants')
-@section('content')
-<section class="mx-auto max-w-md px-4 py-16 sm:px-6"><div class="text-center"><p class="text-sm font-bold uppercase tracking-[.2em] text-brand-600">Welcome back</p><h1 class="mt-3 font-display text-3xl font-extrabold">Log in to your workspace.</h1></div>@include('partials.alerts')<form method="POST" action="{{ route('login') }}" class="surface-panel mt-8 rounded-2xl p-6">@csrf<label class="block text-sm font-semibold">Email<input class="field mt-2" type="email" name="email" value="{{ old('email') }}" required autofocus></label><label class="mt-5 block text-sm font-semibold">Password<input class="field mt-2" type="password" name="password" required></label><label class="mt-4 flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" name="remember" value="1"> Remember me</label><button class="btn btn-blue mt-6 w-full" type="submit">Log in</button><a class="mt-4 block text-center text-sm font-semibold text-brand-600" href="{{ route('password.request') }}">Forgot your password?</a><p class="mt-5 text-center text-sm text-slate-500">Need a team account? <a class="font-semibold text-brand-600" href="{{ route('register') }}">Register here</a></p></form></section>
-@endsection
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Login | {{ config('app.name', 'Digital Star Consultants') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="admin-body min-h-screen">
+    <div class="admin-aurora" aria-hidden="true"></div>
+
+    <main class="grid min-h-screen place-items-center px-5 py-10">
+        <section class="admin-login-card reveal">
+            <div class="text-center">
+                <span class="admin-login-mark">DS</span>
+                <p class="admin-kicker mt-6">Operations console</p>
+                <h1 class="mt-2 text-3xl font-black text-ink">Welcome back</h1>
+                <p class="mt-3 text-sm text-muted">Sign in to manage submissions, services, staff, reports, and customer messages.</p>
+            </div>
+
+            <form method="POST" action="{{ route('login') }}" class="admin-form-stack mt-8" data-login>
+                @csrf
+                <div>
+                    <label class="admin-label" for="email">Email</label>
+                    <input class="admin-field" id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" required autofocus>
+                </div>
+                <div>
+                    <label class="admin-label" for="password">Password</label>
+                    <input class="admin-field" id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <label class="admin-check mt-0">
+                    <input type="checkbox" name="remember" value="1">
+                    Remember this device
+                </label>
+                <button class="admin-button admin-button-dark w-full" type="submit">Sign in</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

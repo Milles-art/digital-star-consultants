@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 
@@ -10,20 +11,29 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    // Role Constants
     const ROLE_ADMIN = 'admin';
     const ROLE_CEO = 'ceo';
     const ROLE_GENERAL_MANAGER = 'gm';
     const ROLE_STAFF = 'staff';
 
-    /**
-     * Only safe, non-privileged attributes.
-     * role / is_active / last_login_at are set explicitly after authorization.
-     */
+    public const MANAGEMENT_ROLES = [
+        self::ROLE_ADMIN,
+        self::ROLE_CEO,
+        self::ROLE_GENERAL_MANAGER,
+    ];
+
+    public const ALL_ROLES = [
+        self::ROLE_ADMIN,
+        self::ROLE_CEO,
+        self::ROLE_GENERAL_MANAGER,
+        self::ROLE_STAFF,
+    ];
+
     protected $fillable = [
         'name',
         'email',
-        'password',
+        'role',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -35,7 +45,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'is_active' => 'boolean',
-        'password' => 'hashed',
     ];
 
     protected $attributes = [
@@ -43,14 +52,25 @@ class User extends Authenticatable
         'is_active' => true,
     ];
 
-    // Relationships
-
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'processed_by');
     }
 
-    // Role Check Methods
+    public function scopeManagement(Builder $query): Builder
+    {
+        return $query->whereIn('role', self::MANAGEMENT_ROLES);
+    }
+
+    public function scopeStaff(Builder $query): Builder
+    {
+        return $query->where('role', self::ROLE_STAFF);
+    }
+
+    public function scopeCanProcessSubmissions(Builder $query): Builder
+    {
+        return $query->whereIn('role', self::ALL_ROLES);
+    }
 
     public function isAdmin(): bool
     {
@@ -79,21 +99,12 @@ class User extends Authenticatable
 
     public function isManagement(): bool
     {
-        return in_array($this->role, [
-            self::ROLE_ADMIN,
-            self::ROLE_CEO,
-            self::ROLE_GENERAL_MANAGER,
-        ], true);
+        return in_array($this->role, self::MANAGEMENT_ROLES, true);
     }
 
     public function canProcessSubmission(): bool
     {
-        return in_array($this->role, [
-            self::ROLE_ADMIN,
-            self::ROLE_CEO,
-            self::ROLE_GENERAL_MANAGER,
-            self::ROLE_STAFF,
-        ], true);
+        return in_array($this->role, self::ALL_ROLES, true);
     }
 
     public function canManageUsers(): bool
@@ -101,21 +112,18 @@ class User extends Authenticatable
         return $this->isManagement();
     }
 
-    // Accessors
-
     public function getRoleLabelAttribute(): string
     {
-        return match ($this->role) {
+        return [
             self::ROLE_ADMIN => 'Administrator',
             self::ROLE_CEO => 'CEO',
             self::ROLE_GENERAL_MANAGER => 'General Manager',
             self::ROLE_STAFF => 'Staff',
-            default => $this->role,
-        };
+        ][$this->role] ?? $this->role;
     }
 
     public function isActive(): bool
     {
-        return (bool) $this->is_active;
+        return $this->is_active;
     }
 }

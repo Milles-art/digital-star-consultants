@@ -10,18 +10,11 @@ use Illuminate\View\View;
 
 class ContactController extends Controller
 {
-    /**
-     * Show the public contact form (no login required).
-     */
     public function show(): View
     {
         return view('contact');
     }
 
-    /**
-     * Store a contact message from the public form.
-     * Rate-limited via route middleware.
-     */
     public function store(Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
@@ -32,7 +25,13 @@ class ContactController extends Controller
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
-        ContactMessage::create($validated);
+        ContactMessage::create([
+            'name' => strip_tags($validated['name']),
+            'email' => strip_tags($validated['email']),
+            'phone' => isset($validated['phone']) ? strip_tags($validated['phone']) : null,
+            'subject' => isset($validated['subject']) ? strip_tags($validated['subject']) : null,
+            'message' => strip_tags($validated['message']),
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json([
