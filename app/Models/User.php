@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -16,24 +16,11 @@ class User extends Authenticatable
     const ROLE_GENERAL_MANAGER = 'gm';
     const ROLE_STAFF = 'staff';
 
-    public const MANAGEMENT_ROLES = [
-        self::ROLE_ADMIN,
-        self::ROLE_CEO,
-        self::ROLE_GENERAL_MANAGER,
-    ];
-
-    public const ALL_ROLES = [
-        self::ROLE_ADMIN,
-        self::ROLE_CEO,
-        self::ROLE_GENERAL_MANAGER,
-        self::ROLE_STAFF,
-    ];
-
     protected $fillable = [
         'name',
         'email',
-        'role',
-        'last_login_at',
+        'password',
+        'avatar_path',
     ];
 
     protected $hidden = [
@@ -45,6 +32,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'is_active' => 'boolean',
+        'password' => 'hashed',
     ];
 
     protected $attributes = [
@@ -52,24 +40,14 @@ class User extends Authenticatable
         'is_active' => true,
     ];
 
+    protected $appends = [
+        'role_label',
+        'avatar_url',
+    ];
+
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'processed_by');
-    }
-
-    public function scopeManagement(Builder $query): Builder
-    {
-        return $query->whereIn('role', self::MANAGEMENT_ROLES);
-    }
-
-    public function scopeStaff(Builder $query): Builder
-    {
-        return $query->where('role', self::ROLE_STAFF);
-    }
-
-    public function scopeCanProcessSubmissions(Builder $query): Builder
-    {
-        return $query->whereIn('role', self::ALL_ROLES);
     }
 
     public function isAdmin(): bool
@@ -99,12 +77,21 @@ class User extends Authenticatable
 
     public function isManagement(): bool
     {
-        return in_array($this->role, self::MANAGEMENT_ROLES, true);
+        return in_array($this->role, [
+            self::ROLE_ADMIN,
+            self::ROLE_CEO,
+            self::ROLE_GENERAL_MANAGER,
+        ], true);
     }
 
     public function canProcessSubmission(): bool
     {
-        return in_array($this->role, self::ALL_ROLES, true);
+        return in_array($this->role, [
+            self::ROLE_ADMIN,
+            self::ROLE_CEO,
+            self::ROLE_GENERAL_MANAGER,
+            self::ROLE_STAFF,
+        ], true);
     }
 
     public function canManageUsers(): bool
@@ -112,18 +99,37 @@ class User extends Authenticatable
         return $this->isManagement();
     }
 
+    public function isActive(): bool
+    {
+        return (bool) $this->is_active;
+    }
+
     public function getRoleLabelAttribute(): string
     {
-        return [
+        return match ($this->role) {
             self::ROLE_ADMIN => 'Administrator',
             self::ROLE_CEO => 'CEO',
             self::ROLE_GENERAL_MANAGER => 'General Manager',
             self::ROLE_STAFF => 'Staff',
-        ][$this->role] ?? $this->role;
+            default => ucfirst((string) $this->role),
+        };
     }
 
-    public function isActive(): bool
+    public function getAvatarUrlAttribute(): ?string
     {
-        return $this->is_active;
+        if (! $this->avatar_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->avatar_path);
+    }
+
+    public function initials(): string
+    {
+        return collect(preg_split('/\s+/', trim($this->name ?? '')))
+            ->filter()
+            ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+            ->take(2)
+            ->implode('') ?: 'U';
     }
 }

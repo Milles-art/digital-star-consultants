@@ -17,15 +17,18 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
+        // Allow Vite-built assets, inline Blade scripts/styles used by the public site,
+        // and Google Fonts (layout uses fonts.googleapis.com).
         $csp = "default-src 'self'; "
-            . "script-src 'self'; "
-            . "style-src 'self' 'unsafe-inline'; "
+            . "script-src 'self' 'unsafe-inline'; "
+            . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            . "font-src 'self' https://fonts.gstatic.com data:; "
             . "img-src 'self' data: blob:; "
-            . "font-src 'self'; "
             . "connect-src 'self'; "
             . "frame-ancestors 'none'; "
             . "base-uri 'self'; "
             . "form-action 'self';";
+
         $response->headers->set('Content-Security-Policy', $csp);
 
         $response->headers->remove('X-Powered-By');

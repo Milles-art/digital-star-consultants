@@ -1,36 +1,25 @@
-# Fixed public blades (design from other AI + backend fixes)
+# Admin submission show page
 
-## Fixes applied
-1. Tailwind `@source` directives restored in `app.css`
-2. Staff dashboard uses `staff.submissions.index`; management uses `admin.dashboard`
-3. Contact uses `public.contact.show` when available
-4. Track links use `url('/track')` (no fake route names)
-5. Submit form posts to `public.submissions.store` with correct field names
-6. Success reads `data.data.reference_number` (our API shape)
+## Features
+- Customer + service details
+- Dynamic field values
+- File download links (private disk)
+- Assign staff
+- Status: in progress / complete / reject (with reason)
+- Staff notes (PUT update)
+- Browser forms redirect back with flash (API JSON still works)
 
 ## Apply
 
 ```bash
 cd ~/digital-star-consultants
-git checkout fix/security-and-architecture
+unzip digital-star-submission-show.zip
 
-unzip digital-star-blades-fixed.zip
+mkdir -p resources/views/admin/submissions
+cp laravel-submission-show/app/Http/Controllers/Admin/SubmissionController.php app/Http/Controllers/Admin/
+cp laravel-submission-show/resources/views/admin/submissions/show.blade.php resources/views/admin/submissions/
 
-cp laravel-blades-fixed/resources/css/app.css resources/css/app.css
-cp -r laravel-blades-fixed/resources/views/* resources/views/
-
-npm run build
-
-git add resources/css/app.css resources/views/
-git commit -m "feat: premium public UI with backend-compatible routes and form"
-git push
+php artisan view:clear
 ```
 
-## Verify
-
-```bash
-php artisan serve
-# open /, /services, a service show page, submit a request
-php artisan test --filter=ExampleTest
-php artisan test --filter=PublicServicePagesTest
-```
+Open any submission from the list: `/admin/submissions/{id}`

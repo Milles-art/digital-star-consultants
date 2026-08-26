@@ -1,13 +1,13 @@
 @extends('layouts.app', ['title' => __('site.services.title')])
 
 @section('content')
-<section class="border-b border-line bg-gradient-to-b from-sky/50 to-paper">
+<section class="border-b border-line bg-gradient-to-b from-[#eaf3ff66] to-white">
     <div class="shell py-12 lg:py-16">
-        <p class="eyebrow reveal">{{ __('site.services.eyebrow') }}</p>
-        <h1 class="section-title reveal mt-2 text-ink">{{ __('site.services.title') }}</h1>
-        <p class="reveal mt-3 max-w-2xl text-muted">{{ __('site.services.lead') }}</p>
+        <p class="eyebrow rise-in">{{ __('site.services.eyebrow') }}</p>
+        <h1 class="section-title rise-in mt-2 text-ink">{{ __('site.services.title') }}</h1>
+        <p class="rise-in mt-3 max-w-2xl text-muted">{{ __('site.services.lead') }}</p>
 
-        <form method="GET" action="{{ route('public.services.index') }}" class="reveal mt-8 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <form method="GET" action="{{ route('public.services.index') }}" class="rise-in mt-8 flex flex-col gap-3 sm:flex-row sm:items-end">
             <div class="flex-1">
                 <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted" for="search">{{ __('site.services.search') }}</label>
                 <input id="search" name="search" type="search" value="{{ $search ?? '' }}"
@@ -16,8 +16,7 @@
             </div>
             <div class="sm:w-56">
                 <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted" for="category">{{ __('site.services.category') }}</label>
-                <select id="category" name="category"
-                    class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue focus:ring-4 focus:ring-blue/10">
+                <select id="category" name="category" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue focus:ring-4 focus:ring-blue/10">
                     <option value="">{{ __('site.services.all_categories') }}</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->slug }}" @selected(($selectedCategory ?? '') === $category->slug)>{{ $category->name }}</option>
@@ -32,44 +31,37 @@
     </div>
 </section>
 
-<section class="shell py-12 lg:py-16">
+<section class="shell py-10 lg:py-14">
     @if ($services->isEmpty())
-        <div class="rounded-3xl border border-dashed border-line bg-surface px-6 py-16 text-center">
+        <div class="rounded-3xl border border-dashed border-line bg-[#f7f9fc] px-6 py-16 text-center">
             <p class="font-semibold text-muted">{{ __('site.services.empty') }}</p>
             <a href="{{ route('public.services.index') }}" class="button-secondary mt-6 inline-flex">{{ __('site.services.clear') }}</a>
         </div>
     @else
-        @foreach ($serviceGroups as $group)
-            <div class="mb-12 last:mb-0">
-                <div class="mb-5 reveal">
-                    <h2 class="text-2xl font-black text-ink">{{ $group['name'] }}</h2>
-                    @if (!empty($group['description']))
-                        <p class="mt-1 text-sm text-muted">{{ $group['description'] }}</p>
-                    @endif
-                </div>
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach ($group['services'] as $service)
-                        <a href="{{ route('public.services.show', $service->slug) }}"
-                           class="reveal group flex flex-col rounded-3xl border border-line bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue/30 hover:shadow-lg">
-                            <div class="flex items-start justify-between gap-3">
-                                <h3 class="text-lg font-black text-ink group-hover:text-blue">{{ $service->name }}</h3>
-                                @if ($service->category)
-                                    <span class="shrink-0 rounded-full bg-sky px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue">{{ $service->category->name }}</span>
-                                @endif
-                            </div>
-                            @if ($service->description)
-                                <p class="mt-3 line-clamp-3 flex-1 text-sm text-muted">{{ $service->description }}</p>
-                            @endif
-                            <div class="mt-5 flex items-center justify-between border-t border-line pt-4 text-sm">
-                                <span class="font-black text-ink">{{ $service->formatted_price }}</span>
-                                <span class="font-semibold text-muted">{{ $service->duration }}</span>
-                            </div>
-                            <p class="mt-3 text-sm font-bold text-blue">{{ __('site.services.apply') }} →</p>
-                        </a>
-                    @endforeach
-                </div>
+        {{-- Desktop: row list (Stripe/Helpwave style). Mobile: stacked rows --}}
+        <div class="rise-in overflow-hidden rounded-3xl border border-line bg-white">
+            <div class="hidden border-b border-line bg-[#f7f9fc] px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-muted md:grid md:grid-cols-[1.4fr_0.8fr_0.5fr_0.5fr_auto] md:gap-4">
+                <span>Service</span>
+                <span>Category</span>
+                <span>{{ __('site.services.price') }}</span>
+                <span>{{ __('site.services.duration') }}</span>
+                <span></span>
             </div>
-        @endforeach
+            @foreach ($services as $service)
+                <a href="{{ route('public.services.show', $service->slug) }}" class="pub-service-row no-underline text-ink">
+                    <div>
+                        <p class="font-black">{{ $service->name }}</p>
+                        @if ($service->description)
+                            <p class="mt-0.5 line-clamp-1 text-sm text-muted md:hidden">{{ $service->description }}</p>
+                        @endif
+                    </div>
+                    <div class="text-sm font-semibold text-muted">{{ $service->category->name ?? '—' }}</div>
+                    <div class="text-sm font-black">{{ $service->formatted_price }}</div>
+                    <div class="text-sm font-semibold text-muted">{{ $service->duration }}</div>
+                    <div class="text-sm font-bold text-blue">{{ __('site.services.apply') }} →</div>
+                </a>
+            @endforeach
+        </div>
     @endif
 </section>
 @endsection

@@ -1,0 +1,24 @@
+REDESIGN V2 — extract into project root
+
+FILES:
+  resources/css/public-extras.css
+  resources/css/admin-glass.css
+  resources/views/layouts/app.blade.php
+  resources/views/layouts/admin.blade.php
+  resources/views/home.blade.php
+  resources/views/admin/dashboard.blade.php
+  resources/views/services/index.blade.php
+
+OPTIONAL: append CSS into app.css instead of separate files.
+The Blade layouts inline the CSS files if they exist at resource_path('css/...').
+
+AFTER EXTRACT:
+  npm run build
+  php artisan view:clear
+
+Dashboard variables: if your DashboardController uses different keys than
+$stats / $recentSubmissions, adjust the blade or map them in the controller.
+The dashboard is resilient (uses ?? '—') when stats are missing.
+
+Public home: 3 pillars, horizontal steps, asymmetric work grid, trust band.
+Admin: glassmorphism, aurora, staggered reveal, table queue (not card spam).
