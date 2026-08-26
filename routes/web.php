@@ -1,122 +1,123 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\{
-    DashboardController,
-    ServiceCategoryController,
-    ServiceController,
-    ServiceFieldController,
-    SubmissionController as AdminSubmissionController,
-    SubmissionFileController,
-    UserController,
-    ReportController,
-    ContactMessageController,
-};
-use App\Http\Controllers\Public\{
-    ServiceController as PublicServiceController,
-    SubmissionController as PublicSubmissionController,
-    HomeController,
-    ContactController,
-};
-use App\Http\Controllers\Auth\{
-    LoginController,
-    RegisterController,
-    PasswordResetController,
-};
 
+/*
+|--------------------------------------------------------------------------
+| Public Routes (NO login required)
+|--------------------------------------------------------------------------
+*/
 
-// ========== Public Routes (No Auth Required) ==========
+Route::get('/', [App\Http\Controllers\Public\HomeController::class, 'index'])->name('home');
 
-// Home
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/services', [App\Http\Controllers\Public\ServiceController::class, 'index'])
+    ->name('public.services.index');
 
-// Services
-Route::get('/services', [PublicServiceController::class, 'index'])->name('public.services.index');
-Route::get('/services/{slug}', [PublicServiceController::class, 'show'])->name('public.services.show');
+Route::get('/services/{slug}', [App\Http\Controllers\Public\ServiceController::class, 'show'])
+    ->name('public.services.show');
 
-// Submissions
-Route::post('/submit', [PublicSubmissionController::class, 'store'])
+Route::post('/submit', [App\Http\Controllers\Public\SubmissionController::class, 'store'])
     ->middleware('throttle:10,1')
     ->name('public.submissions.store');
-Route::get('/track/{reference}', [PublicSubmissionController::class, 'track'])
+
+Route::get('/track/{reference}', [App\Http\Controllers\Public\SubmissionController::class, 'track'])
     ->middleware('throttle:30,1')
     ->name('public.submissions.track');
 
-// Contact
-Route::post('/contact', [ContactController::class, 'store'])
+Route::get('/contact', [App\Http\Controllers\Public\ContactController::class, 'show'])
+    ->name('public.contact.show');
+Route::post('/contact', [App\Http\Controllers\Public\ContactController::class, 'store'])
     ->middleware('throttle:5,1')
     ->name('public.contact.store');
 
-// ========== Guest Routes (No Auth Required) ==========
+/*
+|--------------------------------------------------------------------------
+| Guest Auth Routes
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login'])
+        ->middleware('throttle:5,1');
 
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
+    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [RegisterController::class, 'register'])
+        ->middleware('throttle:5,1');
 
-Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
-Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
-    ->middleware('throttle:5,1')
-    ->name('password.email');
-Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
-Route::post('/reset-password', [PasswordResetController::class, 'reset'])
-    ->middleware('throttle:5,1')
-    ->name('password.update');
+    Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+        ->middleware('throttle:5,1')
+        ->name('password.email');
 
-// ========== Authenticated Routes ==========
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])
+        ->middleware('throttle:5,1')
+        ->name('password.update');
+});
 
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
 
-// ========== Protected Routes (Auth Required) ==========
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
 Route::middleware(['auth'])->group(function () {
 
-    // Admin Routes (Management only) — with global throttle
-    Route::middleware(['role:admin,ceo,gm', 'throttle:120,1'])
-        ->prefix('admin')
-        ->group(function () {
+    // Profile — any logged-in user (admin or staff)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+    Route::delete('/profile/avatar', [ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
 
-        // Dashboard
+    // --------------------------------------------------
+    // Admin / Management (admin, ceo, gm)
+    // --------------------------------------------------
+    Route::prefix('admin')->middleware(['role:admin,ceo,gm'])->group(function () {
+
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
         Route::get('/users/stats', [UserController::class, 'stats'])->name('admin.users.stats');
 
         // Categories
-        Route::get('/categories', [ServiceCategoryController::class, 'index'])->name('admin.categories.index');
-        Route::post('/categories', [ServiceCategoryController::class, 'store'])->name('admin.categories.store');
-        Route::get('/categories/{category}', [ServiceCategoryController::class, 'show'])->name('admin.categories.show');
-        Route::put('/categories/{category}', [ServiceCategoryController::class, 'update'])->name('admin.categories.update');
-        Route::delete('/categories/{category}', [ServiceCategoryController::class, 'destroy'])->name('admin.categories.destroy');
-        Route::post('/categories/{category}/toggle-active', [ServiceCategoryController::class, 'toggleActive'])->name('admin.categories.toggle-active');
+        Route::get('/categories', [App\Http\Controllers\Admin\ServiceCategoryController::class, 'index'])->name('admin.categories.index');
+        Route::post('/categories', [App\Http\Controllers\Admin\ServiceCategoryController::class, 'store'])->name('admin.categories.store');
+        Route::put('/categories/{category}', [App\Http\Controllers\Admin\ServiceCategoryController::class, 'update'])->name('admin.categories.update');
+        Route::delete('/categories/{category}', [App\Http\Controllers\Admin\ServiceCategoryController::class, 'destroy'])->name('admin.categories.destroy');
 
         // Services
-        Route::get('/services', [ServiceController::class, 'index'])->name('admin.services.index');
-        Route::post('/services', [ServiceController::class, 'store'])->name('admin.services.store');
-        Route::get('/services/{service}', [ServiceController::class, 'show'])->name('admin.services.show');
-        Route::put('/services/{service}', [ServiceController::class, 'update'])->name('admin.services.update');
-        Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('admin.services.destroy');
-        Route::post('/services/{service}/toggle-active', [ServiceController::class, 'toggleActive'])->name('admin.services.toggle-active');
+        Route::get('/services', [App\Http\Controllers\Admin\ServiceController::class, 'index'])->name('admin.services.index');
+        Route::post('/services', [App\Http\Controllers\Admin\ServiceController::class, 'store'])->name('admin.services.store');
+        Route::get('/services/{service}', [App\Http\Controllers\Admin\ServiceController::class, 'show'])->name('admin.services.show');
+        Route::put('/services/{service}', [App\Http\Controllers\Admin\ServiceController::class, 'update'])->name('admin.services.update');
+        Route::delete('/services/{service}', [App\Http\Controllers\Admin\ServiceController::class, 'destroy'])->name('admin.services.destroy');
 
         // Service Fields
-        Route::get('/services/{service}/fields', [ServiceFieldController::class, 'index'])->name('admin.fields.index');
-        Route::post('/services/{service}/fields', [ServiceFieldController::class, 'store'])->name('admin.fields.store');
-        Route::get('/fields/{field}', [ServiceFieldController::class, 'show'])->name('admin.fields.show');
-        Route::put('/fields/{field}', [ServiceFieldController::class, 'update'])->name('admin.fields.update');
-        Route::delete('/fields/{field}', [ServiceFieldController::class, 'destroy'])->name('admin.fields.destroy');
-        Route::post('/fields/reorder', [ServiceFieldController::class, 'reorder'])->name('admin.fields.reorder');
+        Route::get('/services/{service}/fields', [App\Http\Controllers\Admin\ServiceFieldController::class, 'index'])->name('admin.service-fields.index');
+        Route::post('/services/{service}/fields', [App\Http\Controllers\Admin\ServiceFieldController::class, 'store'])->name('admin.service-fields.store');
+        Route::put('/fields/{field}', [App\Http\Controllers\Admin\ServiceFieldController::class, 'update'])->name('admin.service-fields.update');
+        Route::delete('/fields/{field}', [App\Http\Controllers\Admin\ServiceFieldController::class, 'destroy'])->name('admin.service-fields.destroy');
 
-        // Submissions
-        Route::get('/submissions', [AdminSubmissionController::class, 'index'])->name('admin.submissions.index');
-        Route::get('/submissions/{submission}', [AdminSubmissionController::class, 'show'])->name('admin.submissions.show');
-        Route::put('/submissions/{submission}', [AdminSubmissionController::class, 'update'])->name('admin.submissions.update');
-        Route::delete('/submissions/{submission}', [AdminSubmissionController::class, 'destroy'])->name('admin.submissions.destroy');
-        Route::post('/submissions/{submission}/assign', [AdminSubmissionController::class, 'assign'])->name('admin.submissions.assign');
-        Route::post('/submissions/{submission}/complete', [AdminSubmissionController::class, 'markCompleted'])->name('admin.submissions.complete');
-        Route::post('/submissions/{submission}/in-progress', [AdminSubmissionController::class, 'markInProgress'])->name('admin.submissions.in-progress');
-        Route::post('/submissions/{submission}/reject', [AdminSubmissionController::class, 'markRejected'])->name('admin.submissions.reject');
+        // Submissions (management)
+        Route::get('/submissions', [App\Http\Controllers\Admin\SubmissionController::class, 'index'])->name('admin.submissions.index');
+        Route::get('/submissions/{submission}', [App\Http\Controllers\Admin\SubmissionController::class, 'show'])->name('admin.submissions.show');
+        Route::put('/submissions/{submission}', [App\Http\Controllers\Admin\SubmissionController::class, 'update'])->name('admin.submissions.update');
+        Route::delete('/submissions/{submission}', [App\Http\Controllers\Admin\SubmissionController::class, 'destroy'])->name('admin.submissions.destroy');
+        Route::post('/submissions/{submission}/assign', [App\Http\Controllers\Admin\SubmissionController::class, 'assign'])->name('admin.submissions.assign');
+        Route::post('/submissions/{submission}/complete', [App\Http\Controllers\Admin\SubmissionController::class, 'markCompleted'])->name('admin.submissions.complete');
+        Route::post('/submissions/{submission}/in-progress', [App\Http\Controllers\Admin\SubmissionController::class, 'markInProgress'])->name('admin.submissions.in-progress');
+        Route::post('/submissions/{submission}/reject', [App\Http\Controllers\Admin\SubmissionController::class, 'markRejected'])->name('admin.submissions.reject');
 
-        // File downloads
-        Route::get('/submissions/{submission}/files/{value}', [SubmissionFileController::class, 'download'])->name('admin.submissions.files.download');
+        Route::get('/submissions/{submission}/files/{value}', [App\Http\Controllers\Admin\SubmissionFileController::class, 'download'])
+            ->name('admin.submissions.files.download');
 
         // Users
         Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
@@ -125,28 +126,41 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
         Route::post('/users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('admin.users.toggle-active');
 
-        // Reports
-        Route::get('/reports/daily', [ReportController::class, 'daily'])->name('admin.reports.daily');
-        Route::get('/reports/weekly', [ReportController::class, 'weekly'])->name('admin.reports.weekly');
-        Route::get('/reports/monthly', [ReportController::class, 'monthly'])->name('admin.reports.monthly');
-        Route::get('/reports/staff-performance', [ReportController::class, 'staffPerformance'])->name('admin.reports.staff-performance');
-        Route::get('/reports/service-usage', [ReportController::class, 'serviceUsage'])->name('admin.reports.service-usage');
-        Route::get('/reports', [ReportController::class, 'overview'])->name('admin.reports.index');
-        Route::get('/reports/overview', [ReportController::class, 'overview'])->name('admin.reports.overview');
+        // Contact messages
+        Route::get('/contact-messages', [App\Http\Controllers\Admin\ContactMessageController::class, 'index'])
+            ->name('admin.contact-messages.index');
+        Route::get('/contact-messages/{contactMessage}', [App\Http\Controllers\Admin\ContactMessageController::class, 'show'])
+            ->name('admin.contact-messages.show');
+        Route::delete('/contact-messages/{contactMessage}', [App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])
+            ->name('admin.contact-messages.destroy');
 
-        // Contact Messages
-        Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('admin.contact-messages.index');
-        Route::get('/contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])->name('admin.contact-messages.show');
-        Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('admin.contact-messages.destroy');
+        // Reports
+        Route::get('/reports/daily', [App\Http\Controllers\Admin\ReportController::class, 'daily'])->name('admin.reports.daily');
+        Route::get('/reports/weekly', [App\Http\Controllers\Admin\ReportController::class, 'weekly'])->name('admin.reports.weekly');
+        Route::get('/reports/monthly', [App\Http\Controllers\Admin\ReportController::class, 'monthly'])->name('admin.reports.monthly');
+        Route::get('/reports/staff-performance', [App\Http\Controllers\Admin\ReportController::class, 'staffPerformance'])->name('admin.reports.staff-performance');
+        Route::get('/reports/service-usage', [App\Http\Controllers\Admin\ReportController::class, 'serviceUsage'])->name('admin.reports.service-usage');
+        Route::get('/reports/overview', [App\Http\Controllers\Admin\ReportController::class, 'overview'])->name('admin.reports.overview');
     });
 
-    // Staff Routes
-    Route::prefix('staff')->middleware(['role:staff', 'throttle:60,1'])->group(function () {
-        Route::get('/submissions', [\App\Http\Controllers\Staff\SubmissionController::class, 'index'])->name('staff.submissions');
-        Route::get('/submissions/{submission}', [\App\Http\Controllers\Staff\SubmissionController::class, 'show'])->name('staff.submissions.show');
-        Route::post('/submissions/{submission}/in-progress', [\App\Http\Controllers\Staff\SubmissionController::class, 'markInProgress'])->name('staff.submissions.in-progress');
-        Route::post('/submissions/{submission}/complete', [\App\Http\Controllers\Staff\SubmissionController::class, 'markCompleted'])->name('staff.submissions.complete');
-        Route::post('/submissions/{submission}/reject', [\App\Http\Controllers\Staff\SubmissionController::class, 'markRejected'])->name('staff.submissions.reject');
-        Route::put('/submissions/{submission}/notes', [\App\Http\Controllers\Staff\SubmissionController::class, 'updateNotes'])->name('staff.submissions.notes');
+    // --------------------------------------------------
+    // Staff area
+    // --------------------------------------------------
+    Route::prefix('staff')->middleware(['role:staff'])->group(function () {
+        Route::get('/submissions', [App\Http\Controllers\Staff\SubmissionController::class, 'index'])
+            ->name('staff.submissions.index');
+        Route::get('/submissions/{submission}', [App\Http\Controllers\Staff\SubmissionController::class, 'show'])
+            ->name('staff.submissions.show');
+        Route::post('/submissions/{submission}/in-progress', [App\Http\Controllers\Staff\SubmissionController::class, 'markInProgress'])
+            ->name('staff.submissions.in-progress');
+        Route::post('/submissions/{submission}/complete', [App\Http\Controllers\Staff\SubmissionController::class, 'markCompleted'])
+            ->name('staff.submissions.complete');
+        Route::post('/submissions/{submission}/reject', [App\Http\Controllers\Staff\SubmissionController::class, 'markRejected'])
+            ->name('staff.submissions.reject');
+        Route::put('/submissions/{submission}/notes', [App\Http\Controllers\Staff\SubmissionController::class, 'updateNotes'])
+            ->name('staff.submissions.notes');
+
+        Route::get('/submissions/{submission}/files/{value}', [App\Http\Controllers\Admin\SubmissionFileController::class, 'download'])
+            ->name('staff.submissions.files.download');
     });
 });
