@@ -248,4 +248,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAjaxForms();
     setupLoginForm();
     setupReports();
+
+    if (document.getElementById('hero-3d-canvas-container')) {
+        import('./hero-3d').then(({ initHero3D }) => {
+            initHero3D();
+        });
+    }
 });
