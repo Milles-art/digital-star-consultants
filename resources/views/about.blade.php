@@ -1,39 +1,8 @@
-@extends('layouts.app', ['title' => __('site.nav.about')])
-
+@extends('layouts.app')
+@section('title','About — Digital Star Consultants')
 @section('content')
-<section class="border-b border-line bg-gradient-to-b from-sky/50 to-paper">
-    <div class="shell py-14 lg:py-20">
-        <p class="eyebrow reveal">{{ __('site.about.eyebrow') }}</p>
-        <h1 class="section-title reveal mt-2 max-w-3xl text-ink">{{ __('site.about.title') }}</h1>
-        <p class="reveal mt-5 max-w-2xl text-lg text-muted">{{ __('site.about.lead') }}</p>
-    </div>
-</section>
-
-<section class="shell py-14 lg:py-16">
-    <div class="grid gap-10 lg:grid-cols-2">
-        <div class="reveal">
-            <h2 class="text-2xl font-black text-ink">{{ __('site.about.mission_t') }}</h2>
-            <p class="mt-4 text-muted leading-relaxed">{{ __('site.about.mission_d') }}</p>
-        </div>
-        <div class="reveal rounded-3xl border border-line bg-white p-6 shadow-sm">
-            <h2 class="text-2xl font-black text-ink">{{ __('site.about.why_t') }}</h2>
-            <ul class="mt-5 space-y-3 text-sm font-semibold text-ink">
-                <li class="flex gap-3"><span class="text-yellow">●</span> {{ __('site.about.why_1') }}</li>
-                <li class="flex gap-3"><span class="text-yellow">●</span> {{ __('site.about.why_2') }}</li>
-                <li class="flex gap-3"><span class="text-yellow">●</span> {{ __('site.about.why_3') }}</li>
-                <li class="flex gap-3"><span class="text-yellow">●</span> {{ __('site.about.why_4') }}</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="reveal mt-12 rounded-3xl border border-line bg-ink p-8 text-white">
-        <p class="text-[11px] font-bold uppercase tracking-wider text-yellow">{{ __('site.about.base_t') }}</p>
-        <p class="mt-3 text-xl font-black">{{ __('site.about.base_d') }}</p>
-        <div class="mt-6 flex flex-wrap gap-2">
-            <a href="https://wa.me/255783257716" class="wa-btn" target="_blank" rel="noopener">WhatsApp 0783 257 716</a>
-            <a href="https://wa.me/255754931751" class="wa-btn" target="_blank" rel="noopener">WhatsApp 0754 931 751</a>
-            <a href="{{ route('public.contact.show') }}" class="button-secondary !border-white/30 !text-white">{{ __('site.nav.contact') }}</a>
-        </div>
-    </div>
-</section>
+<section class="ds-page-hero"><div class="ds-container"><span class="ds-index">ABOUT / DIGITAL STAR</span><h1>Engineering with<br><em>business context.</em></h1><p>We believe good technology is not technology for its own sake. It is a clear system that makes work easier, faster and more visible.</p></div></section>
+<section class="ds-section"><div class="ds-container ds-story"><div><span class="ds-index">OUR APPROACH</span><h2>Understand first.<br>Build deliberately.</h2></div><div><p>Digital Star Consultants works at the intersection of software engineering, business operations and practical digital transformation.</p><p>We focus on useful systems: applications people can actually use, infrastructure teams can maintain and workflows leaders can understand.</p></div></div></section>
+<section class="ds-section ds-dark"><div class="ds-container"><span class="ds-index">CORE VALUES</span><div class="ds-values"><div><b>01</b><h3>Clarity</h3><p>Simple decisions, understandable systems.</p></div><div><b>02</b><h3>Craft</h3><p>Careful engineering from interface to infrastructure.</p></div><div><b>03</b><h3>Reliability</h3><p>Technology that keeps working after launch.</p></div><div><b>04</b><h3>Progress</h3><p>Build, learn, improve and keep moving.</p></div></div></div></section>
+<section class="ds-section"><div class="ds-container ds-office"><div><span class="ds-index">WHERE WE WORK</span><h2>Dar es Salaam<br><em>· Tanzania</em></h2></div><div><p>Our office is based in Dar es Salaam, with digital delivery designed to support clients wherever they operate.</p><p>Mon–Fri · 08:00–17:00</p></div></div></section>
 @endsection
