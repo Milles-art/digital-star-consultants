@@ -24,9 +24,9 @@ class StoreSubmissionRequest extends FormRequest
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|string|max:20',
             'customer_email' => 'nullable|email|max:255',
-            'customer_notes' => 'nullable|string',
+            'customer_notes' => 'nullable|string|max:2000',
             'preferred_date' => 'nullable|date',
-            'fields' => 'nullable|array',
+            'fields' => 'nullable|array|max:50',
         ];
     }
 

@@ -8,6 +8,7 @@ use App\Jobs\SendStatusUpdateEmailJob;
 use App\Jobs\SendSubmissionCompletedEmailJob;
 use App\Jobs\SendSubmissionRejectedEmailJob;
 use App\Models\Submission;
+use App\Models\ActivityLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -65,6 +66,7 @@ class SubmissionController extends Controller
 
         $oldStatus = $submission->status;
         $submission->markAsInProgress();
+        ActivityLog::create(['user_id' => auth()->id(), 'subject_type' => Submission::class, 'subject_id' => $submission->id, 'event' => 'status_changed', 'title' => 'Request moved to in progress', 'description' => auth()->user()->name.' started processing the request.', 'metadata' => ['from' => $oldStatus, 'to' => $submission->status]]);
 
         SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
 
@@ -79,7 +81,9 @@ class SubmissionController extends Controller
     {
         $this->authorize('complete', $submission);
 
+        $oldStatus = $submission->status;
         $submission->markAsCompleted();
+        ActivityLog::create(['user_id' => auth()->id(), 'subject_type' => Submission::class, 'subject_id' => $submission->id, 'event' => 'status_changed', 'title' => 'Request completed', 'description' => auth()->user()->name.' marked the request as completed.', 'metadata' => ['from' => $oldStatus, 'to' => $submission->status]]);
 
         SendSubmissionCompletedEmailJob::dispatch($submission);
 
@@ -100,6 +104,7 @@ class SubmissionController extends Controller
 
         $oldStatus = $submission->status;
         $submission->markAsRejected($validated['reason'] ?? null);
+        ActivityLog::create(['user_id' => auth()->id(), 'subject_type' => Submission::class, 'subject_id' => $submission->id, 'event' => 'status_changed', 'title' => 'Request rejected', 'description' => $validated['reason'] ?: 'Request rejected by staff.', 'metadata' => ['from' => $oldStatus, 'to' => $submission->status]]);
 
         SendSubmissionRejectedEmailJob::dispatch($submission, $validated['reason'] ?? null);
 
@@ -121,6 +126,7 @@ class SubmissionController extends Controller
         $submission->forceFill([
             'staff_notes' => $validated['staff_notes'] ?? null,
         ])->save();
+        ActivityLog::create(['user_id' => auth()->id(), 'subject_type' => Submission::class, 'subject_id' => $submission->id, 'event' => 'note_added', 'title' => 'Internal notes updated', 'description' => 'Staff notes were updated.']);
 
         return response()->json([
             'status' => 'success',

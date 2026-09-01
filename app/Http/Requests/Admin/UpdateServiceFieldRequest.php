@@ -21,7 +21,7 @@ class UpdateServiceFieldRequest extends FormRequest
     {
         return [
             'label' => 'nullable|string|max:255',
-            'field_type' => 'nullable|string|in:text,textarea,number,email,tel,date,time,datetime,select,checkbox,radio,file,hidden,password',
+            'field_type' => 'nullable|string|in:text,textarea,number,email,tel,date,time,datetime,select,checkbox,radio,file',
             'options' => 'nullable|array',
             'placeholder' => 'nullable|string|max:255',
             'help_text' => 'nullable|string',

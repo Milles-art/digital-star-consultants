@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServiceCategory;
+use App\Models\Service;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -29,6 +30,13 @@ class HomeController extends Controller
             ['n' => '04', 'title' => 'Get your result', 'desc' => 'Follow your application status and receive the outcome when it is ready.'],
         ];
 
-        return view('home', compact('categories', 'steps'));
+        $popularServices = Service::query()
+            ->with('category')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->limit(6)
+            ->get();
+
+        return view('home', compact('categories', 'steps', 'popularServices'));
     }
 }

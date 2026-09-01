@@ -1,9 +1,2 @@
 @extends('layouts.app')
-@section('title','Work — Digital Star Consultants')
-@section('content')
-<section class="ds-page-hero"><div class="ds-container"><span class="ds-index">WORK / SELECTED SYSTEMS</span><h1>Software that<br><em>does the job.</em></h1><p>A selection of platforms, internal tools and digital experiences designed around real operational needs.</p></div></section>
-<section class="ds-section"><div class="ds-container"><div class="ds-work-catalog">
-@foreach(($itProjects ?? []) as $project)<article><div class="ds-project-visual"><span>DS / {{ sprintf('%02d',$loop->iteration) }}</span><b>{{ $project->name }}</b></div><small>SOFTWARE SYSTEM</small><h2>{{ $project->name }}</h2><p>{{ $project->description }}</p></article>@endforeach
-@foreach(($graphicsProjects ?? []) as $project)<article><div class="ds-project-visual graphic"><span>CREATIVE / {{ sprintf('%02d',$loop->iteration) }}</span><b>{{ $project->name }}</b></div><small>DESIGN & DIGITAL</small><h2>{{ $project->name }}</h2><p>{{ $project->description }}</p></article>@endforeach
-</div></div></section>
-@endsection
+@section('content')<section class="page-hero"><div class="eyebrow">OUR WORK</div><h1>Practical work.<br><em>Real outcomes.</em></h1><p>A growing showcase of digital platforms, business tools, websites, branding and production work.</p></section><section class="work-showcase"><div class="work-feature"><img src="{{ asset('images/case-study-platform.jpg') }}" alt="Digital platform case study"><div><span>01 · DIGITAL PLATFORM</span><h2>Service request & tracking platform</h2><p>A structured workflow for collecting applications, assigning staff and giving customers a clear reference to follow.</p></div></div><div class="work-grid-two"><article><img src="{{ asset('images/case-study-ops.jpg') }}" alt="Operations dashboard"><span>02 · OPERATIONS</span><h3>Business operations dashboard</h3></article><article><img src="{{ asset('images/tech-cloud-systems.jpg') }}" alt="Technology systems"><span>03 · TECHNOLOGY</span><h3>Cloud & digital systems</h3></article></div></section>@endsection

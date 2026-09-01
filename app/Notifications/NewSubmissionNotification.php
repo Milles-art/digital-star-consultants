@@ -18,7 +18,19 @@ class NewSubmissionNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
+    }
+
+    public function toDatabase(object $notifiable): array
+    {
+        return [
+            'type' => 'new_submission',
+            'title' => 'New service request',
+            'message' => $this->submission->customer_name.' submitted '.$this->submission->service->name,
+            'reference' => $this->submission->reference_number,
+            'submission_id' => $this->submission->id,
+            'url' => url('/admin/submissions/'.$this->submission->id),
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

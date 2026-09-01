@@ -25,3 +25,9 @@ Copy the `resources` files into the project, then run:
 `npm run build`
 
 The existing Laravel controllers/data contracts should remain the source of truth for the service, tracking and contact pages.
+
+## Management authentication
+
+Management uses a dedicated `/admin/login` portal. There is intentionally no public management self-registration route: administrators create staff and management accounts from the authenticated Admin → Users area. This prevents anyone on the public site from registering an administrative account.
+
+For local development, run `php artisan db:seed` to create the demo management accounts defined in `DatabaseSeeder`. Change those credentials before any real deployment.

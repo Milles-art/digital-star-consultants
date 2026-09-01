@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Setting;
 
 class Submission extends Model
 {
@@ -89,6 +90,11 @@ class Submission extends Model
         return $this->belongsTo(User::class, 'processed_by');
     }
 
+    public function activities(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class)->latest();
+    }
+
     // Scopes
 
     public function scopePending(Builder $query): Builder
@@ -148,6 +154,12 @@ class Submission extends Model
         return self::STATUSES[$status]['label'] ?? $status;
     }
 
+    public function assignTo(User $staff): void
+    {
+        $this->processed_by = $staff->id;
+        $this->save();
+    }
+
     // Status transitions
     // Staff\SubmissionController calls these; they didn't exist on the
     // model yet, so every markInProgress/markCompleted/markRejected
@@ -196,8 +208,12 @@ class Submission extends Model
      */
     public static function generateReferenceNumber(): string
     {
+        $prefix = strtoupper((string) Setting::get('operations.reference_prefix', 'DSC'));
+        $prefix = preg_replace('/[^A-Z0-9]+/', '', $prefix) ?: 'DSC';
+        $prefix = substr($prefix, 0, 12);
+
         do {
-            $candidate = 'DSC-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
+            $candidate = $prefix.'-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
         } while (self::where('reference_number', $candidate)->exists());
 
         return $candidate;

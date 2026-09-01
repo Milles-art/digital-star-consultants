@@ -1,0 +1,13 @@
+@extends('layouts.admin')
+@section('page_title','Reports & insights')
+@section('content')
+<div class="ds-report-home">
+<section class="admin-panel ds-report-hero"><div><span class="eyebrow">OPERATIONS INTELLIGENCE</span><h2>Understand the work behind every request.</h2><p>Open a dedicated report for request volume, staff workload, service demand or revenue. Every report keeps its own filters and data view.</p></div><a class="button button-yellow" href="{{ route('admin.finance.index') }}">Open finance →</a></section>
+<section class="ds-report-cards">
+@php $cards=[['Daily report','Requests received, completed and outstanding for a single day.',route('admin.reports.daily'),'01'],['Weekly report','Day-by-day workload across a selected period.',route('admin.reports.weekly'),'02'],['Monthly report','Calendar-month volume and completion trend.',route('admin.reports.monthly'),'03'],['Staff performance','Workload and completion rates by team member.',route('admin.reports.staff-performance'),'04'],['Service usage','The services customers request most often.',route('admin.reports.service-usage'),'05'],['Finance & revenue','Sales, collections, refunds, AOV and revenue mix.',route('admin.finance.index'),'06']]; @endphp
+@foreach($cards as [$title,$text,$href,$num])<a class="ds-report-card {{ $num==='06'?'dark':'' }}" href="{{ $href }}"><span>{{ $num }}</span><div><strong>{{ $title }}</strong><p>{{ $text }}</p></div><b>Open report →</b></a>@endforeach
+</section>
+</div>
+@push('styles')<style>.ds-report-home{display:grid;gap:18px}.ds-report-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:22px}.ds-report-hero h2{margin:6px 0 8px}.ds-report-hero p{margin:0;color:#334155;max-width:800px;font-size:15px;line-height:1.7}.ds-report-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.ds-report-card{min-height:220px;border:1px solid #e2e8f0;border-radius:20px;background:#fff;padding:22px;display:grid;gap:18px;text-decoration:none;color:#0f172a;box-shadow:0 10px 30px rgba(15,23,42,.05)}.ds-report-card>span{font-size:13px;font-weight:800;letter-spacing:.08em;color:#64748b}.ds-report-card strong{font-size:23px}.ds-report-card p{margin:8px 0 0;color:#475569;line-height:1.65;font-size:14px}.ds-report-card b{font-size:14px}.ds-report-card.dark{background:#0b1b33;color:#fff;border-color:#0b1b33}.ds-report-card.dark span,.ds-report-card.dark p{color:#cbd5e1}@media(max-width:1000px){.ds-report-cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.ds-report-hero{display:grid}.ds-report-cards{grid-template-columns:1fr}}
+</style>@endpush
+@endsection

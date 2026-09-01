@@ -75,8 +75,10 @@ class Service extends Model
 
     public function scopeSearch(Builder $query, string $search): Builder
     {
-        return $query->where('name', 'LIKE', "%{$search}%")
-                     ->orWhere('description', 'LIKE', "%{$search}%");
+        return $query->where(function (Builder $builder) use ($search) {
+            $builder->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%");
+        });
     }
 
     // Accessors

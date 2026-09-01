@@ -15,3 +15,8 @@ GET /work
 GET /about
 GET /track
 GET /contact
+
+
+### After upgrading an existing project
+
+Run `php artisan migrate` so the activity log, notification, and settings tables introduced in later versions are created. If you only unzip over an existing database and do not migrate, new admin screens may not have the tables they expect.

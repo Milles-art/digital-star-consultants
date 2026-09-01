@@ -16,6 +16,14 @@ class User extends Authenticatable
     const ROLE_GENERAL_MANAGER = 'gm';
     const ROLE_STAFF = 'staff';
 
+    /** @var list<string> All supported account roles used by admin reporting and filters. */
+    public const ALL_ROLES = [
+        self::ROLE_ADMIN,
+        self::ROLE_CEO,
+        self::ROLE_GENERAL_MANAGER,
+        self::ROLE_STAFF,
+    ];
+
     protected $fillable = [
         'name',
         'email',
@@ -48,6 +56,20 @@ class User extends Authenticatable
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'processed_by');
+    }
+
+    public function scopeStaff($query)
+    {
+        return $query->where('role', self::ROLE_STAFF);
+    }
+
+    public function scopeManagement($query)
+    {
+        return $query->whereIn('role', [
+            self::ROLE_ADMIN,
+            self::ROLE_CEO,
+            self::ROLE_GENERAL_MANAGER,
+        ]);
     }
 
     public function isAdmin(): bool

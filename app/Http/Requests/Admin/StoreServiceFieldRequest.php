@@ -21,7 +21,7 @@ class StoreServiceFieldRequest extends FormRequest
     {
         return [
             'label' => 'required|string|max:255',
-            'field_type' => 'required|string|in:text,textarea,number,email,tel,date,time,datetime,select,checkbox,radio,file,hidden,password',
+            'field_type' => 'required|string|in:text,textarea,number,email,tel,date,time,datetime,select,checkbox,radio,file',
             'options' => 'nullable|array',
             'placeholder' => 'nullable|string|max:255',
             'help_text' => 'nullable|string',

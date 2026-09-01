@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Service;
 use App\Models\Submission;
 use App\Models\SubmissionFieldValue;
+use App\Models\ActivityLog;
 use App\Jobs\SendNewSubmissionEmailJob;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -43,6 +44,15 @@ class SubmissionService
                         ]);
                     }
                 }
+
+                ActivityLog::create([
+                    'subject_type' => Submission::class,
+                    'subject_id' => $submission->id,
+                    'event' => 'created',
+                    'title' => 'Request received',
+                    'description' => 'Customer submitted a new service request.',
+                    'metadata' => ['status' => $submission->status, 'service_id' => $service->id],
+                ]);
 
                 SendNewSubmissionEmailJob::dispatch($submission);
 

@@ -1,11 +1,120 @@
 @extends('layouts.app')
-@section('title','Digital Star Consultants | Technology & Digital Systems')
 @section('content')
-<section class="hero"><div class="hero-grid"></div><div class="hero-orbit" aria-hidden="true"><div class="orbit-core"></div><div class="orbit-ring r3"><span class="orbit-node"></span></div><div class="orbit-ring r2"><span class="orbit-node"></span></div><div class="orbit-ring"><span class="orbit-node"></span></div></div><div class="hero-content"><div class="hero-meta"><span class="dot"></span><span>IT SYSTEMS · SOFTWARE · DIGITAL SERVICES</span></div><h1 class="hero-title">Technology that moves your <span class="accent">business forward.</span></h1><div class="hero-sub">Engineering practical systems for real organizations</div><p class="hero-desc">Digital Star Consultants designs and builds software, websites, integrations and digital workflows that help organizations operate with more clarity, speed and control.</p><div class="hero-actions"><a class="btn-primary" href="{{ route('public.contact.show') }}">Start a Project ↗</a><a class="btn-ghost" href="{{ route('public.services.index') }}">Explore Services</a></div></div><div class="hero-stats"><div class="stat"><div class="num">01</div><div class="label">Software first</div></div><div class="stat"><div class="num">24/7</div><div class="label">Digital access</div></div><div class="stat"><div class="num">TZ</div><div class="label">Built locally</div></div></div><div class="scroll-indicator">SCROLL TO EXPLORE</div></section>
-<section class="capabilities"><div class="section-head reveal"><div><div class="section-tag">CAPABILITIES · 04</div><h2 class="section-title">Technology built around <em>how you work.</em></h2></div><p class="section-lede">From custom platforms to everyday digital services, the system should fit the organization, not the other way around.</p></div><div class="bento"><article class="bento-main reveal"><div class="bento-kicker">01 / FLAGSHIP CAPABILITY</div><h3>Software Engineering & Digital Platforms</h3><p>Custom web applications, portals, internal tools, APIs and workflow systems designed around your operational requirements.</p><div class="tech-list"><span>LARAVEL</span><span>PHP</span><span>VUE / REACT</span><span>MYSQL</span><span>POSTGRESQL</span><span>REST APIs</span><span>TAILWIND</span><span>CLOUD</span></div></article><div class="bento-side"><article class="reveal"><div class="bento-kicker">02 / SYSTEMS</div><h3>Architecture & Integrations</h3><p>Connect services, data and workflows into systems that are easier to operate and maintain.</p></article><article class="reveal"><div class="bento-kicker">03 / DIGITIZATION</div><h3>Business Process Digitization</h3><p>Turn manual processes into practical digital flows with clear ownership, records and visibility.</p></article></div><div class="bento-strip reveal"><strong>04 / PRACTICAL SERVICES</strong><span>NIDA</span><span>TRA</span><span>BRELA</span><span>Printing & Design</span><span>Digital Support</span></div></div></section>
-<section><div class="section-head reveal"><div><div class="section-tag">DELIVERY FRAMEWORK</div><h2 class="section-title">From idea to <em>working system.</em></h2></div><p class="section-lede">A clear delivery path keeps technical work understandable from the first conversation to launch and support.</p></div><div class="process"><div class="rail"><article class="reveal"><span class="rail-no">01</span><h3>Discover</h3><p>Understand the problem, users, constraints and desired outcome.</p></article><article class="reveal"><span class="rail-no">02</span><h3>Architect & Build</h3><p>Design the system and implement the core experience.</p></article><article class="reveal"><span class="rail-no">03</span><h3>Validate & Refine</h3><p>Test real workflows, remove friction and strengthen the product.</p></article><article class="reveal"><span class="rail-no">04</span><h3>Deliver & Support</h3><p>Deploy, document and keep improving the system after launch.</p></article></div></div></section>
-<section><div class="section-head reveal"><div><div class="section-tag">SELECTED WORK</div><h2 class="section-title">Systems made for <em>real use.</em></h2></div><p class="section-lede">A technology portfolio should show what was solved, not only what the interface looks like.</p></div><div class="work-grid"><article class="case featured reveal"><small>CASE STUDY / DIGITAL OPERATIONS</small><h3>Service Request & Tracking Platform</h3><p>A structured digital intake and tracking experience connecting customer requests, dynamic forms, internal processing and reference-based status updates.</p><div class="stack"><span>LARAVEL</span><span>PHP</span><span>DATABASE</span><span>AJAX</span></div></article><div class="case-side"><article class="case reveal"><small>WEB PLATFORM</small><h3>Business Website</h3><p>Responsive corporate presence with clear conversion paths.</p><div class="stack"><span>PHP</span><span>TAILWIND</span></div></article><article class="case reveal"><small>INTERNAL TOOLING</small><h3>Operations Dashboard</h3><p>Structured workflows and visibility for staff operations.</p><div class="stack"><span>LARAVEL</span><span>MYSQL</span></div></article></div></div></section>
-<section><div class="section-head reveal"><div><div class="section-tag">TECHNICAL ECOSYSTEM</div><h2 class="section-title">The stack behind the <em>work.</em></h2></div></div><div class="bento"><article class="bento-main reveal"><div class="bento-kicker">WEB & APPLICATIONS</div><h3>Modern, maintainable frontend experiences</h3><p>Blade, Tailwind CSS, JavaScript and component-driven interface patterns for fast public and operational systems.</p><div class="tech-list"><span>BLADE</span><span>TAILWIND CSS</span><span>JAVASCRIPT</span><span>VITE</span></div></article><div class="bento-side"><article class="reveal"><div class="bento-kicker">BACKEND & APIs</div><h3>Laravel / PHP / REST</h3><p>Business logic, validation, authentication, queues and integrations.</p></article><article class="reveal"><div class="bento-kicker">DATA & INFRASTRUCTURE</div><h3>MySQL / PostgreSQL / Cloud</h3><p>Structured data and deployment foundations selected around the project.</p></article></div></div></section>
-<section><div class="section-head reveal"><div><div class="section-tag">FAQ</div><h2 class="section-title">Questions before we <em>build?</em></h2></div></div><div class="faq"><div class="faq-item reveal" data-faq><button class="faq-q" type="button">Can you build a system around our existing process?<span>+</span></button><div class="faq-a">Yes. We start from the actual workflow and requirements, then design the digital system around them.</div></div><div class="faq-item reveal" data-faq><button class="faq-q" type="button">Can you improve an existing Laravel project?<span>+</span></button><div class="faq-a">Yes. Existing systems can be audited, redesigned and extended while protecting working backend functionality.</div></div><div class="faq-item reveal" data-faq><button class="faq-q" type="button">How do we track a submitted request?<span>+</span></button><div class="faq-a">Use the reference number provided after submission through the public tracking portal.</div></div></div></section>
-<section><div class="cta-wrap reveal"><div class="cta-grid"><div><div class="section-tag">START A CONVERSATION</div><h2>Have a system in mind?</h2><p>Tell us what you need to improve, automate or build. We can turn the requirement into a practical technical plan.</p><div style="margin-top:28px"><a class="btn-primary" href="{{ route('public.contact.show') }}">Talk to Digital Star ↗</a></div></div><div class="track-box"><label>TRACK AN EXISTING REQUEST</label><form action="{{ route('public.track.form') }}" method="GET"><div class="track-row"><input name="q" placeholder="DSC-2026-XXXXXX" aria-label="Reference number"><button type="submit">TRACK</button></div></form></div></div></div></section>
+<section class="ds-ref-hero">
+    <div class="ds-ref-hero-inner">
+        <div class="ds-ref-hero-copy">
+            <span class="ds-ref-eyebrow">DIGITAL SERVICES PARTNER · TANZANIA</span>
+            <h1>Digital services.<br><span>Simplified.</span></h1>
+            <p>Government services, business solutions,<br class="desktop-only"> technology and creative services —<br class="desktop-only"> all in one place.</p>
+            <div class="ds-ref-actions">
+                <a class="ds-ref-btn dark" href="{{ route('public.services.index') }}">Explore Services <b>→</b></a>
+                <a class="ds-ref-btn light" href="{{ route('public.track.form') }}">Track Application <b>▣</b></a>
+            </div>
+        </div>
+        <div class="ds-ref-hero-visual" aria-hidden="true">
+            <div class="ds-ref-skyline"></div>
+            <div class="ds-ref-haze"></div>
+            <img src="{{ asset('images/digital-star-mark.svg') }}" alt="">
+            <div class="ds-ref-star-shadow"></div>
+        </div>
+    </div>
+</section>
+
+<section class="ds-ref-trust">
+    <div class="ds-ref-trust-inner">
+        <article><span class="trust-icon shield">@include('partials.icon',['iconKey'=>'support'])</span><div><strong>Professional Assistance</strong><small>We handle the process for you.</small></div></article>
+        <article><span class="trust-icon clock">@include('partials.icon',['iconKey'=>'forms'])</span><div><strong>Fast &amp; Reliable</strong><small>Quick turnaround with clear communication.</small></div></article>
+        <article><span class="trust-icon shield">@include('partials.icon',['iconKey'=>'support'])</span><div><strong>Secure &amp; Private</strong><small>Your information is always protected.</small></div></article>
+        <article><span class="trust-icon headset">@include('partials.icon',['iconKey'=>'support'])</span><div><strong>Dedicated Support</strong><small>We’re here to help every step of the way.</small></div></article>
+    </div>
+</section>
+
+<section class="ds-ref-categories">
+    <div class="ds-ref-container">
+        <div class="ds-ref-section-heading centered">
+            <h2>What can we help you with?</h2>
+        </div>
+        <div class="ds-ref-category-grid">
+            @foreach($categories->take(4) as $category)
+                @php
+                    $categoryClasses = ['blue','green','purple','gold'];
+                    $class = $categoryClasses[$loop->index] ?? 'blue';
+                    $iconKeys = ['government','business','printing','it'];
+                    $iconKey = $iconKeys[$loop->index] ?? 'default';
+                @endphp
+                <a class="ds-ref-category-card" href="{{ route('public.services.index',['category'=>$category->slug]) }}">
+                    <div class="ds-ref-category-icon {{ $class }}">@include('partials.icon',['iconKey'=>$iconKey])</div>
+                    <h3>{{ $category->name }}</h3>
+                    <p>{{ $category->description ?: 'Professional services and guided assistance.' }}</p>
+                    <strong>Explore Services <span>→</span></strong>
+                </a>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<section class="ds-ref-popular">
+    <div class="ds-ref-container">
+        <div class="ds-ref-section-heading row-heading">
+            <h2>Popular Services</h2>
+            <a href="{{ route('public.services.index') }}">View All Services →</a>
+        </div>
+        <div class="ds-ref-popular-grid">
+            @forelse($popularServices->take(6) as $service)
+                @include('services.partials.card', ['service' => $service])
+            @empty
+                <div class="ds-ref-empty">Popular services will appear here as the catalogue grows.</div>
+            @endforelse
+        </div>
+    </div>
+</section>
+
+<section class="ds-ref-how">
+    <div class="ds-ref-container">
+        <div class="ds-ref-section-heading centered light-heading"><h2>How It Works</h2></div>
+        <div class="ds-ref-steps">
+            @foreach($steps as $step)
+                <article>
+                    <div class="ds-ref-step-icon">{{ $loop->iteration === 1 ? '▣' : ($loop->iteration === 2 ? '▤' : ($loop->iteration === 3 ? '◎' : '✓')) }}</div>
+                    <h3>{{ $step['n'] }}. {{ $step['title'] }}</h3>
+                    <p>{{ $step['desc'] }}</p>
+                </article>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+<section class="ds-ref-track">
+    <div class="ds-ref-track-inner">
+        <div class="ds-ref-track-copy">
+            <h2>Track Your<br>Application</h2>
+            <p>Enter your reference number to track your application status.</p>
+            <form action="{{ route('public.track.form') }}" method="GET" class="ds-ref-track-form">
+                <input name="reference" placeholder="Enter your reference number" aria-label="Reference number">
+                <button type="submit">Track Application <span>→</span></button>
+            </form>
+        </div>
+        <div class="ds-ref-track-art" aria-hidden="true">
+            <div class="ds-ref-laptop">
+                <div class="ds-ref-screen">
+                    <div class="screen-top"><strong>Application Status</strong><span>In Progress</span></div>
+                    <b>DSC-2026-04125</b>
+                    <div class="screen-line"><i class="active"></i><i class="active"></i><i></i></div>
+                    <div class="screen-labels"><span>Received</span><span>In Progress</span><span>Completed</span></div>
+                </div>
+                <div class="ds-ref-base"></div>
+            </div>
+            <div class="ds-ref-phone"><div></div><small>Reference No.</small><strong>DSC-04125</strong><span>In Progress</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="ds-ref-cta">
+    <div class="ds-ref-cta-inner">
+        <img src="{{ asset('images/digital-star-mark.svg') }}" alt="">
+        <div><h2>Need help with a digital service?</h2><p>Our team is ready to assist you.</p></div>
+        <a class="ds-ref-btn gold" href="{{ route('public.contact.show') }}">Contact Us Now <b>→</b></a>
+        <div class="cta-star" aria-hidden="true">★</div>
+    </div>
+</section>
 @endsection

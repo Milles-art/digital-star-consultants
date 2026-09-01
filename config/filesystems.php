@@ -38,6 +38,17 @@ return [
             'report' => false,
         ],
 
+        // Explicit private disk for customer-submitted documents. Nothing in
+        // this disk should be web-accessible; downloads must go through an
+        // authenticated/authorized controller.
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

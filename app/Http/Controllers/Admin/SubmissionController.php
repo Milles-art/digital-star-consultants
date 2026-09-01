@@ -10,6 +10,7 @@ use App\Jobs\SendSubmissionRejectedEmailJob;
 use App\Models\Service;
 use App\Models\Submission;
 use App\Models\User;
+use App\Models\ActivityLog;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -62,10 +63,16 @@ class SubmissionController extends Controller
             User::ROLE_GENERAL_MANAGER,
             User::ROLE_STAFF,
         ])->where('is_active', true)->get(['id', 'name', 'role']);
-        $statuses = $this->getStatuses();
+        $statuses = Submission::statusOptions();
+        $workload = [
+            'total' => (int) Submission::count(),
+            'open' => (int) Submission::whereIn('status', [Submission::STATUS_PENDING, Submission::STATUS_IN_PROGRESS, Submission::STATUS_AWAITING_CUSTOMER])->count(),
+            'unassigned' => (int) Submission::whereNull('processed_by')->whereIn('status', [Submission::STATUS_PENDING, Submission::STATUS_IN_PROGRESS, Submission::STATUS_AWAITING_CUSTOMER])->count(),
+            'awaiting_customer' => (int) Submission::where('status', Submission::STATUS_AWAITING_CUSTOMER)->count(),
+        ];
 
         if (! $request->expectsJson()) {
-            return view('admin.submissions.index', compact('submissions', 'services', 'staff', 'statuses'));
+            return view('admin.submissions.index', compact('submissions', 'services', 'staff', 'statuses', 'workload'));
         }
 
         return response()->json([
@@ -81,7 +88,7 @@ class SubmissionController extends Controller
     {
         $this->authorize('view', $submission);
 
-        $submission->load(['service', 'processedBy', 'values.field']);
+        $submission->load(['service', 'processedBy', 'values.field', 'activities.user']);
 
         $staff = User::whereIn('role', [
             User::ROLE_ADMIN,
@@ -125,6 +132,7 @@ class SubmissionController extends Controller
         }
 
         $submission->save();
+        $this->logActivity($submission, 'updated', 'Request details updated', 'Customer or internal request details were updated.', ['fields' => array_keys($validated)]);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -147,7 +155,7 @@ class SubmissionController extends Controller
 
         $staff = User::findOrFail($validated['staff_id']);
 
-        if (! $staff->canProcessSubmission()) {
+        if (! $staff->is_active || ! $staff->canProcessSubmission()) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'status' => 'error',
@@ -159,6 +167,7 @@ class SubmissionController extends Controller
         }
 
         $submission->assignTo($staff);
+        $this->logActivity($submission, 'assigned', 'Request assigned', 'Request assigned to '.$staff->name.'.', ['staff_id' => $staff->id, 'staff_name' => $staff->name]);
         SendSubmissionAssignedEmailJob::dispatch($submission);
 
         if ($request->expectsJson()) {
@@ -178,6 +187,7 @@ class SubmissionController extends Controller
 
         $oldStatus = $submission->status;
         $submission->markAsCompleted();
+        $this->logActivity($submission, 'status_changed', 'Request completed', 'Request marked as completed.', ['from' => $oldStatus, 'to' => $submission->status]);
 
         SendSubmissionCompletedEmailJob::dispatch($submission);
         SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
@@ -199,6 +209,7 @@ class SubmissionController extends Controller
 
         $oldStatus = $submission->status;
         $submission->markAsInProgress();
+        $this->logActivity($submission, 'status_changed', 'Request moved to in progress', 'Processing has started on this request.', ['from' => $oldStatus, 'to' => $submission->status]);
 
         SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
 
@@ -213,6 +224,33 @@ class SubmissionController extends Controller
         return back()->with('success', 'Marked as in progress.');
     }
 
+    public function markAwaitingCustomer(Request $request, Submission $submission): JsonResponse|RedirectResponse
+    {
+        $this->authorize('update', $submission);
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:2000',
+        ]);
+
+        $oldStatus = $submission->status;
+        $submission->status = Submission::STATUS_AWAITING_CUSTOMER;
+        $submission->staff_notes = trim(($submission->staff_notes ? $submission->staff_notes."\n" : '')."Awaiting customer: {$validated['reason']}");
+        $submission->save();
+        $this->logActivity($submission, 'status_changed', 'Awaiting customer information', $validated['reason'], ['from' => $oldStatus, 'to' => $submission->status, 'reason' => $validated['reason']]);
+
+        SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Request marked as awaiting customer',
+                'data' => $submission,
+            ]);
+        }
+
+        return back()->with('success', 'Request is now awaiting customer information.');
+    }
+
     public function markRejected(Request $request, Submission $submission): JsonResponse|RedirectResponse
     {
         $this->authorize('reject', $submission);
@@ -223,6 +261,7 @@ class SubmissionController extends Controller
 
         $oldStatus = $submission->status;
         $submission->markAsRejected($validated['reason'] ?? null);
+        $this->logActivity($submission, 'status_changed', 'Request rejected', $validated['reason'] ?: 'Request rejected by staff.', ['from' => $oldStatus, 'to' => $submission->status, 'reason' => $validated['reason'] ?? null]);
 
         SendSubmissionRejectedEmailJob::dispatch($submission, $validated['reason'] ?? null);
         SendStatusUpdateEmailJob::dispatch($submission, $oldStatus, $submission->status);
@@ -252,6 +291,20 @@ class SubmissionController extends Controller
         }
 
         return redirect()->route('admin.submissions.index')->with('success', 'Submission deleted.');
+    }
+
+
+    private function logActivity(Submission $submission, string $event, string $title, ?string $description = null, array $metadata = []): void
+    {
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'subject_type' => Submission::class,
+            'subject_id' => $submission->id,
+            'event' => $event,
+            'title' => $title,
+            'description' => $description,
+            'metadata' => $metadata,
+        ]);
     }
 
     private function getStatuses(): array

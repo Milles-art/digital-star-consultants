@@ -25,6 +25,7 @@ use App\Http\Controllers\Auth\{
     LoginController,
     RegisterController,
     PasswordResetController,
+    AdminLoginController,
 };
 
 
@@ -56,11 +57,14 @@ Route::get('/about', [AboutController::class, 'index'])->name('about');
 Route::get('/work', [PortfolioController::class, 'index'])->name('work');
 
 Route::get('/track', [TrackPageController::class, 'form'])->name('public.track.form');
-Route::get('/track/status/{reference}', [TrackPageController::class, 'show'])->name('public.track.show');
+Route::get('/track/status/{reference}', [TrackPageController::class, 'show'])
+    ->where('reference', 'DSC-[0-9]{8}-[A-Za-z0-9]{6}')
+    ->name('public.track.show');
 
 Route::get('/contact', [ContactController::class, 'show'])->name('public.contact.show');
 
 Route::get('/track/{reference}', [PublicSubmissionController::class, 'track'])
+    ->where('reference', 'DSC-[0-9]{8}-[A-Za-z0-9]{6}')
     ->middleware('throttle:30,1')
     ->name('public.submissions.track');
 
@@ -68,6 +72,16 @@ Route::get('/track/{reference}', [PublicSubmissionController::class, 'track'])
 Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:5,1')
     ->name('public.contact.store');
+
+// ========== Management Login ==========
+
+Route::get('/admin/login', [AdminLoginController::class, 'show'])->name('admin.login');
+Route::post('/admin/login', [AdminLoginController::class, 'login'])
+    ->middleware('throttle:5,1')
+    ->name('admin.login.store');
+Route::post('/admin/logout', [AdminLoginController::class, 'logout'])
+    ->middleware('auth')
+    ->name('admin.logout');
 
 // ========== Guest Routes (No Auth Required) ==========
 
@@ -90,6 +104,13 @@ Route::post('/reset-password', [PasswordResetController::class, 'reset'])
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])
+    ->middleware('auth')->name('profile.edit');
+Route::post('/profile/avatar', [\App\Http\Controllers\ProfileController::class, 'updateAvatar'])
+    ->middleware('auth')->name('profile.avatar');
+Route::delete('/profile/avatar', [\App\Http\Controllers\ProfileController::class, 'removeAvatar'])
+    ->middleware('auth')->name('profile.avatar.remove');
+
 // ========== Protected Routes (Auth Required) ==========
 
 Route::middleware(['auth'])->group(function () {
@@ -101,6 +122,10 @@ Route::middleware(['auth'])->group(function () {
 
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+        // Notifications
+        Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('admin.notifications.index');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Admin\NotificationController::class, 'markAllRead'])->name('admin.notifications.read-all');
+        Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Admin\NotificationController::class, 'read'])->name('admin.notifications.read');
         Route::get('/users/stats', [UserController::class, 'stats'])->name('admin.users.stats');
 
         // Categories
@@ -135,6 +160,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/submissions/{submission}/assign', [AdminSubmissionController::class, 'assign'])->name('admin.submissions.assign');
         Route::post('/submissions/{submission}/complete', [AdminSubmissionController::class, 'markCompleted'])->name('admin.submissions.complete');
         Route::post('/submissions/{submission}/in-progress', [AdminSubmissionController::class, 'markInProgress'])->name('admin.submissions.in-progress');
+        Route::post('/submissions/{submission}/awaiting-customer', [AdminSubmissionController::class, 'markAwaitingCustomer'])->name('admin.submissions.awaiting-customer');
         Route::post('/submissions/{submission}/reject', [AdminSubmissionController::class, 'markRejected'])->name('admin.submissions.reject');
 
         // File downloads
@@ -146,8 +172,12 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
         Route::post('/users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('admin.users.toggle-active');
+        Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('admin.users.reset-password');
+        Route::get('/users/{user}/workload', [UserController::class, 'workload'])->name('admin.users.workload');
 
-        // Reports
+        // Reports & Finance
+        Route::get('/finance', [ReportController::class, 'finance'])->name('admin.finance.index');
+
         Route::get('/reports/daily', [ReportController::class, 'daily'])->name('admin.reports.daily');
         Route::get('/reports/weekly', [ReportController::class, 'weekly'])->name('admin.reports.weekly');
         Route::get('/reports/monthly', [ReportController::class, 'monthly'])->name('admin.reports.monthly');
@@ -155,6 +185,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/service-usage', [ReportController::class, 'serviceUsage'])->name('admin.reports.service-usage');
         Route::get('/reports', [ReportController::class, 'overview'])->name('admin.reports.index');
         Route::get('/reports/overview', [ReportController::class, 'overview'])->name('admin.reports.overview');
+
+        // System Settings
+        Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('admin.settings.index');
+        Route::put('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('admin.settings.update');
 
         // Contact Messages
         Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('admin.contact-messages.index');

@@ -35,7 +35,6 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        // Only management can create users
         return $user->isManagement();
     }
 

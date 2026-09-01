@@ -26,8 +26,6 @@ class ServiceField extends Model
         'checkbox' => 'Checkbox',
         'radio' => 'Radio Buttons',
         'file' => 'File Upload',
-        'hidden' => 'Hidden',
-        'password' => 'Password',
     ];
 
     protected $fillable = [
@@ -142,10 +140,13 @@ class ServiceField extends Model
                 // the business actually accepts (IDs, certificates, photos).
                 $rules[] = 'mimes:pdf,jpg,jpeg,png,doc,docx';
                 break;
+            case 'checkbox':
+                $rules[] = 'boolean';
+                break;
             case 'select':
             case 'radio':
                 if ($this->hasOptions()) {
-                    $rules[] = 'in:' . implode(',', array_keys($this->options));
+                    $rules[] = 'in:' . implode(',', array_map(static fn ($value) => str_replace(',', '\\,', (string) $value), array_values($this->options)));
                 }
                 break;
         }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Service;
 use App\Models\ServiceCategory;
 use Database\Seeders\Concerns\SeedsServiceFields;
 use Illuminate\Database\Seeder;
@@ -51,33 +52,6 @@ class SerikaliIdentificationServiceSeeder extends Seeder
             ["label" => "Applicant's ID", 'field_key' => 'upload_applicant_id', 'field_type' => 'file'],
         ], sortOrder: 3);
 
-        $this->seedService($id, 'Passport Application', [
-            ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
-            ['label' => 'Date of Birth', 'field_key' => 'date_of_birth', 'field_type' => 'date'],
-            ['label' => 'Place of Birth', 'field_key' => 'place_of_birth', 'field_type' => 'text'],
-            ['label' => 'Gender', 'field_key' => 'gender', 'field_type' => 'select', 'options' => ['Male', 'Female']],
-            ['label' => 'NIDA Number', 'field_key' => 'nida_number', 'field_type' => 'text'],
-            ['label' => 'Nationality', 'field_key' => 'nationality', 'field_type' => 'text'],
-            ['label' => 'Home Address', 'field_key' => 'home_address', 'field_type' => 'text'],
-            ['label' => 'Occupation', 'field_key' => 'occupation', 'field_type' => 'text'],
-            ['label' => 'Birth Certificate', 'field_key' => 'upload_birth_certificate', 'field_type' => 'file'],
-            ['label' => 'Old Passport (if renewal)', 'field_key' => 'upload_old_passport', 'field_type' => 'file', 'is_required' => false],
-            ['label' => 'Passport-size Photo', 'field_key' => 'upload_passport_photo', 'field_type' => 'file'],
-        ], sortOrder: 4);
-
-        $this->seedService($id, 'Visa Application', [
-            ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
-            ['label' => 'Passport Number', 'field_key' => 'passport_number', 'field_type' => 'text'],
-            ['label' => 'Passport Expiry Date', 'field_key' => 'passport_expiry_date', 'field_type' => 'date'],
-            ['label' => 'Nationality', 'field_key' => 'nationality', 'field_type' => 'text'],
-            ['label' => 'Purpose of Visit', 'field_key' => 'purpose_of_visit', 'field_type' => 'text'],
-            ['label' => 'Intended Arrival Date', 'field_key' => 'arrival_date', 'field_type' => 'date'],
-            ['label' => 'Intended Departure Date', 'field_key' => 'departure_date', 'field_type' => 'date'],
-            ['label' => 'Accommodation Details in Tanzania', 'field_key' => 'accommodation_details', 'field_type' => 'textarea'],
-            ['label' => 'Passport Bio-data Page', 'field_key' => 'upload_passport_biodata', 'field_type' => 'file'],
-            ['label' => 'Passport Photo', 'field_key' => 'upload_passport_photo', 'field_type' => 'file'],
-        ], sortOrder: 5);
-
         $this->seedService($id, 'Police Clearance / Good Conduct', [
             ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
             ['label' => 'Date of Birth', 'field_key' => 'date_of_birth', 'field_type' => 'date'],
@@ -118,7 +92,56 @@ class SerikaliIdentificationServiceSeeder extends Seeder
             ['label' => 'TIN Certificate', 'field_key' => 'upload_tin_certificate', 'field_type' => 'file'],
         ], sortOrder: 9);
 
-        $this->seedService($id, 'Residence / Immigration Applications', [
+
+        $passportCategoryId = ServiceCategory::where('slug', 'passport-immigration')->firstOrFail()->id;
+
+        $this->seedService($passportCategoryId, 'New Passport Application', [
+            ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
+            ['label' => 'Date of Birth', 'field_key' => 'date_of_birth', 'field_type' => 'date'],
+            ['label' => 'Place of Birth', 'field_key' => 'place_of_birth', 'field_type' => 'text'],
+            ['label' => 'Gender', 'field_key' => 'gender', 'field_type' => 'select', 'options' => ['Male', 'Female']],
+            ['label' => 'NIDA Number', 'field_key' => 'nida_number', 'field_type' => 'text'],
+            ['label' => 'Nationality', 'field_key' => 'nationality', 'field_type' => 'text'],
+            ['label' => 'Home Address', 'field_key' => 'home_address', 'field_type' => 'text'],
+            ['label' => 'Occupation', 'field_key' => 'occupation', 'field_type' => 'text'],
+            ['label' => 'Birth Certificate', 'field_key' => 'upload_birth_certificate', 'field_type' => 'file'],
+            ['label' => 'Passport-size Photo', 'field_key' => 'upload_passport_photo', 'field_type' => 'file'],
+        ], description: 'Assistance with a first-time passport application.', sortOrder: 1);
+
+        $this->seedService($passportCategoryId, 'Passport Renewal', [
+            ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
+            ['label' => 'Date of Birth', 'field_key' => 'date_of_birth', 'field_type' => 'date'],
+            ['label' => 'NIDA Number', 'field_key' => 'nida_number', 'field_type' => 'text'],
+            ['label' => 'Current Passport Number', 'field_key' => 'passport_number', 'field_type' => 'text'],
+            ['label' => 'Passport Expiry Date', 'field_key' => 'passport_expiry_date', 'field_type' => 'date'],
+            ['label' => 'Home Address', 'field_key' => 'home_address', 'field_type' => 'text'],
+            ['label' => 'Old Passport', 'field_key' => 'upload_old_passport', 'field_type' => 'file'],
+            ['label' => 'Passport-size Photo', 'field_key' => 'upload_passport_photo', 'field_type' => 'file'],
+        ], description: 'Assistance with renewing an existing passport.', sortOrder: 2);
+
+        $this->seedService($passportCategoryId, 'Passport Update / Correction', [
+            ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
+            ['label' => 'NIDA Number', 'field_key' => 'nida_number', 'field_type' => 'text'],
+            ['label' => 'Current Passport Number', 'field_key' => 'passport_number', 'field_type' => 'text'],
+            ['label' => 'Information to Update', 'field_key' => 'information_to_update', 'field_type' => 'textarea'],
+            ['label' => 'Supporting Document', 'field_key' => 'upload_supporting_document', 'field_type' => 'file'],
+            ['label' => 'Current Passport', 'field_key' => 'upload_current_passport', 'field_type' => 'file'],
+        ], description: 'Assistance with correcting or updating passport information.', sortOrder: 3);
+
+        $this->seedService($passportCategoryId, 'Visa Application', [
+            ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
+            ['label' => 'Passport Number', 'field_key' => 'passport_number', 'field_type' => 'text'],
+            ['label' => 'Passport Expiry Date', 'field_key' => 'passport_expiry_date', 'field_type' => 'date'],
+            ['label' => 'Nationality', 'field_key' => 'nationality', 'field_type' => 'text'],
+            ['label' => 'Purpose of Visit', 'field_key' => 'purpose_of_visit', 'field_type' => 'text'],
+            ['label' => 'Intended Arrival Date', 'field_key' => 'arrival_date', 'field_type' => 'date'],
+            ['label' => 'Intended Departure Date', 'field_key' => 'departure_date', 'field_type' => 'date'],
+            ['label' => 'Accommodation Details', 'field_key' => 'accommodation_details', 'field_type' => 'textarea'],
+            ['label' => 'Passport Bio-data Page', 'field_key' => 'upload_passport_biodata', 'field_type' => 'file'],
+            ['label' => 'Passport Photo', 'field_key' => 'upload_passport_photo', 'field_type' => 'file'],
+        ], description: 'Assistance with visa applications.', sortOrder: 4);
+
+        $this->seedService($passportCategoryId, 'Residence / Immigration Application', [
             ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
             ['label' => 'Nationality', 'field_key' => 'nationality', 'field_type' => 'text'],
             ['label' => 'Passport Number', 'field_key' => 'passport_number', 'field_type' => 'text'],
@@ -126,6 +149,14 @@ class SerikaliIdentificationServiceSeeder extends Seeder
             ['label' => 'Sponsoring Employer / Institution', 'field_key' => 'sponsoring_institution', 'field_type' => 'text'],
             ['label' => 'Passport Copy', 'field_key' => 'upload_passport_copy', 'field_type' => 'file'],
             ['label' => 'Work Permit (if applicable)', 'field_key' => 'upload_work_permit', 'field_type' => 'file', 'is_required' => false],
-        ], sortOrder: 10);
+        ], description: 'Assistance with residence and immigration applications.', sortOrder: 5);
+
+
+        // Retire legacy passport records created by the previous flat catalogue.
+        Service::whereIn('slug', [
+            'passport-application',
+            'visa-application',
+            'residence-immigration-applications',
+        ])->update(['is_active' => false]);
     }
 }

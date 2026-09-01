@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Schema;
 
 class ContactMessageController extends Controller
 {
@@ -17,18 +18,30 @@ class ContactMessageController extends Controller
     {
         abort_unless(auth()->user()?->isManagement(), 403);
 
+        if (! Schema::hasTable('contact_messages')) {
+            $messages = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+            if (! $request->expectsJson()) {
+                return view('admin.contact-messages.index', compact('messages'))->with('schemaMissing', true);
+            }
+            return response()->json(['status' => 'success', 'data' => $messages]);
+        }
+
         $query = ContactMessage::query()->latest();
 
         if ($request->filled('search')) {
             $search = '%' . $request->search . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', $search)
-                    ->orWhere('email', 'like', $search)
-                    ->orWhere('message', 'like', $search);
+                foreach (['name', 'email', 'message', 'phone', 'subject'] as $column) {
+                    if (Schema::hasColumn('contact_messages', $column)) {
+                        $method = $column === 'name' ? 'where' : 'orWhere';
+                        $q->{$method}($column, 'like', $search);
+                    }
+                }
             });
         }
 
-        $messages = $query->paginate($request->integer('per_page', 20));
+        $perPage = max(1, min(100, $request->integer('per_page', 20)));
+        $messages = $query->paginate($perPage);
 
         if (! $request->expectsJson()) {
             return view('admin.contact-messages.index', compact('messages'));
@@ -53,6 +66,10 @@ class ContactMessageController extends Controller
     {
         abort_unless(auth()->user()?->isManagement(), 403);
 
+        if ($contactMessage->read_at === null) {
+            $contactMessage->forceFill(['read_at' => now()])->save();
+        }
+
         if (! request()->expectsJson()) {
             return view('admin.contact-messages.show', ['message' => $contactMessage]);
         }
@@ -70,15 +87,16 @@ class ContactMessageController extends Controller
         ]);
     }
 
-    public function destroy(ContactMessage $contactMessage): JsonResponse
+    public function destroy(ContactMessage $contactMessage): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         abort_unless(auth()->user()?->isManagement(), 403);
 
         $contactMessage->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Message deleted',
-        ]);
+        if (! request()->expectsJson()) {
+            return redirect()->route('admin.contact-messages.index')->with('success', 'Message deleted successfully.');
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Message deleted']);
     }
 }

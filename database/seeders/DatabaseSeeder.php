@@ -8,7 +8,6 @@ use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -32,42 +31,21 @@ class DatabaseSeeder extends Seeder
         $staff2 = $this->createUser('Staff Two',  'staff2@digitalstar.local', User::ROLE_STAFF,            'Stf2!Dsc2026#Vm5');
 
         // --------------------------------------------------
-        // Categories + Services (demo data)
+        // Canonical service catalogue
         // --------------------------------------------------
-        $categories = [
-            'Business Registration' => ['BRELA Company Name Search', 'Business License Application'],
-            'Tax & TRA' => ['TIN Application', 'VAT Registration'],
-            'Immigration & Travel' => ['Passport Assistance', 'Visa Support'],
-            'IT Consultancy' => ['Website Setup', 'Email Hosting'],
-            'Printing & Graphics' => ['Business Cards', 'Banner Design'],
-        ];
-
-        foreach ($categories as $catName => $services) {
-            $category = ServiceCategory::firstOrCreate(
-                ['slug' => Str::slug($catName)],
-                [
-                    'name' => $catName,
-                    'description' => $catName.' services',
-                    'is_active' => true,
-                    'sort_order' => 0,
-                ]
-            );
-
-            foreach ($services as $index => $serviceName) {
-                Service::firstOrCreate(
-                    ['slug' => Str::slug($serviceName)],
-                    [
-                        'service_category_id' => $category->id,
-                        'name' => $serviceName,
-                        'description' => 'Professional '.$serviceName.' service',
-                        'price' => rand(10000, 150000),
-                        'is_active' => true,
-                        'sort_order' => $index,
-                        'duration_minutes' => 60,
-                    ]
-                );
-            }
-        }
+        $this->call([
+            ServiceCategorySeeder::class,
+            SerikaliIdentificationServiceSeeder::class,
+            JobsServiceSeeder::class,
+            EducationServiceSeeder::class,
+            TraServiceSeeder::class,
+            BrelaBusinessServiceSeeder::class,
+            TravelServiceSeeder::class,
+            OtherOnlineFormsServiceSeeder::class,
+            PrintingGraphicsServiceSeeder::class,
+            StationeryServiceSeeder::class,
+            ItConsultancyServiceSeeder::class,
+        ]);
 
         // --------------------------------------------------
         // Sample submissions
@@ -93,7 +71,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->command?->info('Seeded 5 demo users with strong passwords.');
-        $this->command?->warn('Run `php artisan user:reset-password {email}` if you forget them.');
+        $this->command?->warn('For local credentials management, use the Admin > Team & Access password reset action.');
     }
 
     protected function createUser(string $name, string $email, string $role, string $password): User

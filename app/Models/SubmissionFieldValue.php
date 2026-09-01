@@ -69,8 +69,8 @@ class SubmissionFieldValue extends Model
 
     public function getFileSizeAttribute(): ?string
     {
-        if ($this->file_path && Storage::disk('local')->exists($this->file_path)) {
-            $bytes = Storage::disk('local')->size($this->file_path);
+        if ($this->file_path && Storage::disk('private')->exists($this->file_path)) {
+            $bytes = Storage::disk('private')->size($this->file_path);
             return $this->formatFileSize($bytes);
         }
         return null;
@@ -85,13 +85,13 @@ class SubmissionFieldValue extends Model
 
     public function hasFile(): bool
     {
-        return !is_null($this->file_path) && Storage::disk('local')->exists($this->file_path);
+        return !is_null($this->file_path) && Storage::disk('private')->exists($this->file_path);
     }
 
     public function deleteFile(): bool
     {
         if ($this->hasFile()) {
-            return Storage::disk('local')->delete($this->file_path);
+            return Storage::disk('private')->delete($this->file_path);
         }
         return true;
     }

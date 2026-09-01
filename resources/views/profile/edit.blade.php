@@ -1,0 +1,2 @@
+@extends('layouts.app')
+@section('content')<section class="profile-page"><div class="eyebrow">MY PROFILE</div><h1>{{ $user->name }}</h1><p>{{ $user->email }} · {{ $user->role_label }}</p><div class="profile-card"><h2>Profile photo</h2><form method="POST" action="{{ route('profile.avatar') }}" enctype="multipart/form-data">@csrf<input type="file" name="avatar" accept="image/*" required><button class="button button-yellow">Upload photo</button></form></div></section>@endsection

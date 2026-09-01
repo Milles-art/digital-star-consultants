@@ -141,14 +141,23 @@ class ServiceFieldController extends Controller
     {
         $this->authorize('update', ServiceField::class);
 
-        $request->validate([
-            'fields' => 'required|array',
-            'fields.*.id' => 'required|exists:service_fields,id',
-            'fields.*.sort_order' => 'required|integer|min:0',
+        $validated = $request->validate([
+            'fields' => ['required', 'array', 'min:1', 'max:200'],
+            'fields.*.id' => ['required', 'integer', 'distinct', 'exists:service_fields,id'],
+            'fields.*.sort_order' => ['required', 'integer', 'min:0', 'max:100000'],
         ]);
 
-        foreach ($request->fields as $fieldData) {
-            ServiceField::where('id', $fieldData['id'])
+        $ids = collect($validated['fields'])->pluck('id');
+        $found = ServiceField::whereIn('id', $ids)->count();
+        if ($found !== $ids->count()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'One or more fields could not be found.',
+            ], 422);
+        }
+
+        foreach ($validated['fields'] as $fieldData) {
+            ServiceField::whereKey($fieldData['id'])
                 ->update(['sort_order' => $fieldData['sort_order']]);
         }
 

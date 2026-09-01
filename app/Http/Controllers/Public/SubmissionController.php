@@ -86,6 +86,9 @@ class SubmissionController extends Controller
             ], 404);
         }
 
+        $nameParts = preg_split('/\s+/', trim((string) $submission->customer_name), -1, PREG_SPLIT_NO_EMPTY);
+        $maskedName = $nameParts[0] ?? 'Customer';
+
         return response()->json([
             'status' => 'success',
             'data' => [
@@ -94,18 +97,9 @@ class SubmissionController extends Controller
                 'status_label' => $submission->status_label,
                 'status_color' => $submission->status_color,
                 'service_name' => $submission->service->name ?? null,
-                'customer_name' => $submission->customer_name,
-                'preferred_date' => $submission->preferred_date,
+                'customer_name' => $maskedName,
                 'created_at' => $submission->created_at->format('Y-m-d H:i'),
                 'completed_at' => $submission->completed_at?->format('Y-m-d H:i'),
-                'fields' => $submission->values->map(function ($value) {
-                    return [
-                        'label' => $value->field->label ?? null,
-                        'field_key' => $value->field->field_key ?? null,
-                        'value' => $value->getValueForDisplay(),
-                        'is_file' => $value->isFile(),
-                    ];
-                }),
             ],
         ]);
     }
