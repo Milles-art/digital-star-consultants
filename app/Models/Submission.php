@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -90,9 +91,9 @@ class Submission extends Model
         return $this->belongsTo(User::class, 'processed_by');
     }
 
-    public function activities(): HasMany
+    public function activities(): MorphMany
     {
-        return $this->hasMany(ActivityLog::class)->latest();
+        return $this->morphMany(ActivityLog::class, 'subject')->latest();
     }
 
     // Scopes

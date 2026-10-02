@@ -7,66 +7,101 @@ use Illuminate\View\View;
 
 class PortfolioController extends Controller
 {
-    /**
-     * Static showcase items until a CMS/portfolio admin is added.
-     * Replace titles, descriptions and stacks with real client work.
-     */
     public function index(): View
     {
-        $itProjects = [
+        $slides = [
             [
-                'title' => 'Service request & tracking platform',
-                'title_sw' => 'Jukwaa la maombi na ufuatiliaji',
-                'summary' => 'Web system for citizens to submit service requests, upload documents, and track status by reference number — built for a local service bureau.',
-                'summary_sw' => 'Mfumo wa wavuti kwa raia kuwasilisha maombi, kupakia nyaraka, na kufuatilia hali kwa namba ya kumbukumbu.',
-                'stack' => 'Laravel · MySQL · Tailwind · Vite',
-                'tag' => 'Web app',
+                'id' => 'digital-platform',
+                'category' => 'SOFTWARE & WEB',
+                'title' => 'Service Request & Tracking Platform',
+                'description' => 'A guided digital service platform that collects applications, manages documents, assigns staff and gives customers a clear status timeline.',
+                'stack' => ['Laravel', 'PHP', 'MySQL', 'JavaScript'],
+                'image' => 'images/work-digital-platform.svg',
             ],
             [
-                'title' => 'Business operations dashboard',
-                'title_sw' => 'Dashibodi ya uendeshaji biashara',
-                'summary' => 'Internal dashboard for staff roles, assignments, reports and submission workflows with role-based access.',
-                'summary_sw' => 'Dashibodi ya ndani kwa majukumu ya staff, ugawaji kazi, ripoti na mtiririko wa maombi.',
-                'stack' => 'Laravel · Role middleware · Charts API',
-                'tag' => 'Internal tool',
+                'id' => 'business-ops',
+                'category' => 'IT & TECHNOLOGY',
+                'title' => 'Business Operations Dashboard',
+                'description' => 'An operations workspace for assignments, reporting, workflow visibility and role-based team management.',
+                'stack' => ['Laravel', 'Charts', 'RBAC'],
+                'image' => 'images/work-operations.svg',
             ],
             [
-                'title' => 'Custom business website',
-                'title_sw' => 'Tovuti maalum ya biashara',
-                'summary' => 'Marketing site with service catalogue, contact flows and mobile-first design for a Dar es Salaam SME.',
-                'summary_sw' => 'Tovuti ya uuzaji yenye orodha ya huduma, mawasiliano na muundo unaofaa simu kwa SME ya Dar.',
-                'stack' => 'Laravel · Tailwind · SEO basics',
-                'tag' => 'Website',
-            ],
-        ];
-
-        $graphicsProjects = [
-            [
-                'title' => 'Brand identity pack',
-                'title_sw' => 'Kifurushi cha utambulisho wa brand',
-                'summary' => 'Logo, colour system and print-ready templates for cards, letterheads and social posts.',
-                'summary_sw' => 'Nembo, rangi na templeti za print kwa kadi, barua na mitandao ya kijamii.',
-                'stack' => 'Brand · Print · Social',
-                'tag' => 'Branding',
+                'id' => 'brand-identity',
+                'category' => 'GRAPHICS & BRANDING',
+                'title' => 'Brand Identity & Campaign Design',
+                'description' => 'A complete visual identity system with social graphics, stationery and campaign-ready marketing assets.',
+                'stack' => ['Brand Identity', 'Print', 'Social'],
+                'image' => 'images/work-branding.svg',
             ],
             [
-                'title' => 'Event & outdoor print',
-                'title_sw' => 'Print ya matukio na nje',
-                'summary' => 'Banners, posters and large-format artwork prepared for local production.',
-                'summary_sw' => 'Mabango, posta na kazi kubwa zilizoandaliwa kwa uzalishaji wa karibu.',
-                'stack' => 'Large format · Poster · Banner',
-                'tag' => 'Print',
-            ],
-            [
-                'title' => 'Product & promo design',
-                'title_sw' => 'Ubunifu wa bidhaa na matangazo',
-                'summary' => 'Flyers, menus and promotional layouts for shops and service businesses.',
-                'summary_sw' => 'Flaya, menyu na miundo ya matangazo kwa maduka na biashara za huduma.',
-                'stack' => 'Flyer · Menu · Promo',
-                'tag' => 'Design',
+                'id' => 'digital-ecosystem',
+                'category' => 'IT & TECHNOLOGY',
+                'title' => 'Digital Business Ecosystem',
+                'description' => 'A connected digital presence combining a business website, service catalogue, customer workflows and internal operations.',
+                'stack' => ['Web', 'Cloud', 'Integrations'],
+                'image' => 'images/work-ecosystem.svg',
             ],
         ];
 
-        return view('work', compact('itProjects', 'graphicsProjects'));
+        $projects = [
+            [
+                'category' => 'IT & TECHNOLOGY',
+                'filter' => 'it',
+                'title' => 'Business Operations Dashboard',
+                'description' => 'Internal workspace for staff, assignments and reporting.',
+                'image' => 'images/work-operations.svg',
+                'meta' => ['Laravel', 'Role-based access'],
+            ],
+            [
+                'category' => 'SOFTWARE & WEB',
+                'filter' => 'software',
+                'title' => 'Service Request Platform',
+                'description' => 'Digital applications, documents and customer tracking.',
+                'image' => 'images/work-digital-platform.svg',
+                'meta' => ['Laravel', 'MySQL'],
+            ],
+            [
+                'category' => 'SOFTWARE & WEB',
+                'filter' => 'software',
+                'title' => 'Business Website & Catalogue',
+                'description' => 'Responsive company website with a structured service catalogue.',
+                'image' => 'images/work-website.svg',
+                'meta' => ['Blade', 'Vite', 'Responsive'],
+            ],
+            [
+                'category' => 'GRAPHICS & BRANDING',
+                'filter' => 'graphics',
+                'title' => 'Brand Identity System',
+                'description' => 'Identity, print assets and social media design toolkit.',
+                'image' => 'images/work-branding.svg',
+                'meta' => ['Branding', 'Print Design'],
+            ],
+            [
+                'category' => 'GRAPHICS & BRANDING',
+                'filter' => 'graphics',
+                'title' => 'Campaign & Promotional Design',
+                'description' => 'Campaign graphics built for digital and print publishing.',
+                'image' => 'images/work-campaign.svg',
+                'meta' => ['Social', 'Campaign'],
+            ],
+            [
+                'category' => 'IT & TECHNOLOGY',
+                'filter' => 'it',
+                'title' => 'Digital Infrastructure Concept',
+                'description' => 'Technology architecture and cloud-ready digital workflows.',
+                'image' => 'images/work-ecosystem.svg',
+                'meta' => ['Cloud', 'Systems'],
+            ],
+        ];
+
+        $stats = [
+            ['value' => '40+', 'label' => 'Projects & deliveries'],
+            ['value' => '20+', 'label' => 'Business & creative engagements'],
+            ['value' => '3', 'label' => 'Core disciplines'],
+            ['value' => '24/7', 'label' => 'Digital support'],
+        ];
+
+        return view('work', compact('slides', 'projects', 'stats'));
     }
 }

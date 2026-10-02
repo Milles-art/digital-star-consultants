@@ -22,7 +22,7 @@ trait SeedsServiceFields
     }
 
     /**
-     * Create (or update) a service under a category and replace its fields.
+     * Create (or update) a service under a category and reconcile its fields.
      *
      * @param  array<int, array<string, mixed>>  $fields  flat list of field
      *         defs, e.g. ['label' => ..., 'field_key' => ..., 'field_type' => ...]
@@ -46,16 +46,29 @@ trait SeedsServiceFields
             ]
         );
 
-        // Re-running the seeder shouldn't leave stale/duplicate fields
-        // behind if the field list changed since last run.
-        $service->fields()->delete();
+        // Never delete field records here: submission_field_values reference
+        // service_fields and deletion would destroy historical customer data.
+        // Reconcile by stable (service_id + field_key), archive removed fields,
+        // and reactivate/update the fields that belong to the current service form.
+        ServiceField::where('service_id', $service->id)->update(['is_active' => false]);
 
         foreach (array_values($fields) as $order => $field) {
-            ServiceField::create($field + [
-                'service_id' => $service->id,
+            $payload = [
+                'label' => $field['label'],
+                'field_type' => $field['field_type'] ?? 'text',
+                'options' => $field['options'] ?? null,
+                'placeholder' => $field['placeholder'] ?? null,
+                'help_text' => $field['help_text'] ?? null,
+                'default_value' => $field['default_value'] ?? null,
                 'is_required' => $field['is_required'] ?? true,
                 'sort_order' => $order,
-            ]);
+                'is_active' => true,
+            ];
+
+            ServiceField::updateOrCreate(
+                ['service_id' => $service->id, 'field_key' => $field['field_key']],
+                $payload
+            );
         }
 
         return $service;

@@ -1,3 +1,7 @@
+{{--
+    Inline SVG icon by key. Usage: @include('partials.icon', ['iconKey' => 'passport'])
+    Size and colour come from the parent (.ds-icon-box) via currentColor.
+--}}
 @php
     $paths = [
         'government' => 'M4 10h16M5 10v9h14v-9M8 10V7l4-3 4 3v3M8 19v-4h8v4',
@@ -18,7 +22,6 @@
         'security' => 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4',
         'default' => 'M12 3l2.2 6.7H21l-5.5 4 2.1 6.8-5.6-4-5.6 4 2.1-6.8-5.5-4h6.8z',
     ];
-    $iconKey = $iconKey ?? 'default';
-    $path = $paths[$iconKey] ?? $paths['default'];
+    $path = $paths[$iconKey ?? 'default'] ?? $paths['default'];
 @endphp
 <svg class="ds-svg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="{{ $path }}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>

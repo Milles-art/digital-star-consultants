@@ -1,47 +1,77 @@
-@extends('layouts.app')
+@extends('layouts.digitalstar')
+
+@section('title', 'Track an application | Digital Star Consultants')
+
+@php
+    $features = [
+        ['icon' => 'activity', 'title' => 'Live status', 'copy' => 'See the latest stage of your application at any time.'],
+        ['icon' => 'signpost', 'title' => 'Clear next step', 'copy' => 'Know whether you need to do anything or just wait.'],
+        ['icon' => 'hash', 'title' => 'One reference', 'copy' => 'Use the same code from submission to completion.'],
+    ];
+@endphp
+
+@section('hero-aside')
+    <div class="ds-hero-card">
+        <div class="ds-hero-card-chip" aria-hidden="true"></div>
+        <span class="ds-hero-card-label">Your reference number</span>
+        <h3>Track an application</h3>
+        <small>Example: DSC-20260901-ABC123</small>
+        <form class="ds-form" id="track-form" style="margin-top:20px;gap:14px">
+            <label class="ds-field">Reference number
+                <input id="tracking-reference" name="reference" required autocomplete="off" placeholder="20260901-ABC123">
+            </label>
+            <button class="ds-btn ds-btn-mint ds-btn-block" type="submit">Check status <i data-lucide="arrow-right"></i></button>
+        </form>
+        <p class="ds-hero-note"><i data-lucide="shield-check"></i> Private and secure. Your reference is only used to find your status.</p>
+    </div>
+@endsection
 
 @section('content')
-<section class="track-page track-entry-page">
-    <div class="track-entry-shell">
-        <div class="track-entry-copy">
-            <span class="track-eyebrow">APPLICATION TRACKING</span>
-            <h1>Know where your request <em>stands.</em></h1>
-            <p>Enter your Digital Star reference number to see the latest status, service details and the next step for your request.</p>
-            <div class="track-benefits">
-                <div><span>01</span><strong>Live status</strong><small>See the latest stage of your application.</small></div>
-                <div><span>02</span><strong>Clear next step</strong><small>Know whether you need to do anything.</small></div>
-                <div><span>03</span><strong>One reference</strong><small>Use the same code from submission to completion.</small></div>
+    @include('partials.ds-hero', [
+        'kicker' => 'Application tracking',
+        'title' => 'Know where your request <span class="ds-accent">stands.</span>',
+        'lead' => 'Enter your Digital Star reference number to see the latest status, service details and the next step.',
+        'points' => ['Live status', 'Clear next step', 'One reference'],
+    ])
+
+    <section class="ds-section">
+        <div class="ds-container">
+            @include('partials.ds-heading', [
+                'kicker' => 'How tracking works',
+                'title' => 'Three steps, one reference.',
+                'copy' => 'Use the same code from submission to completion.',
+            ])
+            <div class="ds-grid-3-even">
+                @foreach ($features as $item)
+                    <article class="ds-service ds-reveal" style="--d:{{ $loop->index * 0.08 }}s">
+                        <span class="ds-icon-box"><i data-lucide="{{ $item['icon'] }}"></i></span>
+                        <h3>{{ $item['title'] }}</h3>
+                        <p>{{ $item['copy'] }}</p>
+                    </article>
+                @endforeach
+            </div>
+
+            <div class="ds-panel ds-banner ds-reveal">
+                <div>
+                    <span class="ds-kicker">Can't find your reference?</span>
+                    <h3>Check your confirmation message or contact our team.</h3>
+                </div>
+                <a class="ds-btn ds-btn-primary" href="{{ route('public.contact.show') }}">Contact support <i data-lucide="arrow-right"></i></a>
             </div>
         </div>
+    </section>
+@endsection
 
-        <div class="track-entry-panel">
-            <div class="track-panel-top">
-                <div class="track-icon-wrap">@include('partials.icon', ['iconKey' => 'forms'])</div>
-                <div><span>YOUR REFERENCE NUMBER</span><strong>Track an application</strong></div>
-            </div>
-            <form class="track-entry-form" id="track-form">
-                <label for="tracking-reference">Reference number</label>
-                <div class="track-input-wrap"><span>DSC</span><input id="tracking-reference" name="reference" required autocomplete="off" placeholder="20260901-ABC123" aria-describedby="tracking-hint"></div>
-                <p id="tracking-hint">Example: <b>DSC-20260901-ABC123</b></p>
-                <button class="ds-button ds-button-gold" type="submit">Check application status <span>→</span></button>
-            </form>
-            <div class="track-security"><span>✓</span><div><strong>Private & secure</strong><small>Your reference is used only to retrieve the status of your request.</small></div></div>
-        </div>
-    </div>
-</section>
-
-<section class="track-help-strip">
-    <div><span>CAN'T FIND YOUR REFERENCE?</span><strong>Check the confirmation message or contact our team.</strong></div>
-    <a class="ds-button ds-button-outline" href="{{ route('public.contact.show') }}">Contact support <span>→</span></a>
-</section>
-
+@push('scripts')
 <script>
-document.getElementById('track-form')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const value = new FormData(event.currentTarget).get('reference')?.toString().trim();
-    if (!value) return;
-    const normalized = value.toUpperCase().startsWith('DSC-') ? value.toUpperCase() : `DSC-${value.toUpperCase()}`;
-    window.location.href = `/track/status/${encodeURIComponent(normalized)}`;
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('track-form')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const value = new FormData(event.currentTarget).get('reference')?.toString().trim().toUpperCase();
+        if (!value) return;
+        const normalized = value.startsWith('DSC-') ? value : `DSC-${value}`;
+        window.location.href = `/track/status/${encodeURIComponent(normalized)}`;
+    });
 });
 </script>
-@endsection
+@endpush

@@ -122,18 +122,14 @@ class ServiceFieldController extends Controller
     {
         $this->authorize('delete', $field);
 
-        if ($field->values()->count() > 0) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Cannot delete field with existing values. Archive instead.'
-            ], 422);
-        }
-
-        $field->delete();
+        // Service fields are part of the submission contract. Never hard-delete
+        // them: historical submissions may still reference the field, and the
+        // exact question definition should remain available to staff.
+        $field->update(['is_active' => false]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Field deleted successfully'
+            'message' => 'Field archived successfully. Historical submissions remain intact.'
         ]);
     }
 

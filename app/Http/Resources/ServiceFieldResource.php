@@ -21,6 +21,7 @@ class ServiceFieldResource extends JsonResource
             'help_text' => $this->help_text,
             'default_value' => $this->default_value,
             'is_required' => $this->is_required,
+            'is_active' => $this->is_active,
             'sort_order' => $this->sort_order,
         ];
     }

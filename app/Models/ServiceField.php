@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\Rule;
 
 class ServiceField extends Model
 {
@@ -39,18 +40,21 @@ class ServiceField extends Model
         'default_value',
         'is_required',
         'sort_order',
+        'is_active',
     ];
 
     protected $casts = [
         'options' => 'array',
         'is_required' => 'boolean',
         'sort_order' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     protected $attributes = [
         'is_required' => true,
         'sort_order' => 0,
         'field_type' => 'text',
+        'is_active' => true,
     ];
 
     //  Relationships
@@ -104,20 +108,18 @@ class ServiceField extends Model
      */
     public function getValidationRules(): array
     {
-        $rules = [];
-
-        if ($this->is_required) {
-            $rules[] = 'required';
-        } else {
-            $rules[] = 'nullable';
-        }
+        $rules = [$this->is_required ? 'required' : 'nullable'];
 
         switch ($this->field_type) {
             case 'email':
+                $rules[] = 'string';
                 $rules[] = 'email';
+                $rules[] = 'max:255';
                 break;
             case 'tel':
-                $rules[] = 'regex:/^[0-9+\-\s]+$/';
+                $rules[] = 'string';
+                $rules[] = 'regex:/^[0-9+\-\s()]+$/';
+                $rules[] = 'max:50';
                 break;
             case 'number':
                 $rules[] = 'numeric';
@@ -134,10 +136,6 @@ class ServiceField extends Model
             case 'file':
                 $rules[] = 'file';
                 $rules[] = 'max:10240'; // 10MB
-                // Restrict to expected document/image types. Public,
-                // unauthenticated file upload with no MIME whitelist is a
-                // real risk — adjust this list to whatever document types
-                // the business actually accepts (IDs, certificates, photos).
                 $rules[] = 'mimes:pdf,jpg,jpeg,png,doc,docx';
                 break;
             case 'checkbox':
@@ -146,8 +144,16 @@ class ServiceField extends Model
             case 'select':
             case 'radio':
                 if ($this->hasOptions()) {
-                    $rules[] = 'in:' . implode(',', array_map(static fn ($value) => str_replace(',', '\\,', (string) $value), array_values($this->options)));
+                    $rules[] = Rule::in(array_values($this->options));
                 }
+                break;
+            case 'textarea':
+                $rules[] = 'string';
+                $rules[] = 'max:5000';
+                break;
+            default:
+                $rules[] = 'string';
+                $rules[] = 'max:1000';
                 break;
         }
 

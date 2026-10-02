@@ -16,6 +16,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class SubmissionController extends Controller
 {
@@ -84,11 +86,37 @@ class SubmissionController extends Controller
         ]);
     }
 
+    public function print(Submission $submission): View|JsonResponse
+    {
+        $this->authorize('view', $submission);
+        $submission->load(['service.category', 'service.fields', 'service.allFields', 'processedBy', 'values.field']);
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $submission,
+            ]);
+        }
+
+        return view('admin.submissions.print', compact('submission'));
+    }
+
     public function show(Submission $submission): View|JsonResponse
     {
         $this->authorize('view', $submission);
 
-        $submission->load(['service', 'processedBy', 'values.field', 'activities.user']);
+        // Keep the request workspace resilient when the local database is
+        // behind the current migrations. Activity history was introduced
+        // after the original submissions feature, so loading the relation
+        // unconditionally could turn a harmless page visit into a 500 when
+        // the activity_logs table has not been migrated yet.
+        $submission->load(['service.category', 'service.fields', 'service.allFields', 'processedBy', 'values.field']);
+
+        if (Schema::hasTable('activity_logs')) {
+            $submission->load('activities.user');
+        } else {
+            $submission->setRelation('activities', new Collection());
+        }
 
         $staff = User::whereIn('role', [
             User::ROLE_ADMIN,
@@ -122,7 +150,7 @@ class SubmissionController extends Controller
         ]);
 
         foreach (['customer_name', 'customer_phone', 'customer_email', 'customer_notes', 'preferred_date', 'total_price'] as $field) {
-            if (array_key_exists($field, $validated) && $validated[$field] !== null) {
+            if (array_key_exists($field, $validated)) {
                 $submission->{$field} = $validated[$field];
             }
         }

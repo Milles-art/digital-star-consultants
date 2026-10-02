@@ -3,8 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Service;
-use App\Models\ServiceCategory;
-use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -48,29 +46,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // --------------------------------------------------
-        // Sample submissions
+        // Realistic sample service requests
         // --------------------------------------------------
-        $activeServices = Service::where('is_active', true)->get();
+        $this->call(SubmissionSeeder::class);
 
-        if ($activeServices->isNotEmpty()) {
-            // Pending (unassigned)
-            Submission::factory()->count(3)->create([
-                'service_id' => $activeServices->random()->id,
-                'status' => Submission::STATUS_PENDING,
-            ]);
-
-            // Assigned to staff1
-            Submission::factory()->count(2)->assignedTo($staff1)->create([
-                'service_id' => $activeServices->random()->id,
-            ]);
-
-            // Assigned to staff2 + completed
-            Submission::factory()->count(2)->assignedTo($staff2)->completed()->create([
-                'service_id' => $activeServices->random()->id,
-            ]);
-        }
-
-        $this->command?->info('Seeded 5 demo users with strong passwords.');
+        $this->command?->info('Seeded demo users and 5 realistic service requests.');
         $this->command?->warn('For local credentials management, use the Admin > Team & Access password reset action.');
     }
 

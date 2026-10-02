@@ -1,2 +1,31 @@
-@extends('layouts.app')
-@section('content')<section class="auth-page"><div class="auth-card"><div class="brand auth-brand"><span class="brand-mark"><img src="{{ asset('images/digital-star-mark.svg') }}" alt="Digital Star Consultants star mark"></span><span><b>DIGITAL STAR</b><small>STAFF PORTAL</small></span></div><div class="eyebrow">SECURE ACCESS</div><h1>Welcome back.</h1><p>Sign in to manage service requests and operations.</p><form id="login-form"><label>Email<input type="email" name="email" required></label><label>Password<input type="password" name="password" required></label><label class="check"><input type="checkbox" name="remember"> Remember me</label><div id="login-error" class="form-message error" hidden></div><button class="button button-yellow button-wide">Sign in →</button></form><a class="back-link" href="{{ route('home') }}">← Back to website</a></div></section><script>document.getElementById('login-form').addEventListener('submit',async e=>{e.preventDefault();const m=document.getElementById('login-error');const r=await fetch('/login',{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json','Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});const d=await r.json();if(r.ok)location.href=d.data.redirect;else{m.hidden=false;m.textContent=d.message||'Unable to sign in.'}})</script>@endsection
+@extends('layouts.digitalstar')
+
+@section('title', 'Sign in | Digital Star Consultants')
+
+@section('content')
+<section class="ds-section">
+    <div class="ds-container ds-narrow">
+        <div class="ds-panel ds-reveal">
+            <span class="ds-kicker">Secure access</span>
+            <h3 style="font-size:28px">Welcome back.</h3>
+            <p>Sign in to manage service requests and operations.</p>
+            <form id="login-form" class="ds-form" style="margin-top:24px">
+                <label class="ds-field">Email
+                    <input type="email" name="email" required autocomplete="username" placeholder="you@digitalstar.co.tz">
+                </label>
+                <label class="ds-field">Password
+                    <input type="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
+                </label>
+                <label class="ds-check"><input type="checkbox" name="remember"><span>Remember me</span></label>
+                <div id="login-error" class="ds-alert ds-alert-error" hidden></div>
+                <button class="ds-btn ds-btn-primary ds-btn-block" style="height:48px">Sign in <i data-lucide="arrow-right"></i></button>
+            </form>
+            <p class="ds-help"><a href="{{ route('home') }}">← Back to website</a></p>
+        </div>
+    </div>
+</section>
+@endsection
+
+@push('scripts')
+<script>document.getElementById('login-form').addEventListener('submit',async e=>{e.preventDefault();const m=document.getElementById('login-error');const r=await fetch('/login',{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content,'Accept':'application/json','Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});const d=await r.json();if(r.ok)location.href=d.data.redirect;else{m.hidden=false;m.textContent=d.message||'Unable to sign in.'}})</script>
+@endpush

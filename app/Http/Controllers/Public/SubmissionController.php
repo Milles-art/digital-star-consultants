@@ -8,6 +8,7 @@ use App\Models\Service;
 use App\Models\Submission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class SubmissionController extends Controller
 {
@@ -33,15 +34,25 @@ class SubmissionController extends Controller
         foreach ($service->fields as $field) {
             $fieldRules["fields.{$field->field_key}"] = $field->getValidationRules();
         }
-        $request->validate($fieldRules);
+
+        // Validate one canonical field bag. Laravel keeps uploaded files in the
+        // file bag; merge them into the same nested `fields` structure used by
+        // text/select/radio inputs so every seeded field is validated exactly once.
+        $payload = $request->all();
+        $payload['fields'] = array_replace_recursive(
+            is_array($request->input('fields', [])) ? $request->input('fields', []) : [],
+            is_array($request->file('fields', [])) ? $request->file('fields', []) : []
+        );
+
+        Validator::make($payload, $fieldRules)->validate();
 
         try {
             $submission = $this->submissionService->createSubmission($service, [
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone,
-                'customer_email' => $request->customer_email,
-                'customer_notes' => $request->customer_notes,
-                'preferred_date' => $request->preferred_date,
+                'customer_name' => $request->validated('customer_name'),
+                'customer_phone' => $request->validated('customer_phone'),
+                'customer_email' => $request->validated('customer_email'),
+                'customer_notes' => $request->validated('customer_notes'),
+                'preferred_date' => $request->validated('preferred_date'),
                 'fields' => $request->input('fields', []),
                 'files' => $request->file('fields', []),
             ]);

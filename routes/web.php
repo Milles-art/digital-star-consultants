@@ -155,6 +155,7 @@ Route::middleware(['auth'])->group(function () {
         // Submissions
         Route::get('/submissions', [AdminSubmissionController::class, 'index'])->name('admin.submissions.index');
         Route::get('/submissions/{submission}', [AdminSubmissionController::class, 'show'])->name('admin.submissions.show');
+        Route::get('/submissions/{submission}/print', [AdminSubmissionController::class, 'print'])->name('admin.submissions.print');
         Route::put('/submissions/{submission}', [AdminSubmissionController::class, 'update'])->name('admin.submissions.update');
         Route::delete('/submissions/{submission}', [AdminSubmissionController::class, 'destroy'])->name('admin.submissions.destroy');
         Route::post('/submissions/{submission}/assign', [AdminSubmissionController::class, 'assign'])->name('admin.submissions.assign');

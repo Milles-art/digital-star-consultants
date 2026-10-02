@@ -48,6 +48,11 @@ class Service extends Model
 
     public function fields(): HasMany
     {
+        return $this->hasMany(ServiceField::class)->where('is_active', true)->orderBy('sort_order');
+    }
+
+    public function allFields(): HasMany
+    {
         return $this->hasMany(ServiceField::class)->orderBy('sort_order');
     }
 

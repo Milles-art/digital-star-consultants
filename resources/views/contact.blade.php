@@ -1,65 +1,129 @@
-@extends('layouts.app')
+@extends('layouts.digitalstar')
+
+@section('title', 'Contact | Digital Star Consultants')
+
+@php
+    $ds = config('digitalstar');
+    $info = [
+        ['icon' => 'mail', 'label' => 'Email us', 'value' => 'hello@digitalstar.co.tz', 'href' => 'mailto:hello@digitalstar.co.tz'],
+        ['icon' => 'map-pin', 'label' => 'Visit us', 'value' => 'Dar es Salaam, Tanzania', 'href' => null],
+        ['icon' => 'clock', 'label' => 'Office hours', 'value' => 'Mon - Sat, 8AM - 6PM', 'href' => null],
+    ];
+    $tips = [
+        'Clear guidance on the right service for your request.',
+        'Response from our team during business hours.',
+        'Need something urgent? Check the catalogue first for a guided application.',
+    ];
+    $fields = [
+        ['name' => 'name', 'label' => 'Name', 'type' => 'text', 'placeholder' => 'John Mwakyusa', 'autocomplete' => 'name', 'required' => true],
+        ['name' => 'email', 'label' => 'Email', 'type' => 'email', 'placeholder' => 'example@gmail.com', 'autocomplete' => 'email', 'required' => true],
+        ['name' => 'phone', 'label' => 'Phone (optional)', 'type' => 'tel', 'placeholder' => '+255 712 345 678', 'autocomplete' => 'tel', 'required' => false],
+        ['name' => 'subject', 'label' => 'Subject (optional)', 'type' => 'text', 'placeholder' => 'New website for my business', 'autocomplete' => 'off', 'required' => false],
+    ];
+@endphp
+
+@section('hero-actions')
+    <a href="#message" class="ds-btn ds-btn-mint">Send a message <i data-lucide="arrow-right"></i></a>
+    <a href="mailto:hello@digitalstar.co.tz" class="ds-btn ds-btn-ghost-light">hello@digitalstar.co.tz</a>
+@endsection
+
+@section('hero-aside')
+    <div class="ds-hero-card">
+        <div class="ds-hero-card-chip" aria-hidden="true"></div>
+        <span class="ds-hero-card-label">Quick start</span>
+        <h3>Not sure where to begin?</h3>
+        <small>Start with the complete catalogue</small>
+        <p>Browse by service area, then choose the exact service that matches your request.</p>
+        <a href="{{ route('public.services.index') }}" class="ds-btn ds-btn-white">Browse services <i data-lucide="arrow-right"></i></a>
+    </div>
+@endsection
 
 @section('content')
-<section class="ds-page-hero ds-contact-hero">
-    <div class="ds-container ds-page-hero-grid">
-        <div>
-            <div class="ds-eyebrow">CONTACT DIGITAL STAR</div>
-            <h1>Let's get something <em>moving.</em></h1>
-            <p>Tell us what you need help with. We'll point you to the right service or help you understand the next step.</p>
-            <div class="ds-contact-quick">
-                <a href="mailto:hello@digitalstar.co.tz"><span class="ds-quick-icon">@</span><span><small>EMAIL</small><strong>hello@digitalstar.co.tz</strong></span></a>
-                <div><span class="ds-quick-icon">8–6</span><span><small>BUSINESS HOURS</small><strong>Mon – Sat · 8:00 AM – 6:00 PM</strong></span></div>
-                <div><span class="ds-quick-icon">TZ</span><span><small>LOCATION</small><strong>Dar es Salaam, Tanzania</strong></span></div>
-            </div>
-        </div>
-        <div class="ds-contact-side-card">
-            <div class="ds-contact-side-top"><span>QUICK START</span><span class="ds-side-dot"></span></div>
-            <h2>Not sure which service you need?</h2>
-            <p>Start with the complete catalogue and browse by service area, then choose the exact service that matches your request.</p>
-            <a class="ds-button ds-button-dark" href="{{ route('public.services.index') }}">Browse services <span>→</span></a>
-        </div>
-    </div>
-</section>
+    @include('partials.ds-hero', [
+        'kicker' => 'Contact Digital Star',
+        'title' => "Let's get something <span class=\"ds-accent\">moving.</span>",
+        'lead' => "Tell us what you need help with. We'll point you to the right service or help you understand the next step.",
+        'image' => $ds['images']['collab'],
+        'points' => ['Mon - Sat, 8AM - 6PM', 'Dar es Salaam, Tanzania'],
+    ])
 
-<section class="ds-section ds-contact-section">
-    <div class="ds-container ds-contact-layout">
-        <div class="ds-contact-info">
-            <div class="ds-eyebrow">SEND A MESSAGE</div>
-            <h2>We'd like to <em>hear from you.</em></h2>
-            <p>Use the form and give us enough detail to understand what you need. A member of the team can then respond with the most useful next step.</p>
-            <div class="ds-contact-note">
-                <span class="ds-note-icon">✓</span>
-                <div><strong>Keep it simple</strong><p>You do not need to know the service name. Just tell us what you are trying to accomplish.</p></div>
-            </div>
-            <div class="ds-contact-note">
-                <span class="ds-note-icon">↗</span>
-                <div><strong>Need something urgent?</strong><p>Use the service catalogue first to see whether your exact request already has a guided application.</p></div>
-            </div>
-        </div>
+    <section class="ds-section" id="message" style="scroll-margin-top:80px">
+        <div class="ds-container">
+            @include('partials.ds-heading', [
+                'kicker' => 'Send a message',
+                'title' => "We'd like to hear from you.",
+                'copy' => 'Give us enough detail to understand what you need. A member of the team will respond with the most useful next step.',
+            ])
 
-        <div class="ds-contact-form-card">
-            @if (session('success'))
-                <div class="ds-alert ds-alert-success">{{ session('success') }}</div>
-            @endif
-            @if ($errors->any())
-                <div class="ds-alert ds-alert-error"><strong>Please check the highlighted details.</strong><span>{{ $errors->first() }}</span></div>
-            @endif
-            <form class="ds-contact-form" method="POST" action="{{ route('public.contact.store') }}">
-                @csrf
-                <div class="ds-form-grid-2">
-                    <label>Name<input name="name" autocomplete="name" required value="{{ old('name') }}" placeholder="Your full name"></label>
-                    <label>Email<input type="email" name="email" autocomplete="email" required value="{{ old('email') }}" placeholder="you@example.com"></label>
-                    <label>Phone<input name="phone" autocomplete="tel" value="{{ old('phone') }}" placeholder="+255 ..."></label>
-                    <label>Subject<input name="subject" value="{{ old('subject') }}" placeholder="What can we help with?"></label>
+            <div class="ds-contact">
+                <div class="ds-stack ds-reveal">
+                    @foreach ($info as $item)
+                        <div class="ds-info">
+                            <span class="ds-icon-box"><i data-lucide="{{ $item['icon'] }}"></i></span>
+                            <div style="min-width:0">
+                                <small>{{ $item['label'] }}</small>
+                                @if ($item['href'])
+                                    <a href="{{ $item['href'] }}">{{ $item['value'] }}</a>
+                                @else
+                                    <strong>{{ $item['value'] }}</strong>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+
+                    <div class="ds-tips">
+                        <h3>Keep it simple</h3>
+                        <p>You don't need to know the service name. Just tell us what you're trying to accomplish.</p>
+                        <ul>
+                            @foreach ($tips as $tip)
+                                <li><i data-lucide="circle-check"></i><span>{{ $tip }}</span></li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
-                <label>Message<textarea name="message" required placeholder="Tell us what you need help with...">{{ old('message') }}</textarea></label>
-                <div class="ds-form-footer">
-                    <span>Your details are used to respond to your enquiry.</span>
-                    <button class="ds-button ds-button-gold" type="submit">Send message <span>→</span></button>
+
+                <div class="ds-form-card ds-reveal" style="--d:.1s">
+                    @if (session('success'))
+                        <div class="ds-alert ds-alert-success" role="status">{{ session('success') }}</div>
+                    @endif
+                    @if ($errors->any())
+                        <div class="ds-alert ds-alert-error" role="alert"><strong>Please check the highlighted details.</strong></div>
+                    @endif
+
+                    <form class="ds-form" method="POST" action="{{ route('public.contact.store') }}">
+                        @csrf
+                        <div class="ds-form-row">
+                            @foreach ($fields as $field)
+                                <label class="ds-field {{ $errors->has($field['name']) ? 'has-error' : '' }}">
+                                    {{ $field['label'] }}
+                                    <input type="{{ $field['type'] }}" name="{{ $field['name'] }}" value="{{ old($field['name']) }}"
+                                           placeholder="{{ $field['placeholder'] }}" autocomplete="{{ $field['autocomplete'] }}"
+                                           @if($field['required']) required @endif>
+                                    @error($field['name'])<span class="ds-field-error">{{ $message }}</span>@enderror
+                                </label>
+                            @endforeach
+                        </div>
+                        <label class="ds-field {{ $errors->has('message') ? 'has-error' : '' }}">
+                            Message
+                            <textarea name="message" rows="6" required placeholder="Tell us what you need help with...">{{ old('message') }}</textarea>
+                            @error('message')<span class="ds-field-error">{{ $message }}</span>@enderror
+                        </label>
+                        <button type="submit" class="ds-btn ds-btn-primary ds-btn-block" style="height:48px">
+                            Send message <i data-lucide="arrow-right"></i>
+                        </button>
+                        <p class="ds-form-note">Your details are used only to respond to your enquiry.</p>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+
+    @include('partials.ds-cta', [
+        'kicker' => 'Prefer to browse?',
+        'title' => 'Find the right service first.',
+        'copy' => 'Explore the complete catalogue, then start a guided application in minutes.',
+        'buttonLabel' => 'Explore services',
+        'url' => route('public.services.index'),
+        'checklist' => ['Guided applications', 'Document support', 'Status tracking'],
+    ])
 @endsection

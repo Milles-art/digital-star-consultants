@@ -14,8 +14,16 @@ class SubmissionFieldValue extends Model
     protected $fillable = [
         'submission_id',
         'service_field_id',
+        'field_label_snapshot',
+        'field_key_snapshot',
+        'field_type_snapshot',
+        'field_options_snapshot',
         'value',
         'file_path',
+    ];
+
+    protected $casts = [
+        'field_options_snapshot' => 'array',
     ];
 
     protected $appends = [
@@ -48,7 +56,7 @@ class SubmissionFieldValue extends Model
 
     public function getIsFileAttribute(): bool
     {
-        return $this->field && $this->field->isFileField();
+        return ($this->field_type_snapshot ?: $this->field?->field_type) === 'file';
     }
 
     /**
@@ -102,27 +110,30 @@ class SubmissionFieldValue extends Model
             return $this->file_path ? basename($this->file_path) : 'No file';
         }
 
-        if ($this->field && $this->field->isSelectField()) {
-            $options = $this->field->getOptionsArray();
-            return $options[$this->value] ?? $this->value;
+        $value = $this->value;
+        if ($value === null || $value === '') {
+            return '';
         }
 
-        return $this->value ?? '';
-    }
-
-    //  Mutator 
-    
-    public function setValueAttribute($value): void
-    {
-        // If field is select/radio, store the key not the label
-        if ($this->field && $this->field->isSelectField() && !empty($this->field->options)) {
-            $options = $this->field->getOptionsArray();
-            if (in_array($value, $options, true)) {
-                $this->attributes['value'] = array_search($value, $options, true);
-                return;
+        // Multi-value fields are stored as JSON so the exact customer response
+        // can be reconstructed without losing order or labels.
+        if (is_string($value) && str_starts_with(trim($value), '[')) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return implode(', ', array_map('strval', $decoded));
             }
         }
-        $this->attributes['value'] = $value;
+
+        // Preserve the submitted label when the public form posted labels.
+        // For older rows that stored an option index, gracefully resolve it.
+        if (in_array($this->field_type_snapshot ?: $this->field?->field_type, ['select', 'radio', 'checkbox'], true)) {
+            $options = array_values($this->field_options_snapshot ?: ($this->field?->getOptionsArray() ?? []));
+            if (isset($options[(int) $value]) && (string) ((int) $value) === (string) $value) {
+                return (string) $options[(int) $value];
+            }
+        }
+
+        return (string) $value;
     }
 
     //  Private Helper 

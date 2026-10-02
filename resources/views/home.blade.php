@@ -1,120 +1,121 @@
-@extends('layouts.app')
+@extends('layouts.digitalstar')
+
+@php
+    $ds = config('digitalstar');
+    $floatCards = [
+        ['icon' => 'laptop', 'title' => 'Web Development', 'sub' => 'Modern & responsive'],
+        ['icon' => 'megaphone', 'title' => 'Digital Marketing', 'sub' => 'Grow your brand'],
+        ['icon' => 'server', 'title' => 'IT Consultancy', 'sub' => 'Reliable & secure'],
+    ];
+    // Prefer live catalogue pillars from the database; fall back to the static config.
+    $dsIconFor = function ($slug) {
+        $slug = strtolower($slug ?? '');
+        return match (true) {
+            str_contains($slug, 'print') || str_contains($slug, 'graphic') || str_contains($slug, 'brand') => 'palette',
+            str_contains($slug, 'business') || str_contains($slug, 'brela') => 'briefcase',
+            str_contains($slug, 'it') || str_contains($slug, 'tech') || str_contains($slug, 'consult') => 'server',
+            str_contains($slug, 'government') || str_contains($slug, 'online') => 'laptop',
+            default => 'code-xml',
+        };
+    };
+    $homeServices = (isset($categories) && $categories->isNotEmpty())
+        ? $categories->take(4)->map(fn ($c) => [
+            'title' => $c->name,
+            'copy' => \Illuminate\Support\Str::limit($c->description ?: 'Professional digital services tailored to your needs.', 110),
+            'icon' => $dsIconFor($c->slug),
+            'points' => $c->children->pluck('name')->merge($c->services->pluck('name'))->take(3)->all() ?: ['Guided application', 'Document support', 'Status tracking'],
+            'url' => route('public.services.index', ['category' => $c->slug]),
+        ])
+        : collect($ds['services'])->map(fn ($s) => $s + ['url' => route('public.services.index')]);
+@endphp
+
+{{-- Hero slots (must be defined before the content section) --}}
+@section('hero-actions')
+    <a href="{{ route('work') }}" class="ds-btn ds-btn-mint">Explore our work <i data-lucide="arrow-right"></i></a>
+    <a href="{{ route('public.contact.show') }}" class="ds-btn ds-btn-ghost-light">Get a quote</a>
+@endsection
+
+@section('hero-aside')
+    <div class="ds-visual" aria-hidden="true">
+        <div class="ds-visual-frame"></div>
+        <div class="ds-visual-core"><i data-lucide="code-xml"></i></div>
+        @foreach ($floatCards as $card)
+            <div class="ds-float ds-float-{{ $loop->iteration }}">
+                <i class="ds-float-icon"><i data-lucide="{{ $card['icon'] }}"></i></i>
+                <div><strong>{{ $card['title'] }}</strong><small>{{ $card['sub'] }}</small></div>
+            </div>
+        @endforeach
+    </div>
+@endsection
+
 @section('content')
-<section class="ds-ref-hero">
-    <div class="ds-ref-hero-inner">
-        <div class="ds-ref-hero-copy">
-            <span class="ds-ref-eyebrow">DIGITAL SERVICES PARTNER · TANZANIA</span>
-            <h1>Digital services.<br><span>Simplified.</span></h1>
-            <p>Government services, business solutions,<br class="desktop-only"> technology and creative services —<br class="desktop-only"> all in one place.</p>
-            <div class="ds-ref-actions">
-                <a class="ds-ref-btn dark" href="{{ route('public.services.index') }}">Explore Services <b>→</b></a>
-                <a class="ds-ref-btn light" href="{{ route('public.track.form') }}">Track Application <b>▣</b></a>
+    @include('partials.ds-hero', [
+        'kicker' => 'Digital solutions for a brighter tomorrow',
+        'title' => 'Your trusted digital partner <span class="ds-accent">in Tanzania</span>',
+        'lead' => 'We help businesses and organizations grow through modern web, software, creative and IT solutions.',
+        'image' => $ds['images']['hero'],
+        'points' => ['Modern solutions', 'Reliable support', 'Local expertise'],
+    ])
+
+    @include('partials.ds-stats')
+
+    {{-- SERVICES --}}
+    <section class="ds-section">
+        <div class="ds-container">
+            @include('partials.ds-heading', [
+                'kicker' => 'What we do',
+                'title' => 'Our services',
+                'copy' => 'From web development to digital consultation, we provide end-to-end solutions for your business.',
+                'action' => '<a href="' . route('public.services.index') . '" class="ds-btn ds-btn-soft">View all services <i data-lucide="arrow-right"></i></a>',
+            ])
+            <div class="ds-grid-4">
+                @foreach ($homeServices as $service)
+                    <a href="{{ $service['url'] }}" class="ds-service ds-reveal" style="--d:{{ $loop->index * 0.08 }}s">
+                        <span class="ds-icon-box"><i data-lucide="{{ $service['icon'] }}"></i></span>
+                        <h3>{{ $service['title'] }}</h3>
+                        <p>{{ $service['copy'] }}</p>
+                        <ul class="ds-tags">
+                            @foreach ($service['points'] as $point)
+                                <li>{{ $point }}</li>
+                            @endforeach
+                        </ul>
+                        <span class="ds-card-link">Learn more <i data-lucide="arrow-up-right"></i></span>
+                    </a>
+                @endforeach
             </div>
         </div>
-        <div class="ds-ref-hero-visual" aria-hidden="true">
-            <div class="ds-ref-skyline"></div>
-            <div class="ds-ref-haze"></div>
-            <img src="{{ asset('images/digital-star-mark.svg') }}" alt="">
-            <div class="ds-ref-star-shadow"></div>
-        </div>
-    </div>
-</section>
+    </section>
 
-<section class="ds-ref-trust">
-    <div class="ds-ref-trust-inner">
-        <article><span class="trust-icon shield">@include('partials.icon',['iconKey'=>'support'])</span><div><strong>Professional Assistance</strong><small>We handle the process for you.</small></div></article>
-        <article><span class="trust-icon clock">@include('partials.icon',['iconKey'=>'forms'])</span><div><strong>Fast &amp; Reliable</strong><small>Quick turnaround with clear communication.</small></div></article>
-        <article><span class="trust-icon shield">@include('partials.icon',['iconKey'=>'support'])</span><div><strong>Secure &amp; Private</strong><small>Your information is always protected.</small></div></article>
-        <article><span class="trust-icon headset">@include('partials.icon',['iconKey'=>'support'])</span><div><strong>Dedicated Support</strong><small>We’re here to help every step of the way.</small></div></article>
-    </div>
-</section>
+    @include('partials.ds-process', [
+        'kicker' => 'How it works',
+        'title' => 'Our simple process',
+        'copy' => 'We make it easy to bring your ideas to life with a clear and transparent process.',
+    ])
 
-<section class="ds-ref-categories">
-    <div class="ds-ref-container">
-        <div class="ds-ref-section-heading centered">
-            <h2>What can we help you with?</h2>
-        </div>
-        <div class="ds-ref-category-grid">
-            @foreach($categories->take(4) as $category)
-                @php
-                    $categoryClasses = ['blue','green','purple','gold'];
-                    $class = $categoryClasses[$loop->index] ?? 'blue';
-                    $iconKeys = ['government','business','printing','it'];
-                    $iconKey = $iconKeys[$loop->index] ?? 'default';
-                @endphp
-                <a class="ds-ref-category-card" href="{{ route('public.services.index',['category'=>$category->slug]) }}">
-                    <div class="ds-ref-category-icon {{ $class }}">@include('partials.icon',['iconKey'=>$iconKey])</div>
-                    <h3>{{ $category->name }}</h3>
-                    <p>{{ $category->description ?: 'Professional services and guided assistance.' }}</p>
-                    <strong>Explore Services <span>→</span></strong>
-                </a>
-            @endforeach
-        </div>
-    </div>
-</section>
-
-<section class="ds-ref-popular">
-    <div class="ds-ref-container">
-        <div class="ds-ref-section-heading row-heading">
-            <h2>Popular Services</h2>
-            <a href="{{ route('public.services.index') }}">View All Services →</a>
-        </div>
-        <div class="ds-ref-popular-grid">
-            @forelse($popularServices->take(6) as $service)
-                @include('services.partials.card', ['service' => $service])
-            @empty
-                <div class="ds-ref-empty">Popular services will appear here as the catalogue grows.</div>
-            @endforelse
-        </div>
-    </div>
-</section>
-
-<section class="ds-ref-how">
-    <div class="ds-ref-container">
-        <div class="ds-ref-section-heading centered light-heading"><h2>How It Works</h2></div>
-        <div class="ds-ref-steps">
-            @foreach($steps as $step)
-                <article>
-                    <div class="ds-ref-step-icon">{{ $loop->iteration === 1 ? '▣' : ($loop->iteration === 2 ? '▤' : ($loop->iteration === 3 ? '◎' : '✓')) }}</div>
-                    <h3>{{ $step['n'] }}. {{ $step['title'] }}</h3>
-                    <p>{{ $step['desc'] }}</p>
-                </article>
-            @endforeach
-        </div>
-    </div>
-</section>
-
-<section class="ds-ref-track">
-    <div class="ds-ref-track-inner">
-        <div class="ds-ref-track-copy">
-            <h2>Track Your<br>Application</h2>
-            <p>Enter your reference number to track your application status.</p>
-            <form action="{{ route('public.track.form') }}" method="GET" class="ds-ref-track-form">
-                <input name="reference" placeholder="Enter your reference number" aria-label="Reference number">
-                <button type="submit">Track Application <span>→</span></button>
-            </form>
-        </div>
-        <div class="ds-ref-track-art" aria-hidden="true">
-            <div class="ds-ref-laptop">
-                <div class="ds-ref-screen">
-                    <div class="screen-top"><strong>Application Status</strong><span>In Progress</span></div>
-                    <b>DSC-2026-04125</b>
-                    <div class="screen-line"><i class="active"></i><i class="active"></i><i></i></div>
-                    <div class="screen-labels"><span>Received</span><span>In Progress</span><span>Completed</span></div>
-                </div>
-                <div class="ds-ref-base"></div>
+    {{-- RECENT WORK --}}
+    <section class="ds-section">
+        <div class="ds-container">
+            @include('partials.ds-heading', [
+                'kicker' => 'Our portfolio',
+                'title' => 'Recent work',
+                'copy' => "Some of the projects we've delivered for our clients.",
+                'action' => '<a href="' . route('work') . '" class="ds-btn ds-btn-soft">View all work <i data-lucide="arrow-right"></i></a>',
+            ])
+            <div class="ds-grid-3">
+                @foreach (array_slice($ds['projects'], 0, 3) as $project)
+                    <div class="ds-reveal" style="--d:{{ $loop->index * 0.1 }}s">
+                        @include('partials.ds-project-card', ['project' => $project, 'href' => route('work')])
+                    </div>
+                @endforeach
             </div>
-            <div class="ds-ref-phone"><div></div><small>Reference No.</small><strong>DSC-04125</strong><span>In Progress</span></div>
         </div>
-    </div>
-</section>
+    </section>
 
-<section class="ds-ref-cta">
-    <div class="ds-ref-cta-inner">
-        <img src="{{ asset('images/digital-star-mark.svg') }}" alt="">
-        <div><h2>Need help with a digital service?</h2><p>Our team is ready to assist you.</p></div>
-        <a class="ds-ref-btn gold" href="{{ route('public.contact.show') }}">Contact Us Now <b>→</b></a>
-        <div class="cta-star" aria-hidden="true">★</div>
-    </div>
-</section>
+    @include('partials.ds-cta', [
+        'kicker' => 'Ready to get started?',
+        'title' => 'Ready to transform your ideas into reality?',
+        'copy' => "Let's discuss how we can help your business grow with the right digital solutions.",
+        'buttonLabel' => 'Get a free quote',
+        'url' => route('public.contact.show'),
+    ])
 @endsection

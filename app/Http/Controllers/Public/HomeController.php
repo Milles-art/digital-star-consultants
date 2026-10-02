@@ -20,14 +20,20 @@ class HomeController extends Controller
                     ->with(['services' => fn ($query) => $query->active()->orderBy('sort_order')]),
                 'services' => fn ($query) => $query->active()->orderBy('sort_order'),
             ])
+            ->whereIn('slug', [
+                'online-government-services',
+                'business-services',
+                'printing-graphics-design',
+                'it-tech-consultancy',
+            ])
             ->orderBy('sort_order')
             ->get();
 
         $steps = [
-            ['n' => '01', 'title' => 'Choose a service', 'desc' => 'Browse our services and select the one that matches your needs.'],
-            ['n' => '02', 'title' => 'Send your request', 'desc' => 'Complete the application with your details and supporting documents.'],
-            ['n' => '03', 'title' => 'We review it', 'desc' => 'Our team checks your request and contacts you if anything else is needed.'],
-            ['n' => '04', 'title' => 'Get your result', 'desc' => 'Follow your application status and receive the outcome when it is ready.'],
+            ['n' => '01', 'title' => 'Choose a service', 'desc' => 'Browse our services and select the one that matches your needs.', 'icon' => 'messages-square', 'copy' => 'Browse our services and select the one that matches your needs.'],
+            ['n' => '02', 'title' => 'Send your request', 'desc' => 'Complete the application with your details and supporting documents.', 'icon' => 'file-text', 'copy' => 'Complete the application with your details and supporting documents.'],
+            ['n' => '03', 'title' => 'We review it', 'desc' => 'Our team checks your request and contacts you if anything else is needed.', 'icon' => 'rocket', 'copy' => 'Our team checks your request and contacts you if anything else is needed.'],
+            ['n' => '04', 'title' => 'Get your result', 'desc' => 'Follow your application status and receive the outcome when it is ready.', 'icon' => 'life-buoy', 'copy' => 'Follow your application status and receive the outcome when it is ready.'],
         ];
 
         $popularServices = Service::query()
