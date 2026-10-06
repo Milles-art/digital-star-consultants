@@ -3,9 +3,9 @@
 @php
     $ds = config('digitalstar');
     $floatCards = [
-        ['icon' => 'laptop', 'title' => 'Web Development', 'sub' => 'Modern & responsive'],
-        ['icon' => 'megaphone', 'title' => 'Digital Marketing', 'sub' => 'Grow your brand'],
-        ['icon' => 'server', 'title' => 'IT Consultancy', 'sub' => 'Reliable & secure'],
+        ['icon' => 'laptop', 'title' => 'Online Applications', 'sub' => 'Guidance at each step'],
+        ['icon' => 'megaphone', 'title' => 'Print & Branding', 'sub' => 'Make your business seen'],
+        ['icon' => 'server', 'title' => 'IT Consultancy', 'sub' => 'Support for your business'],
     ];
     // Prefer live catalogue pillars from the database; fall back to the static config.
     $dsIconFor = function ($slug) {
@@ -50,9 +50,9 @@
 
 @section('content')
     @include('partials.ds-hero', [
-        'kicker' => 'Digital solutions for a brighter tomorrow',
+        'kicker' => 'Everyday services, with a helping hand',
         'title' => 'Your trusted digital partner <span class="ds-accent">in Tanzania</span>',
-        'lead' => 'We help businesses and organizations grow through modern web, software, creative and IT solutions.',
+        'lead' => 'From government applications and business registration to printing, branding and IT, we help you get the next thing done.',
         'image' => $ds['images']['hero'],
         'points' => ['Modern solutions', 'Reliable support', 'Local expertise'],
     ])
@@ -65,7 +65,7 @@
             @include('partials.ds-heading', [
                 'kicker' => 'What we do',
                 'title' => 'Our services',
-                'copy' => 'From web development to digital consultation, we provide end-to-end solutions for your business.',
+                'copy' => 'Find help with online applications, business paperwork, printing, stationery and technology—all in one place.',
                 'action' => '<a href="' . route('public.services.index') . '" class="ds-btn ds-btn-soft">View all services <i data-lucide="arrow-right"></i></a>',
             ])
             <div class="ds-grid-4">
@@ -89,7 +89,7 @@
     @include('partials.ds-process', [
         'kicker' => 'How it works',
         'title' => 'Our simple process',
-        'copy' => 'We make it easy to bring your ideas to life with a clear and transparent process.',
+        'copy' => 'Choose a service, send your details and follow your request with one reference number.',
     ])
 
     {{-- RECENT WORK --}}
@@ -113,9 +113,9 @@
 
     @include('partials.ds-cta', [
         'kicker' => 'Ready to get started?',
-        'title' => 'Ready to transform your ideas into reality?',
-        'copy' => "Let's discuss how we can help your business grow with the right digital solutions.",
-        'buttonLabel' => 'Get a free quote',
+        'title' => 'What can we help you with today?',
+        'copy' => "Tell us what you need. We can help you choose a service, prepare your documents or plan your next project.",
+        'buttonLabel' => 'Talk to our team',
         'url' => route('public.contact.show'),
     ])
 @endsection

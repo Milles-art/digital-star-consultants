@@ -6,7 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        // Locale needs the session started by the web middleware group.
+        $middleware->web(append: [\App\Http\Middleware\SetLocale::class]);
         // Keep Laravel's CSRF protection enabled for all browser/session writes.
         // Public forms and the admin portal both render CSRF tokens, so there
         // is no reason to exempt login, submissions, tracking, or admin routes.
@@ -48,3 +50,8 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
     })->create();
+
+// Translation files are kept in resources/lang in this project.
+$app->useLangPath(dirname(__DIR__).'/resources/lang');
+
+return $app;

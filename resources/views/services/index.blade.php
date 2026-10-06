@@ -14,7 +14,7 @@
         $heroLead = 'Showing services that match <strong style="color:#fff">&ldquo;' . e($search) . '&rdquo;</strong>.';
     } else {
         $heroTitle = 'Everything you need. <span class="ds-accent">In one place.</span>';
-        $heroLead = 'Explore our complete service catalogue. Start with a service area, open a group, then choose the exact service you need.';
+        $heroLead = 'From NIDA and passports to BRELA, printing and websites — pick the exact service you need and our team guides the rest, from documents to delivery.';
     }
 @endphp
 
@@ -109,8 +109,8 @@
             @elseif (!$selectedCategory)
                 @include('partials.ds-heading', [
                     'kicker' => 'Complete catalogue',
-                    'title' => 'All service areas.',
-                    'copy' => 'We have grouped every service by purpose, so you can see the full range without a long flat list.',
+                    'title' => 'Four areas. One team behind all of them.',
+                    'copy' => 'Every service below is handled by a real person at Digital Star — grouped by purpose so you find yours in seconds, not hours.',
                 ])
                 <div class="ds-stack-lg">
                     @foreach ($categories as $category)
@@ -177,7 +177,7 @@
                 @include('partials.ds-heading', [
                     'kicker' => $selectedCategory->parent?->name ?? 'Service group',
                     'title' => $selectedCategory->name,
-                    'copy' => "Choose the exact service you need and we'll guide you through the application.",
+                    'copy' => "Open a service to see exactly what it costs, what to prepare, and how to apply — then finish the whole thing online in minutes.",
                     'action' => '<span class="ds-count">' . $services->count() . ' services</span>',
                 ])
                 @if ($services->isNotEmpty())
@@ -199,6 +199,17 @@
             @endif
         </div>
     </section>
+
+    @include('partials.ds-process', [
+        'kicker' => 'How applying works',
+        'title' => 'From search to done in three moves.',
+        'copy' => 'No queues, no guesswork. Here is the whole journey before you even start.',
+        'steps' => [
+            ['title' => 'Find it fast', 'copy' => 'Search or browse the catalogue and open the exact service you need.', 'icon' => 'search'],
+            ['title' => 'Apply with guidance', 'copy' => 'A short form tells us what matters — we check documents and details with you.', 'icon' => 'file-check'],
+            ['title' => 'Track to completion', 'copy' => 'Get a reference number and follow your request until it is delivered.', 'icon' => 'radar'],
+        ],
+    ])
 
     @include('partials.ds-cta', [
         'kicker' => 'Already applied?',

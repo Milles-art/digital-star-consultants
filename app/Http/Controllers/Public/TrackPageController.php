@@ -9,15 +9,27 @@ use Illuminate\View\View;
 
 class TrackPageController extends Controller
 {
-    public function form(): View
+    public function form(Request $request): View|\Illuminate\Http\RedirectResponse
     {
+        if ($request->has('reference')) {
+            $reference = $request->input('reference');
+            if (is_string($reference)) {
+                $request->merge(['reference' => strtoupper(trim($reference))]);
+            }
+            $validated = $request->validate([
+                'reference' => ['required', 'string', 'regex:/\A'.\App\Support\SubmissionReference::PATTERN.'\z/'],
+            ], ['reference.regex' => __('public.track_invalid')]);
+
+            return redirect()->route('public.track.show', $validated['reference']);
+        }
+
         return view('track.form');
     }
 
     public function show(Request $request, string $reference): View
     {
         $submission = Submission::with('service')
-            ->where('reference_number', $reference)
+            ->where('reference_number', strtoupper($reference))
             ->first();
 
         $timeline = $this->timelineFor($submission?->status);

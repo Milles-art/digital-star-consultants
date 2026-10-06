@@ -51,7 +51,7 @@ class SettingsController extends Controller
             'company_address' => ['nullable', 'string', 'max:255'],
             'company_hours' => ['nullable', 'string', 'max:120'],
             'currency' => ['required', 'string', 'size:3'],
-            'reference_prefix' => ['required', 'string', 'alpha_dash', 'max:12'],
+            'reference_prefix' => ['required', 'string', 'regex:/\A[A-Za-z0-9]{1,12}\z/'],
             'customer_uploads_enabled' => ['nullable', 'boolean'],
             'notify_new_submission' => ['nullable', 'boolean'],
             'notify_status_change' => ['nullable', 'boolean'],

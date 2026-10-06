@@ -15,11 +15,13 @@
         <div class="ds-hero-card-chip" aria-hidden="true"></div>
         <span class="ds-hero-card-label">Your reference number</span>
         <h3>Track an application</h3>
-        <small>Example: DSC-20260901-ABC123</small>
-        <form class="ds-form" id="track-form" style="margin-top:20px;gap:14px">
+        <small>{{ __('public.reference_example') }}: {{ \App\Support\SubmissionReference::example() }}</small>
+        <form method="GET" action="{{ route('public.track.form') }}" class="ds-form" id="track-form" style="margin-top:20px;gap:14px">
             <label class="ds-field">Reference number
-                <input id="tracking-reference" name="reference" required autocomplete="off" placeholder="20260901-ABC123">
+                <input id="tracking-reference" name="reference" required autocomplete="off" maxlength="28" value="{{ old('reference') }}" placeholder="{{ \App\Support\SubmissionReference::example() }}" aria-describedby="reference-help">
             </label>
+            <small id="reference-help">{{ __('public.reference_help') }}</small>
+            @error('reference')<p class="ds-alert ds-alert-error" role="alert">{{ $message }}</p>@enderror
             <button class="ds-btn ds-btn-mint ds-btn-block" type="submit">Check status <i data-lucide="arrow-right"></i></button>
         </form>
         <p class="ds-hero-note"><i data-lucide="shield-check"></i> Private and secure. Your reference is only used to find your status.</p>
@@ -62,16 +64,3 @@
     </section>
 @endsection
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('track-form')?.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const value = new FormData(event.currentTarget).get('reference')?.toString().trim().toUpperCase();
-        if (!value) return;
-        const normalized = value.startsWith('DSC-') ? value : `DSC-${value}`;
-        window.location.href = `/track/status/${encodeURIComponent(normalized)}`;
-    });
-});
-</script>
-@endpush

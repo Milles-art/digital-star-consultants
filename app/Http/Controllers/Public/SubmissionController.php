@@ -64,7 +64,7 @@ class SubmissionController extends Controller
                     'reference_number' => $submission->reference_number,
                     'status' => $submission->status,
                     'status_label' => $submission->status_label,
-                    'tracking_url' => url("/track/{$submission->reference_number}"),
+                    'tracking_url' => route('public.track.show', $submission->reference_number),
                     'customer_name' => $submission->customer_name,
                     'service_name' => $service->name,
                 ],
@@ -87,7 +87,7 @@ class SubmissionController extends Controller
     public function track(string $reference): JsonResponse
     {
         $submission = Submission::with(['service', 'values.field'])
-            ->where('reference_number', $reference)
+            ->where('reference_number', strtoupper($reference))
             ->first();
 
         if (! $submission) {

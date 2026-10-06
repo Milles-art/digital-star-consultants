@@ -10,7 +10,7 @@ use App\Http\Controllers\Admin\{
     SubmissionFileController,
     UserController,
     ReportController,
-    ContactMessageController,
+    ContactMessageController
 };
 use App\Http\Controllers\Public\{
     ServiceController as PublicServiceController,
@@ -19,13 +19,12 @@ use App\Http\Controllers\Public\{
     ContactController,
     AboutController,
     PortfolioController,
-    TrackPageController,
+    TrackPageController
 };
 use App\Http\Controllers\Auth\{
     LoginController,
-    RegisterController,
     PasswordResetController,
-    AdminLoginController,
+    AdminLoginController
 };
 
 
@@ -50,21 +49,26 @@ Route::get('/locale/{locale}', function (string $locale) {
     }
     session(['locale' => $locale]);
 
-    return redirect()->back();
+    // Keep the visitor on the same local page and replace any stale lang query.
+    $previous = parse_url(url()->previous());
+    parse_str($previous['query'] ?? '', $query);
+    $query['lang'] = $locale;
+    return redirect(($previous['path'] ?? '/').'?'.http_build_query($query));
 })->name('locale.switch');
 
 Route::get('/about', [AboutController::class, 'index'])->name('about');
 Route::get('/work', [PortfolioController::class, 'index'])->name('work');
 
-Route::get('/track', [TrackPageController::class, 'form'])->name('public.track.form');
+Route::get('/track', [TrackPageController::class, 'form'])->middleware('throttle:30,1')->name('public.track.form');
 Route::get('/track/status/{reference}', [TrackPageController::class, 'show'])
-    ->where('reference', 'DSC-[0-9]{8}-[A-Za-z0-9]{6}')
+    ->where('reference', \App\Support\SubmissionReference::PATTERN)
+    ->middleware('throttle:30,1')
     ->name('public.track.show');
 
 Route::get('/contact', [ContactController::class, 'show'])->name('public.contact.show');
 
 Route::get('/track/{reference}', [PublicSubmissionController::class, 'track'])
-    ->where('reference', 'DSC-[0-9]{8}-[A-Za-z0-9]{6}')
+    ->where('reference', \App\Support\SubmissionReference::PATTERN)
     ->middleware('throttle:30,1')
     ->name('public.submissions.track');
 
@@ -88,8 +92,8 @@ Route::post('/admin/logout', [AdminLoginController::class, 'logout'])
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:5,1');
 
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
+// Accounts are provisioned only through the authorized management user controller.
+// Public customers submit and track requests without creating accounts.
 
 Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])

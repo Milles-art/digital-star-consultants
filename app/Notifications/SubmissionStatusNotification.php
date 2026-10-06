@@ -41,7 +41,7 @@ class SubmissionStatusNotification extends Notification implements ShouldQueue
             ->line('**Old Status:** ' . Submission::statusLabel($this->oldStatus))
             ->line('**New Status:** ' . Submission::statusLabel($this->newStatus))
             ->line('**Service:** ' . ($this->submission->service->name ?? 'N/A'))
-            ->action('Track Submission', url('/track/' . $this->submission->reference_number))
+            ->action('Track Submission', route('public.track.show', $this->submission->reference_number))
             ->line('Thank you for using our services!');
     }
 }

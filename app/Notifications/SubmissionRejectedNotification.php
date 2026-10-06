@@ -40,7 +40,7 @@ class SubmissionRejectedNotification extends Notification implements ShouldQueue
         }
 
         $mail->line('If you have any questions, please contact us.')
-            ->action('Track Submission', url('/track/' . $this->submission->reference_number))
+            ->action('Track Submission', route('public.track.show', $this->submission->reference_number))
             ->line('Thank you for using our services!');
 
         return $mail;

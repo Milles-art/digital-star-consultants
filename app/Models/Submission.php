@@ -209,9 +209,7 @@ class Submission extends Model
      */
     public static function generateReferenceNumber(): string
     {
-        $prefix = strtoupper((string) Setting::get('operations.reference_prefix', 'DSC'));
-        $prefix = preg_replace('/[^A-Z0-9]+/', '', $prefix) ?: 'DSC';
-        $prefix = substr($prefix, 0, 12);
+        $prefix = \App\Support\SubmissionReference::prefix();
 
         do {
             $candidate = $prefix.'-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));

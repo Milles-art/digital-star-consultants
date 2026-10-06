@@ -93,7 +93,7 @@
                     <span class="ds-icon-box"><i data-lucide="search-x"></i></span>
                     <span class="ds-kicker" style="display:block;padding-top:16px">Reference not found</span>
                     <h3>We couldn't find that application.</h3>
-                    <p>Check the reference number and try again. It should look like <strong>DSC-20260901-ABC123</strong>.</p>
+                    <p>Check the reference number and try again. It should look like <strong>{{ \App\Support\SubmissionReference::example() }}</strong>.</p>
                     <div class="ds-actions">
                         <a class="ds-btn ds-btn-primary" href="{{ route('public.track.form') }}">Try again <i data-lucide="arrow-right"></i></a>
                         <a class="ds-btn ds-btn-soft" href="{{ route('public.contact.show') }}">Contact support</a>

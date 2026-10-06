@@ -39,7 +39,7 @@
                 <div class="settings-panel-head"><div><span class="admin-kicker">OPERATIONS</span><h3>Request defaults</h3><p>Small controls that keep the workflow consistent.</p></div><span class="settings-section-icon">◫</span></div>
                 <div class="settings-grid">
                     <label>Currency code<input name="currency" value="{{ old('currency', $settings['operations.currency']->castValue()) }}" maxlength="3" required><small>Used for future financial records and reporting.</small></label>
-                    <label>Reference prefix<input name="reference_prefix" value="{{ old('reference_prefix', $settings['operations.reference_prefix']->castValue()) }}" maxlength="12" required><small>Example: DSC-000123.</small></label>
+                    <label>Reference prefix<input name="reference_prefix" value="{{ old('reference_prefix', $settings['operations.reference_prefix']->castValue()) }}" maxlength="12" required><small>Letters and numbers only, e.g. DSC. Existing references keep working.</small></label>
                 </div>
                 <label class="toggle-row"><span><strong>Customer document uploads</strong><small>Allow customers to submit supporting files during an application.</small></span><input type="checkbox" name="customer_uploads_enabled" value="1" {{ $settings['operations.customer_uploads_enabled']->castValue() ? 'checked' : '' }}></label>
             </section>

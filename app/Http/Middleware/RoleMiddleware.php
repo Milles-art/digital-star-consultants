@@ -21,6 +21,9 @@ class RoleMiddleware
             ], 401);
         }
 
+        // Re-check active status on every protected request, including existing sessions.
+        abort_unless(auth()->user()->is_active, 403);
+
         // Check if user has one of the allowed roles
         if (! in_array(auth()->user()->role, $roles)) {
             if (! $request->expectsJson()) {

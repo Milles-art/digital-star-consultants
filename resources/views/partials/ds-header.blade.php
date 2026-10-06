@@ -1,11 +1,11 @@
 @php
     $dsNav = [
-        ['label' => 'Home', 'url' => url('/'), 'active' => request()->is('/')],
-        ['label' => 'About', 'url' => url('/about'), 'active' => request()->is('about*')],
-        ['label' => 'Services', 'url' => route('public.services.index'), 'active' => request()->routeIs('public.services.*')],
-        ['label' => 'Work', 'url' => route('work'), 'active' => request()->routeIs('work')],
-        ['label' => 'Track', 'url' => route('public.track.form'), 'active' => request()->routeIs('public.track.*')],
-        ['label' => 'Contact', 'url' => route('public.contact.show'), 'active' => request()->routeIs('public.contact.*')],
+        ['label' => __('site.nav.home'), 'url' => url('/'), 'active' => request()->is('/')],
+        ['label' => __('site.nav.services'), 'url' => route('public.services.index'), 'active' => request()->routeIs('public.services.*')],
+        ['label' => __('site.nav.work'), 'url' => route('work'), 'active' => request()->routeIs('work')],
+        ['label' => __('site.nav.track'), 'url' => route('public.track.form'), 'active' => request()->routeIs('public.track.*')],
+        ['label' => __('site.nav.about'), 'url' => url('/about'), 'active' => request()->is('about*')],
+        ['label' => __('site.nav.contact'), 'url' => route('public.contact.show'), 'active' => request()->routeIs('public.contact.*')],
     ];
 @endphp
 

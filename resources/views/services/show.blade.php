@@ -15,9 +15,9 @@
         ['title' => 'Review & confirm', 'sub' => 'Check before sending'],
     ];
     $highlights = [
-        ['icon' => 'compass', 'title' => 'Guided process', 'copy' => 'Clear steps with support from our team from submission to completion.'],
-        ['icon' => 'file-check', 'title' => 'Document check', 'copy' => 'We help you identify the information required before you apply.'],
-        ['icon' => 'radar', 'title' => 'Reference tracking', 'copy' => 'Track your request after submission with a unique reference.'],
+        ['icon' => 'compass', 'title' => 'Guided process', 'copy' => 'Four short steps, written in plain language — with our team beside you from submission to completion.'],
+        ['icon' => 'file-check', 'title' => 'Document check', 'copy' => 'Know exactly what to prepare before you start, so nothing bounces back for missing paperwork.'],
+        ['icon' => 'radar', 'title' => 'Reference tracking', 'copy' => 'A unique reference number lets you follow your request online until it is delivered.'],
     ];
 @endphp
 
@@ -74,8 +74,8 @@
         <div class="ds-container">
             @include('partials.ds-heading', [
                 'kicker' => 'Service overview',
-                'title' => 'Everything you need to know.',
-                'copy' => $service->description ?: 'Digital Star Consultants provides guided support for this service, helping you prepare the right information and follow its progress.',
+                'title' => 'Everything you need to know — upfront.',
+                'copy' => ($service->description ? $service->description . ' ' : '') . 'No surprises: the fee, the documents and the timeline are all stated before you apply.',
             ])
             <div class="ds-grid-3-even">
                 @foreach ($highlights as $item)

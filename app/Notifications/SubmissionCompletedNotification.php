@@ -34,6 +34,6 @@ class SubmissionCompletedNotification extends Notification implements ShouldQueu
             ->line('**Service:** ' . ($this->submission->service->name ?? 'N/A'))
             ->line('**Completed At:** ' . ($this->submission->completed_at ? $this->submission->completed_at->format('Y-m-d H:i') : 'N/A'))
             ->line('Thank you for using our services!')
-            ->action('Track Submission', url('/track/' . $this->submission->reference_number));
+            ->action('Track Submission', route('public.track.show', $this->submission->reference_number));
     }
 }

@@ -8,7 +8,7 @@
     $points = $points ?? [];
 @endphp
 <section class="ds-hero">
-    <img class="ds-hero-bg" src="{{ $image }}" alt="">
+    <img class="ds-hero-bg" src="{{ $image }}" alt="" fetchpriority="high" decoding="async">
     <div class="ds-hero-shade" aria-hidden="true"></div>
     <div class="ds-hero-glow" aria-hidden="true"></div>
     <div class="ds-hero-grid" aria-hidden="true"></div>

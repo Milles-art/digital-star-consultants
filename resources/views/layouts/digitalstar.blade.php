@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Digital Star Consultants | Your Digital Partner in Tanzania')</title>
-    <meta name="description" content="@yield('description', 'Digital Star Consultants helps businesses and organizations in Tanzania grow through modern web, software, creative and IT solutions.')">
+    <meta name="description" content="@yield('description', 'Digital Star Consultants helps people and businesses in Tanzania with government applications, business registration, printing, branding and IT.')">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,8 +23,8 @@
     @include('partials.ds-footer')
 
     {{-- Lucide icons, self-hosted so they work under our CSP and offline --}}
-    <script src="{{ asset('js/lucide.min.js') }}"></script>
+    <script defer src="{{ asset('js/icons.js') }}?v={{ filemtime(public_path('js/icons.js')) }}"></script>
     @stack('scripts')
-    <script src="{{ asset('js/digitalstar.js') }}"></script>
+    <script defer src="{{ asset('js/digitalstar.js') }}?v={{ filemtime(public_path('js/digitalstar.js')) }}"></script>
 </body>
 </html>

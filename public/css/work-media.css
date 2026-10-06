@@ -1,0 +1,7 @@
+/* Media support only. The original public design stylesheet is unchanged. */
+.ds-modal [data-modal-image]{object-fit:contain;height:auto;max-height:65vh;width:100%;background:var(--ds-dark)}
+.ds-modal [data-modal-video]{display:block;width:100%;max-height:65vh;background:var(--ds-dark)}
+.ds-modal [hidden]{display:none!important}
+.ds-modal .ds-modal-close{z-index:2}
+/* Fit wide artwork inside the existing cards; preserve their size, overlay and colours. */
+#projects .ds-project img{object-fit:contain}

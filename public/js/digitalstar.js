@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabs.forEach((tab) => tab.addEventListener('click', () => {
         tabs.forEach((t) => {
             t.classList.toggle('is-active', t === tab);
-            t.setAttribute('aria-selected', String(t === tab));
+            t.setAttribute('aria-pressed', String(t === tab));
         });
         const filter = tab.dataset.workFilter;
         cards.forEach((card) => {
@@ -49,11 +49,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const projects = window.digitalStarProjects || [];
     if (modal && typeof modal.showModal === 'function') {
         const q = (sel) => modal.querySelector(sel);
+        const video = q('[data-modal-video]');
+        const stopVideo = () => { if (video) { video.pause(); video.removeAttribute('src'); video.removeAttribute('poster'); video.load(); } };
+        modal.addEventListener('close', stopVideo);
         document.querySelectorAll('[data-project-id]').forEach((btn) => btn.addEventListener('click', () => {
             const p = projects[Number(btn.dataset.projectId)];
             if (!p) return;
-            q('[data-modal-image]').src = p.image;
-            q('[data-modal-image]').alt = p.title;
+            stopVideo();
+            const isVideo = p.type === 'video' && p.video;
+            const img = q('[data-modal-image]');
+            img.hidden = Boolean(isVideo);
+            if (video) video.hidden = !isVideo;
+            if (isVideo && video) { video.src = p.video; video.poster = p.image; video.setAttribute('aria-label', p.title); img.removeAttribute('src'); }
+            else { img.src = p.image; img.alt = p.alt || p.title; }
             q('[data-modal-category]').textContent = p.category;
             q('[data-modal-title]').textContent = p.title;
             q('[data-modal-description]').textContent = p.description;
@@ -68,6 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         modal.querySelectorAll('[data-modal-close]').forEach((b) => b.addEventListener('click', () => modal.close()));
         // Close when clicking the backdrop
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });
+        modal.addEventListener('click', (e) => { const b = modal.getBoundingClientRect(); if (e.target === modal && (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom)) modal.close(); });
     }
 });
