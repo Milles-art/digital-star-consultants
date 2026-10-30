@@ -26,13 +26,22 @@ class SubmissionController extends Controller
         if (! $service || ! $service->is_active) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not available',
+                'message' => __('site.form_errors.service_unavailable'),
             ], 404);
         }
 
         $fieldRules = [];
+        $fieldAttributes = [];
+        $requiredFields = [];
         foreach ($service->fields as $field) {
-            $fieldRules["fields.{$field->field_key}"] = $field->getValidationRules();
+            // Allow partial submissions: replace 'required' with 'nullable'
+            // so customers can submit with whatever info/docs they have.
+            $rules = array_map(fn ($r) => $r === 'required' ? 'nullable' : $r, $field->getValidationRules());
+            $fieldRules["fields.{$field->field_key}"] = $rules;
+            $fieldAttributes["fields.{$field->field_key}"] = $field->label;
+            if ($field->is_required) {
+                $requiredFields[] = $field->field_key;
+            }
         }
 
         // Validate one canonical field bag. Laravel keeps uploaded files in the
@@ -44,7 +53,16 @@ class SubmissionController extends Controller
             is_array($request->file('fields', [])) ? $request->file('fields', []) : []
         );
 
-        Validator::make($payload, $fieldRules)->validate();
+        Validator::make($payload, $fieldRules, [], array_filter($fieldAttributes))->validate();
+
+        // Determine completeness: if every required field has a value, the
+        // submission can go straight to pending; otherwise it awaits our
+        // team contacting the customer to collect the missing docs/info.
+        $submittedFields = array_keys(is_array($request->input('fields', [])) ? $request->input('fields', []) : []);
+        $missingRequired = array_diff($requiredFields, $submittedFields);
+        $status = empty($missingRequired)
+            ? Submission::STATUS_PENDING
+            : Submission::STATUS_AWAITING_CUSTOMER;
 
         try {
             $submission = $this->submissionService->createSubmission($service, [
@@ -55,11 +73,13 @@ class SubmissionController extends Controller
                 'preferred_date' => $request->validated('preferred_date'),
                 'fields' => $request->input('fields', []),
                 'files' => $request->file('fields', []),
-            ]);
+            ], $status);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Submission created successfully',
+                'message' => $status === Submission::STATUS_PENDING
+                    ? __('site.form_errors.created')
+                    : __('site.form_errors.created_partial'),
                 'data' => [
                     'reference_number' => $submission->reference_number,
                     'status' => $submission->status,
@@ -79,7 +99,7 @@ class SubmissionController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unable to process your request. Please try again later.',
+                'message' => __('site.form_errors.try_again'),
             ], 500);
         }
     }
@@ -93,12 +113,12 @@ class SubmissionController extends Controller
         if (! $submission) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Submission not found',
+                'message' => __('site.form_errors.not_found'),
             ], 404);
         }
 
         $nameParts = preg_split('/\s+/', trim((string) $submission->customer_name), -1, PREG_SPLIT_NO_EMPTY);
-        $maskedName = $nameParts[0] ?? 'Customer';
+        $maskedName = $nameParts[0] ?? __('site.track.customer_fallback');
 
         return response()->json([
             'status' => 'success',

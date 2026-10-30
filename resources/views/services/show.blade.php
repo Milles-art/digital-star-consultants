@@ -1,30 +1,55 @@
 @extends('layouts.digitalstar')
 
-@section('title', $service->name . ' | Digital Star Consultants')
-
 @php
+    $d = __('site.services.detail');
     $category = $service->category;
     $parentCategory = $category?->parent;
     $fileFields = $service->fields->filter(fn ($field) => $field->field_type === 'file');
     $detailFields = $service->fields->filter(fn ($field) => ! in_array($field->field_type, ['file', 'hidden']));
-    $price = $service->is_free ? 'Quote on request' : $service->formatted_price;
+    $price = $service->is_free ? $d['stat_fee_value'] : $service->formatted_price;
+@endphp
+
+@section('title', $service->name . ' | Digital Star Consultants')
+@section('description', \Illuminate\Support\Str::limit(strip_tags($service->description ?: __('site.services.detail.meta_desc', ['name' => $service->name])), 155))
+
+@php
     $wizardSteps = [
-        ['title' => 'Contact information', 'sub' => 'Basic contact details'],
-        ['title' => 'Service details', 'sub' => 'Information for this service'],
-        ['title' => 'Documents', 'sub' => 'Upload required documents'],
-        ['title' => 'Review & confirm', 'sub' => 'Check before sending'],
+        ['title' => $d['step1_title'], 'sub' => $d['step1_sub']],
+        ['title' => $d['step2_title'], 'sub' => $d['step2_sub']],
+        ['title' => $d['step3_title'], 'sub' => $d['step3_sub']],
+        ['title' => $d['step4_title'], 'sub' => $d['step4_sub']],
     ];
     $highlights = [
-        ['icon' => 'compass', 'title' => 'Guided process', 'copy' => 'Four short steps, written in plain language — with our team beside you from submission to completion.'],
-        ['icon' => 'file-check', 'title' => 'Document check', 'copy' => 'Know exactly what to prepare before you start, so nothing bounces back for missing paperwork.'],
-        ['icon' => 'radar', 'title' => 'Reference tracking', 'copy' => 'A unique reference number lets you follow your request online until it is delivered.'],
+        ['icon' => 'compass', 'title' => $d['hl_guided_title'], 'copy' => $d['hl_guided_copy']],
+        ['icon' => 'file-check', 'title' => $d['hl_docs_title'], 'copy' => $d['hl_docs_copy']],
+        ['icon' => 'radar', 'title' => $d['hl_track_title'], 'copy' => $d['hl_track_copy']],
+    ];
+    // Localised strings for application-form.js (read via window.DS_FORM_I18N).
+    $wizardI18n = [
+        'full_name' => $d['full_name'],
+        'phone' => $d['phone'],
+        'email' => $d['email'],
+        'preferred_date' => $d['preferred_date'],
+        'notes' => __('site.services.notes'),
+        'field' => __('site.services.fields'),
+        'yes' => $d['yes'],
+        'no' => $d['no'],
+        'additional_info' => $d['review_service'],
+        'no_additional_fields' => $d['step2_empty'],
+        'document' => $d['review_files'],
+        'no_file_selected' => $d['file_hint'],
+        'documents' => $d['review_files'],
+        'no_documents_required' => $d['step3_empty'],
+        'selected_prefix' => $d['selected_prefix'],
+        'submitting' => $d['submitting'],
+        'error' => $d['submit_error'],
     ];
 @endphp
 
 @section('hero-crumbs')
-    <a href="{{ route('home') }}">Home</a>
+    <a href="{{ route('home') }}">{{ __('site.nav.home') }}</a>
     <i data-lucide="chevron-right"></i>
-    <a href="{{ route('public.services.index') }}">Services</a>
+    <a href="{{ route('public.services.index') }}">{{ __('site.nav.services') }}</a>
     @if ($parentCategory)
         <i data-lucide="chevron-right"></i>
         <a href="{{ route('public.services.index', ['category' => $parentCategory->slug]) }}">{{ $parentCategory->name }}</a>
@@ -36,36 +61,36 @@
 @endsection
 
 @section('hero-actions')
-    <a href="#application" class="ds-btn ds-btn-mint">Start application <i data-lucide="arrow-down"></i></a>
-    <a href="{{ route('public.services.index', $category ? ['category' => $category->slug] : []) }}" class="ds-btn ds-btn-ghost-light">Back to services</a>
+    <a href="#application" class="ds-btn ds-btn-mint">{{ $d['start_app'] }} <i data-lucide="arrow-down"></i></a>
+    <a href="{{ route('public.services.index', $category ? ['category' => $category->slug] : []) }}" class="ds-btn ds-btn-ghost-light">{{ $d['back_services'] }}</a>
 @endsection
 
 @section('hero-aside')
     <div class="ds-hero-card">
         <div class="ds-hero-card-chip" aria-hidden="true"></div>
-        <span class="ds-hero-card-label">Ready to start?</span>
-        <h3>Apply in 4 steps.</h3>
-        <small>Tracked with a unique reference</small>
-        <p>Your request is handled by our team and tracked with a unique reference number.</p>
-        <a href="#application" class="ds-btn ds-btn-white">Start application <i data-lucide="arrow-down"></i></a>
+        <span class="ds-hero-card-label">{{ $d['aside_ready'] }}</span>
+        <h3>{{ $d['aside_title'] }}</h3>
+        <small>{{ $d['aside_tracked'] }}</small>
+        <p>{{ $d['aside_copy'] }}</p>
+        <a href="#application" class="ds-btn ds-btn-white">{{ $d['start_app'] }} <i data-lucide="arrow-down"></i></a>
     </div>
 @endsection
 
 @section('content')
     @include('partials.ds-hero', [
-        'kicker' => ($category?->name ?? 'Service') . ' · Available',
+        'kicker' => ($category?->name ?? $d['hero_service']) . ' · ' . $d['hero_available'],
         'title' => e($service->name),
-        'lead' => e($service->description ?: 'Get professional assistance from Digital Star Consultants from application to completion.'),
-        'points' => [$price, $service->duration, 'Guided & assisted'],
+        'lead' => e($service->description ?: $d['hero_lead_fallback']),
+        'points' => [$price, $service->duration, $d['point_guided']],
     ])
 
     @include('partials.ds-stats', [
         'compact' => true,
         'stats' => [
-            ['value' => $service->is_free ? 'Quote' : $service->formatted_price, 'label' => 'Service fee', 'icon' => 'wallet'],
-            ['value' => $service->duration, 'label' => 'Typical handling', 'icon' => 'clock'],
-            ['value' => 'Guided', 'label' => 'Assisted application', 'icon' => 'badge-check'],
-            ['value' => ($detailFields->count() + $fileFields->count()) . ' fields', 'label' => 'Details + documents', 'icon' => 'clipboard-list'],
+            ['value' => $service->is_free ? $d['stat_fee_value'] : $service->formatted_price, 'label' => $d['stat_fee'], 'icon' => 'wallet'],
+            ['value' => $service->duration, 'label' => $d['stat_time'], 'icon' => 'clock'],
+            ['value' => $d['stat_guided'], 'label' => $d['stat_guided_label'], 'icon' => 'badge-check'],
+            ['value' => __('site.services.detail.stat_fields', ['count' => $detailFields->count() + $fileFields->count()]), 'label' => $d['stat_fields_label'], 'icon' => 'clipboard-list'],
         ],
     ])
 
@@ -73,40 +98,89 @@
     <section class="ds-section" id="overview">
         <div class="ds-container">
             @include('partials.ds-heading', [
-                'kicker' => 'Service overview',
-                'title' => 'Everything you need to know — upfront.',
-                'copy' => ($service->description ? $service->description . ' ' : '') . 'No surprises: the fee, the documents and the timeline are all stated before you apply.',
+                'kicker' => $d['overview_kicker'],
+                'title' => $d['overview_title'],
+                'copy' => ($service->description ? $service->description . ' ' : '') . $d['overview_copy'],
             ])
             <div class="ds-grid-3-even">
                 @foreach ($highlights as $item)
                     <article class="ds-service ds-reveal" style="--d:{{ $loop->index * 0.08 }}s">
                         <span class="ds-icon-box"><i data-lucide="{{ $item['icon'] }}"></i></span>
                         <h3>{{ $item['title'] }}</h3>
-                        <p>{{ $item['copy'] }}</p>
+                        <p>{!! $item['copy'] !!}</p>
                     </article>
                 @endforeach
             </div>
 
             <div class="ds-two" id="requirements" style="margin-top:20px">
                 <div class="ds-panel ds-reveal">
-                    <span class="ds-kicker">What you'll need</span>
-                    <h3>Prepare before applying</h3>
+                    <span class="ds-kicker">{{ $d['need_kicker'] }}</span>
+                    <h3>{{ $d['need_title'] }}</h3>
                     <ul class="ds-list">
-                        <li><i data-lucide="circle-check"></i><span><strong>Accurate details</strong>: use information matching your official documents.</span></li>
-                        @if ($fileFields->count())
-                            <li><i data-lucide="circle-check"></i><span><strong>{{ $fileFields->count() }} {{ \Illuminate\Support\Str::plural('document', $fileFields->count()) }}</strong>: upload clear files in the document step.</span></li>
+                        <li><i data-lucide="circle-check"></i><span>{!! $d['need_accurate'] !!}</span></li>
+
+                        {{-- Exact documents required for this service --}}
+                        @if ($fileFields->isNotEmpty())
+                            <li style="padding-left:8px;border-left:3px solid var(--ds-accent);margin-left:4px">
+                                <span style="display:block;font-size:0.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ds-accent);margin-bottom:8px">
+                                    {{ $d['documents_required'] }}
+                                </span>
+                                <ul style="list-style:none;padding:0;margin:0">
+                                    @foreach ($fileFields as $field)
+                                        <li style="margin-bottom:6px;display:flex;align-items:flex-start;gap:10px">
+                                            <i data-lucide="file-text" style="width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--ds-accent)"></i>
+                                            <span>
+                                                <strong>{{ $field->label }}</strong>
+                                                @if ($field->is_required)
+                                                    <span class="ds-badge ds-badge-required" style="font-size:0.7rem;margin-left:6px">{{ __("site.services.detail.badge_required") }}</span>
+                                                @else
+                                                    <span class="ds-badge ds-badge-optional" style="font-size:0.7rem;margin-left:6px">{{ __("site.services.detail.badge_optional") }}</span>
+                                                @endif
+                                                @if ($field->help_text)
+                                                    <br><small style="color:var(--ds-muted-fg);display:block;margin-top:2px">{{ $field->help_text }}</small>
+                                                @endif
+                                            </span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <small style="display:block;margin-top:6px;color:var(--ds-muted-fg);font-size:0.85rem">{{ $d['accepted_formats'] }}</small>
+                            </li>
                         @endif
-                        <li><i data-lucide="circle-check"></i><span><strong>Reachable contact</strong>: keep your phone available for follow-up.</span></li>
+
+                        {{-- Exact information required for this service --}}
+                        @php $infoFields = $detailFields->filter(fn ($f) => $f->is_required); @endphp
+                        @if ($infoFields->isNotEmpty())
+                            <li style="padding-left:8px;border-left:3px solid var(--ds-accent);margin-left:4px">
+                                <span style="display:block;font-size:0.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ds-accent);margin-bottom:8px">
+                                    {{ $d['info_required'] }}
+                                </span>
+                                <ul style="list-style:none;padding:0;margin:0">
+                                    @foreach ($infoFields as $field)
+                                        <li style="margin-bottom:6px;display:flex;align-items:flex-start;gap:10px">
+                                            <i data-lucide="type" style="width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--ds-accent)"></i>
+                                            <span>
+                                                <strong>{{ $field->label }}</strong>
+                                                @if ($field->help_text)
+                                                    <br><small style="color:var(--ds-muted-fg);display:block;margin-top:2px">{{ $field->help_text }}</small>
+                                                @endif
+                                            </span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </li>
+                        @endif
+
+                        <li><i data-lucide="circle-check"></i><span>{!! $d['need_contact'] !!}</span></li>
                     </ul>
                 </div>
                 <div class="ds-panel ds-panel-muted ds-reveal" style="--d:.1s">
-                    <span class="ds-kicker">Process</span>
-                    <h3>What happens next</h3>
+                    <span class="ds-kicker">{{ $d['process_kicker'] }}</span>
+                    <h3>{{ $d['process_title'] }}</h3>
                     <ol class="ds-numbered">
-                        <li>Submit your application</li>
-                        <li>We review the request</li>
-                        <li>We contact you if needed</li>
-                        <li>Receive updates &amp; result</li>
+                        <li>{{ $d['process_1'] }}</li>
+                        <li>{{ $d['process_2'] }}</li>
+                        <li>{{ $d['process_3'] }}</li>
+                        <li>{{ $d['process_4'] }}</li>
                     </ol>
                 </div>
             </div>
@@ -117,15 +191,15 @@
     <section class="ds-section ds-section-tint" id="application" style="scroll-margin-top:72px">
         <div class="ds-container ds-wizard">
             <aside class="ds-wizard-side">
-                <span class="ds-kicker">Application</span>
-                <h2 style="padding-top:12px;font-size:32px;font-weight:800;letter-spacing:-.02em;line-height:1.15">Start your request.</h2>
-                <p style="padding-top:12px;color:var(--ds-muted-fg)">Complete the four steps. You can review everything before submitting.</p>
+                <span class="ds-kicker">{{ $d['wizard_kicker'] }}</span>
+                <h2 style="padding-top:12px;font-size:32px;font-weight:800;letter-spacing:-.02em;line-height:1.15">{{ $d['wizard_title'] }}</h2>
+                <p style="padding-top:12px;color:var(--ds-muted-fg)">{{ $d['wizard_lead'] }}</p>
 
                 <div class="ds-panel" style="margin-top:24px;padding:20px">
-                    <span class="ds-kicker">Your progress</span>
+                    <span class="ds-kicker">{{ $d['progress_kicker'] }}</span>
                     <div class="ds-progress-head">
                         <strong data-progress-count>1 / 4</strong>
-                        <span>Step <b data-progress-step>1</b> of 4</span>
+                        <span>{!! $d['progress_step'] !!}</span>
                     </div>
                     <div class="ds-progress"><span data-progress-bar style="width:25%"></span></div>
                     <ol class="ds-wsteps">
@@ -136,7 +210,7 @@
                             </li>
                         @endforeach
                     </ol>
-                    <p class="ds-help">Need help? <a href="{{ route('public.contact.show') }}">Contact us</a></p>
+                    <p class="ds-help">{{ $d['help'] }} <a href="{{ route('public.contact.show') }}">{{ $d['help_link'] }}</a></p>
                 </div>
             </aside>
 
@@ -148,31 +222,31 @@
 
                     {{-- Step 1 --}}
                     <section class="ds-step-panel" data-step="1">
-                        <span class="ds-kicker">Step 01 of 04</span>
-                        <h3>Tell us about yourself</h3>
-                        <p>We'll use these details to contact you about your application.</p>
+                        <span class="ds-kicker">{{ __('site.services.detail.step_of', ['no' => '01']) }}</span>
+                        <h3>{{ $d['step1_title'] }}</h3>
+                        <p>{{ $d['step1_copy'] }}</p>
                         <div class="ds-form-row">
-                            <label class="ds-field">Full name *
-                                <input id="customer_name" name="customer_name" required autocomplete="name" placeholder="John Mwakyusa">
+                            <label class="ds-field">{{ $d['full_name'] }} *
+                                <input id="customer_name" name="customer_name" required autocomplete="name" placeholder="{{ $d['name_ph'] }}">
                             </label>
-                            <label class="ds-field">Phone number *
+                            <label class="ds-field">{{ $d['phone'] }} *
                                 <input id="customer_phone" name="customer_phone" type="tel" required autocomplete="tel" placeholder="07XX XXX XXX">
                             </label>
-                            <label class="ds-field">Email address <span class="ds-optional">(optional)</span>
+                            <label class="ds-field">{!! __('site.services.detail.email_label', ['optional' => __('site.services.optional')]) !!}
                                 <input id="customer_email" type="email" name="customer_email" autocomplete="email" placeholder="example@gmail.com">
                             </label>
-                            <label class="ds-field">Preferred date <span class="ds-optional">(optional)</span>
+                            <label class="ds-field">{!! __('site.services.detail.preferred_date_label', ['optional' => __('site.services.optional')]) !!}
                                 <input id="preferred_date" type="date" name="preferred_date">
                             </label>
                         </div>
-                        <div class="ds-secure"><i data-lucide="lock"></i><span><strong>Your information is secure.</strong> It is used only to process this request.</span></div>
+                        <div class="ds-secure"><i data-lucide="lock"></i><span>{!! $d['secure'] !!}</span></div>
                     </section>
 
                     {{-- Step 2 --}}
                     <section class="ds-step-panel" data-step="2" hidden>
-                        <span class="ds-kicker">Step 02 of 04</span>
-                        <h3>Service details</h3>
-                        <p>Provide the information required for <strong>{{ $service->name }}</strong>.</p>
+                        <span class="ds-kicker">{{ __('site.services.detail.step_of', ['no' => '02']) }}</span>
+                        <h3>{{ $d['step2_title'] }}</h3>
+                        <p>{!! __('site.services.detail.step2_copy', ['name' => $service->name]) !!}</p>
                         @if ($detailFields->isNotEmpty())
                             <div class="ds-form-row">
                                 @foreach ($detailFields as $field)
@@ -182,28 +256,50 @@
                         @else
                             <div class="ds-empty">
                                 <span class="ds-icon-box"><i data-lucide="check"></i></span>
-                                <h3>No additional details required</h3>
-                                <p>You can continue to document upload and review.</p>
+                                <h3>{{ $d['step2_empty'] }}</h3>
+                                <p>{{ $d['step2_empty_copy'] }}</p>
                             </div>
                         @endif
-                        <label class="ds-field" style="margin-top:20px">Additional notes <span class="ds-optional">(optional)</span>
-                            <textarea id="notes" name="customer_notes" rows="4" placeholder="Tell us anything else we should know"></textarea>
+                        <label class="ds-field" style="margin-top:20px">{!! __('site.services.detail.notes_label', ['optional' => __('site.services.optional')]) !!}
+                            <textarea id="notes" name="customer_notes" rows="4" placeholder="{{ $d['notes_ph'] }}"></textarea>
                         </label>
                     </section>
 
                     {{-- Step 3 --}}
                     <section class="ds-step-panel" data-step="3" hidden>
-                        <span class="ds-kicker">Step 03 of 04</span>
-                        <h3>Upload documents</h3>
-                        <p>Attach clear copies of the documents needed for this service. PDF, JPG, PNG or Word.</p>
+                        <span class="ds-kicker">{{ __('site.services.detail.step_of', ['no' => '03']) }}</span>
+                        <h3>{{ $d['step3_title'] }}</h3>
+                        <p>{{ $d['step3_copy'] }}</p>
+
                         @if ($fileFields->isNotEmpty())
+                            {{-- Documents required checklist --}}
+                            <div class="ds-panel" style="margin-bottom:20px">
+                                <span class="ds-kicker">{{ $d['documents_required'] }}</span>
+                                <ul class="ds-list">
+                                    @foreach ($fileFields as $field)
+                                        <li>
+                                            <strong>{{ $field->label }}</strong>
+                                            @if ($field->is_required) <span class="ds-badge ds-badge-required">{{ __("site.services.detail.badge_required") }}</span> @else <span class="ds-badge ds-badge-optional">{{ __("site.services.detail.badge_optional") }}</span> @endif
+                                            @if ($field->help_text)
+                                                <br><small style="color:var(--ds-muted-fg)">{{ $field->help_text }}</small>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                    <li style="margin-top:8px;padding-top:8px;border-top:1px solid var(--ds-border);color:var(--ds-muted-fg);font-size:0.9rem">
+                                        <i data-lucide="file-text" style="width:14px;height:14px;margin-right:6px"></i>
+                                        {{ $d['accepted_formats'] }}
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {{-- File upload boxes --}}
                             <div class="ds-files">
                                 @foreach ($fileFields as $field)
                                     <label class="ds-file">
                                         <span class="ds-icon-box"><i data-lucide="cloud-upload"></i></span>
                                         <span style="min-width:0">
-                                            <strong>{{ $field->label }} @if ($field->is_required)*@else<span class="ds-optional">(optional)</span>@endif</strong>
-                                            <small data-file-name-for="field-{{ $field->field_key }}">{{ $field->help_text ?: 'Click to choose a file' }}</small>
+                                            <strong>{{ $field->label }} @if ($field->is_required)*@else<span class="ds-optional">({{ __('site.services.optional') }})</span>@endif</strong>
+                                            <small data-file-name-for="field-{{ $field->field_key }}">{{ $d['file_hint'] }}</small>
                                         </span>
                                         <input id="field-{{ $field->field_key }}" type="file" name="fields[{{ $field->field_key }}]"
                                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" data-label="{{ $field->label }}" @required($field->is_required)>
@@ -213,51 +309,51 @@
                         @else
                             <div class="ds-empty">
                                 <span class="ds-icon-box"><i data-lucide="file-check"></i></span>
-                                <h3>No document upload required</h3>
-                                <p>Continue to the final review.</p>
+                                <h3>{{ $d['step3_empty'] }}</h3>
+                                <p>{{ $d['step3_empty_copy'] }}</p>
                             </div>
                         @endif
                     </section>
 
                     {{-- Step 4 --}}
                     <section class="ds-step-panel" data-step="4" hidden>
-                        <span class="ds-kicker">Step 04 of 04</span>
-                        <h3>Review your application</h3>
-                        <p>Please check your details carefully before submitting.</p>
-                        @foreach (['contact' => '01 · Contact information', 'service' => '02 · Service information', 'files' => '03 · Documents'] as $key => $label)
+                        <span class="ds-kicker">{{ __('site.services.detail.step_of', ['no' => '04']) }}</span>
+                        <h3>{{ $d['step4_title'] }}</h3>
+                        <p>{{ $d['step4_copy'] }}</p>
+                        @foreach (['contact' => $d['review_contact'], 'service' => $d['review_service'], 'files' => $d['review_files']] as $key => $label)
                             <div class="ds-review">
                                 <div class="ds-review-head">
                                     <strong>{{ $label }}</strong>
-                                    <button type="button" class="ds-link-btn" data-go-step="{{ $loop->iteration }}">Edit</button>
+                                    <button type="button" class="ds-link-btn" data-go-step="{{ $loop->iteration }}">{{ $d['edit'] }}</button>
                                 </div>
                                 <dl class="ds-meta" data-review="{{ $key }}"></dl>
                             </div>
                         @endforeach
                         <label class="ds-check" style="margin-top:20px">
                             <input type="checkbox" id="application-consent" required>
-                            <span>I confirm that the information provided is accurate and I agree that Digital Star may use it to process this request.</span>
+                            <span>{{ $d['consent'] }}</span>
                         </label>
                     </section>
 
                     {{-- Success (shown after submission) --}}
-                    <section class="ds-success" data-success hidden>
+                    <section class="ds-success" data-success role="status" aria-live="polite" hidden>
                         <span class="ds-icon-box"><i data-lucide="check"></i></span>
-                        <h3>Application received</h3>
-                        <p>Keep this reference number. You'll need it to track your request.</p>
+                        <h3>{{ $d['success_title'] }}</h3>
+                        <p>{{ $d['success_copy'] }}</p>
                         <span class="ds-ref" data-reference></span>
                         <div class="ds-actions" style="justify-content:center">
-                            <a class="ds-btn ds-btn-primary" data-track-link href="#">Track your request <i data-lucide="arrow-right"></i></a>
-                            <a class="ds-btn ds-btn-soft" href="{{ route('public.services.index') }}">Browse more services</a>
+                            <a class="ds-btn ds-btn-primary" data-track-link href="#">{{ $d['track'] }} <i data-lucide="arrow-right"></i></a>
+                            <a class="ds-btn ds-btn-soft" href="{{ route('public.services.index') }}">{{ $d['browse_more'] }}</a>
                         </div>
                     </section>
 
                     <div class="ds-alert ds-alert-error" data-form-message role="alert" hidden></div>
 
                     <div class="ds-wizard-nav" data-wizard-nav>
-                        <button type="button" class="ds-btn ds-btn-soft" data-back hidden><i data-lucide="arrow-left"></i> Back</button>
+                        <button type="button" class="ds-btn ds-btn-soft" data-back hidden><i data-lucide="arrow-left"></i> {{ $d['back'] }}</button>
                         <span class="ds-spacer"></span>
-                        <button type="button" class="ds-btn ds-btn-primary" data-next>Save &amp; continue <i data-lucide="arrow-right"></i></button>
-                        <button type="submit" class="ds-btn ds-btn-primary" data-submit hidden>Submit application <i data-lucide="send"></i></button>
+                        <button type="button" class="ds-btn ds-btn-primary" data-next>{{ $d['next'] }} <i data-lucide="arrow-right"></i></button>
+                        <button type="submit" class="ds-btn ds-btn-primary" data-submit hidden>{{ $d['submit'] }} <i data-lucide="send"></i></button>
                     </div>
                 </form>
             </div>
@@ -265,15 +361,19 @@
     </section>
 
     @include('partials.ds-cta', [
-        'kicker' => 'Need clarification?',
-        'title' => 'Talk to our team first.',
-        'copy' => 'Digital Star can guide you through the requirements and next steps before you apply.',
-        'buttonLabel' => 'Contact us',
+        'kicker' => $d['cta_kicker'],
+        'title' => $d['cta_title'],
+        'copy' => $d['cta_copy'],
+        'buttonLabel' => $d['cta_btn'],
         'url' => route('public.contact.show'),
-        'checklist' => ['Secure & confidential', 'Reference tracking', 'Team support'],
+        'checklist' => $d['cta_checklist'],
     ])
 @endsection
 
 @push('scripts')
+    <script>
+        // Localised strings for the 4-step wizard (application-form.js).
+        window.DS_FORM_I18N = {!! json_encode($wizardI18n, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!};
+    </script>
     <script src="{{ asset('js/application-form.js') }}"></script>
 @endpush

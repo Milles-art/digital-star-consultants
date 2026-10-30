@@ -13,9 +13,9 @@ use Exception;
 
 class SubmissionService
 {
-    public function createSubmission(Service $service, array $data): Submission
+    public function createSubmission(Service $service, array $data, string $status = Submission::STATUS_PENDING): Submission
     {
-        return DB::transaction(function () use ($service, $data) {
+        return DB::transaction(function () use ($service, $data, $status) {
             try {
                 $submission = Submission::create([
                     'service_id' => $service->id,
@@ -24,7 +24,7 @@ class SubmissionService
                     'customer_email' => $data['customer_email'] ?? null,
                     'customer_notes' => $data['customer_notes'] ?? null,
                     'preferred_date' => $data['preferred_date'] ?? null,
-                    'status' => Submission::STATUS_PENDING,
+                    'status' => $status,
                 ]);
 
                 $inputFields = is_array($data['fields'] ?? null) ? $data['fields'] : [];
