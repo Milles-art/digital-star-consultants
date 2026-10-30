@@ -60,6 +60,10 @@ class Submission extends Model
         'customer_notes',
         'preferred_date',
         'total_price',
+        'status',
+        'payment_status',
+        'staff_notes',
+        'processed_by',
     ];
 
     protected $casts = [
