@@ -58,7 +58,12 @@ class SubmissionController extends Controller
         // Determine completeness: if every required field has a value, the
         // submission can go straight to pending; otherwise it awaits our
         // team contacting the customer to collect the missing docs/info.
-        $submittedFields = array_keys(is_array($request->input('fields', [])) ? $request->input('fields', []) : []);
+        $textValues = is_array($request->input('fields', [])) ? $request->input('fields', []) : [];
+        $fileValues = is_array($request->file('fields', [])) ? $request->file('fields', []) : [];
+        $submittedFields = array_unique(array_merge(
+            array_keys(array_filter($textValues, fn ($v) => $v !== null && $v !== '')),
+            array_keys($fileValues)
+        ));
         $missingRequired = array_diff($requiredFields, $submittedFields);
         $status = empty($missingRequired)
             ? Submission::STATUS_PENDING
