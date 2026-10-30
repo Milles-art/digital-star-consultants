@@ -302,7 +302,7 @@
                                             <small data-file-name-for="field-{{ $field->field_key }}">{{ $d['file_hint'] }}</small>
                                         </span>
                                         <input id="field-{{ $field->field_key }}" type="file" name="fields[{{ $field->field_key }}]"
-                                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" data-label="{{ $field->label }}" @required($field->is_required)>
+                                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" data-label="{{ $field->label }}">
                                     </label>
                                 @endforeach
                             </div>
