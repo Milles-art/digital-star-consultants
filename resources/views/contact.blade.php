@@ -1,58 +1,57 @@
 @extends('layouts.digitalstar')
 
-@section('title', 'Contact | Digital Star Consultants')
-
 @php
+    $c = __('site.contact');
     $ds = config('digitalstar');
     $info = [
-        ['icon' => 'mail', 'label' => 'Email us', 'value' => 'hello@digitalstar.co.tz', 'href' => 'mailto:hello@digitalstar.co.tz'],
-        ['icon' => 'map-pin', 'label' => 'Visit us', 'value' => 'Dar es Salaam, Tanzania', 'href' => null],
-        ['icon' => 'clock', 'label' => 'Office hours', 'value' => 'Mon - Sat, 8AM - 6PM', 'href' => null],
+        ['icon' => 'mail', 'label' => $c['info_email'], 'value' => 'hello@digitalstar.co.tz', 'href' => 'mailto:hello@digitalstar.co.tz'],
+        ['icon' => 'map-pin', 'label' => $c['info_visit'], 'value' => $c['point_city'], 'href' => null],
+        ['icon' => 'clock', 'label' => $c['info_hours'], 'value' => $c['hours_value'], 'href' => null],
     ];
-    $tips = [
-        'Clear guidance on the right service for your request.',
-        'Response from our team during business hours.',
-        'Need something urgent? Check the catalogue first for a guided application.',
-    ];
+    $tips = [$c['tip1'], $c['tip2'], $c['tip3']];
+    $optional = __('site.services.optional');
     $fields = [
-        ['name' => 'name', 'label' => 'Name', 'type' => 'text', 'placeholder' => 'John Mwakyusa', 'autocomplete' => 'name', 'required' => true],
-        ['name' => 'email', 'label' => 'Email', 'type' => 'email', 'placeholder' => 'example@gmail.com', 'autocomplete' => 'email', 'required' => true],
-        ['name' => 'phone', 'label' => 'Phone (optional)', 'type' => 'tel', 'placeholder' => '+255 712 345 678', 'autocomplete' => 'tel', 'required' => false],
-        ['name' => 'subject', 'label' => 'Subject (optional)', 'type' => 'text', 'placeholder' => 'New website for my business', 'autocomplete' => 'off', 'required' => false],
+        ['name' => 'name', 'label' => $c['name'], 'type' => 'text', 'placeholder' => __('site.services.detail.name_ph'), 'autocomplete' => 'name', 'required' => true],
+        ['name' => 'email', 'label' => $c['email'], 'type' => 'email', 'placeholder' => 'example@gmail.com', 'autocomplete' => 'email', 'required' => true],
+        ['name' => 'phone', 'label' => $c['phone'], 'type' => 'tel', 'placeholder' => '+255 712 345 678', 'autocomplete' => 'tel', 'required' => false],
+        ['name' => 'subject', 'label' => $c['subject'], 'type' => 'text', 'placeholder' => $c['subject_ph'], 'autocomplete' => 'off', 'required' => false],
     ];
 @endphp
 
+@section('title', $c['title'] . ' | Digital Star Consultants')
+@section('description', $c['meta_desc'])
+
 @section('hero-actions')
-    <a href="#message" class="ds-btn ds-btn-mint">Send a message <i data-lucide="arrow-right"></i></a>
+    <a href="#message" class="ds-btn ds-btn-mint">{{ $c['send'] }} <i data-lucide="arrow-right"></i></a>
     <a href="mailto:hello@digitalstar.co.tz" class="ds-btn ds-btn-ghost-light">hello@digitalstar.co.tz</a>
 @endsection
 
 @section('hero-aside')
     <div class="ds-hero-card">
         <div class="ds-hero-card-chip" aria-hidden="true"></div>
-        <span class="ds-hero-card-label">Quick start</span>
-        <h3>Not sure where to begin?</h3>
-        <small>Start with the complete catalogue</small>
-        <p>Browse by service area, then choose the exact service that matches your request.</p>
-        <a href="{{ route('public.services.index') }}" class="ds-btn ds-btn-white">Browse services <i data-lucide="arrow-right"></i></a>
+        <span class="ds-hero-card-label">{{ $c['aside_label'] }}</span>
+        <h3>{{ $c['aside_title'] }}</h3>
+        <small>{{ $c['aside_small'] }}</small>
+        <p>{{ $c['aside_copy'] }}</p>
+        <a href="{{ route('public.services.index') }}" class="ds-btn ds-btn-white">{{ $c['aside_btn'] }} <i data-lucide="arrow-right"></i></a>
     </div>
 @endsection
 
 @section('content')
     @include('partials.ds-hero', [
-        'kicker' => 'Contact Digital Star',
-        'title' => "Let's get something <span class=\"ds-accent\">moving.</span>",
-        'lead' => "Tell us what you need help with. We'll point you to the right service or help you understand the next step.",
+        'kicker' => $c['hero_kicker'],
+        'title' => $c['title_span'],
+        'lead' => $c['lead_full'],
         'image' => $ds['images']['collab'],
-        'points' => ['Mon - Sat, 8AM - 6PM', 'Dar es Salaam, Tanzania'],
+        'points' => [$c['point_hours'], $c['point_city']],
     ])
 
     <section class="ds-section" id="message" style="scroll-margin-top:80px">
         <div class="ds-container">
             @include('partials.ds-heading', [
-                'kicker' => 'Send a message',
-                'title' => "We'd like to hear from you.",
-                'copy' => 'Give us enough detail to understand what you need. A member of the team will respond with the most useful next step.',
+                'kicker' => $c['msg_kicker'],
+                'title' => $c['msg_title'],
+                'copy' => $c['msg_copy'],
             ])
 
             <div class="ds-contact">
@@ -72,8 +71,8 @@
                     @endforeach
 
                     <div class="ds-tips">
-                        <h3>Keep it simple</h3>
-                        <p>You don't need to know the service name. Just tell us what you're trying to accomplish.</p>
+                        <h3>{{ $c['tips_title'] }}</h3>
+                        <p>{{ $c['tips_copy'] }}</p>
                         <ul>
                             @foreach ($tips as $tip)
                                 <li><i data-lucide="circle-check"></i><span>{{ $tip }}</span></li>
@@ -87,7 +86,7 @@
                         <div class="ds-alert ds-alert-success" role="status">{{ session('success') }}</div>
                     @endif
                     @if ($errors->any())
-                        <div class="ds-alert ds-alert-error" role="alert"><strong>Please check the highlighted details.</strong></div>
+                        <div class="ds-alert ds-alert-error" role="alert"><strong>{{ $c['errors'] }}</strong></div>
                     @endif
 
                     <form class="ds-form" method="POST" action="{{ route('public.contact.store') }}">
@@ -104,14 +103,14 @@
                             @endforeach
                         </div>
                         <label class="ds-field {{ $errors->has('message') ? 'has-error' : '' }}">
-                            Message
-                            <textarea name="message" rows="6" required placeholder="Tell us what you need help with...">{{ old('message') }}</textarea>
+                            {{ $c['message'] }}
+                            <textarea name="message" rows="6" required placeholder="{{ $c['msg_area_ph'] }}">{{ old('message') }}</textarea>
                             @error('message')<span class="ds-field-error">{{ $message }}</span>@enderror
                         </label>
                         <button type="submit" class="ds-btn ds-btn-primary ds-btn-block" style="height:48px">
-                            Send message <i data-lucide="arrow-right"></i>
+                            {{ $c['send'] }} <i data-lucide="arrow-right"></i>
                         </button>
-                        <p class="ds-form-note">Your details are used only to respond to your enquiry.</p>
+                        <p class="ds-form-note">{{ $c['form_note'] }}</p>
                     </form>
                 </div>
             </div>
@@ -119,11 +118,28 @@
     </section>
 
     @include('partials.ds-cta', [
-        'kicker' => 'Prefer to browse?',
-        'title' => 'Find the right service first.',
-        'copy' => 'Explore the complete catalogue, then start a guided application in minutes.',
-        'buttonLabel' => 'Explore services',
+        'kicker' => $c['cta_kicker'],
+        'title' => $c['cta_title'],
+        'copy' => $c['cta_copy'],
+        'buttonLabel' => $c['cta_btn'],
         'url' => route('public.services.index'),
-        'checklist' => ['Guided applications', 'Document support', 'Status tracking'],
+        'checklist' => $c['checklist'],
     ])
 @endsection
+
+@push('scripts')
+<script>
+    // Contact form: show a spinner while the request is in flight
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('.ds-form-card form.ds-form');
+        if (!form) return;
+        form.addEventListener('submit', () => {
+            const btn = form.querySelector('button[type="submit"]');
+            if (!btn || !btn.checkValidity()) return;
+            btn.classList.add('is-loading');
+            btn.setAttribute('aria-busy', 'true');
+            btn.disabled = true;
+        });
+    });
+</script>
+@endpush

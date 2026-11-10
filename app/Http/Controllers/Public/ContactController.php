@@ -23,6 +23,12 @@ class ContactController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'subject' => ['nullable', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
+        ], [], [
+            'name' => __('site.contact.name'),
+            'email' => __('site.contact.email'),
+            'phone' => __('site.contact.phone'),
+            'subject' => __('site.contact.subject'),
+            'message' => __('site.contact.message'),
         ]);
 
         ContactMessage::create([
@@ -36,10 +42,10 @@ class ContactController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'status' => 'success',
-                'message' => 'Thank you! Your message has been sent successfully.',
+                'message' => __('site.contact.success'),
             ], 201);
         }
 
-        return back()->with('success', 'Thank you! Your message has been sent successfully.');
+        return back()->with('success', __('site.contact.success'));
     }
 }

@@ -1,11 +1,12 @@
 @extends('layouts.digitalstar')
 
 @php
+    $h = __('site.home');
     $ds = config('digitalstar');
     $floatCards = [
-        ['icon' => 'laptop', 'title' => 'Online Applications', 'sub' => 'Guidance at each step'],
-        ['icon' => 'megaphone', 'title' => 'Print & Branding', 'sub' => 'Make your business seen'],
-        ['icon' => 'server', 'title' => 'IT Consultancy', 'sub' => 'Support for your business'],
+        ['icon' => 'laptop', 'title' => $h['float1_t'], 'sub' => $h['float1_s']],
+        ['icon' => 'megaphone', 'title' => $h['float2_t'], 'sub' => $h['float2_s']],
+        ['icon' => 'server', 'title' => $h['float3_t'], 'sub' => $h['float3_s']],
     ];
     // Prefer live catalogue pillars from the database; fall back to the static config.
     $dsIconFor = function ($slug) {
@@ -21,18 +22,20 @@
     $homeServices = (isset($categories) && $categories->isNotEmpty())
         ? $categories->take(4)->map(fn ($c) => [
             'title' => $c->name,
-            'copy' => \Illuminate\Support\Str::limit($c->description ?: 'Professional digital services tailored to your needs.', 110),
+            'copy' => \Illuminate\Support\Str::limit($c->description ?: $h['cat_fallback'], 110),
             'icon' => $dsIconFor($c->slug),
-            'points' => $c->children->pluck('name')->merge($c->services->pluck('name'))->take(3)->all() ?: ['Guided application', 'Document support', 'Status tracking'],
+            'points' => $c->children->pluck('name')->merge($c->services->pluck('name'))->take(3)->all() ?: $h['points_fallback'],
             'url' => route('public.services.index', ['category' => $c->slug]),
         ])
         : collect($ds['services'])->map(fn ($s) => $s + ['url' => route('public.services.index')]);
 @endphp
 
+@section('description', $h['meta_desc'])
+
 {{-- Hero slots (must be defined before the content section) --}}
 @section('hero-actions')
-    <a href="{{ route('work') }}" class="ds-btn ds-btn-mint">Explore our work <i data-lucide="arrow-right"></i></a>
-    <a href="{{ route('public.contact.show') }}" class="ds-btn ds-btn-ghost-light">Get a quote</a>
+    <a href="{{ route('work') }}" class="ds-btn ds-btn-mint">{{ $h['cta_work'] }} <i data-lucide="arrow-right"></i></a>
+    <a href="{{ route('public.contact.show') }}" class="ds-btn ds-btn-ghost-light">{{ $h['cta_quote'] }}</a>
 @endsection
 
 @section('hero-aside')
@@ -50,11 +53,11 @@
 
 @section('content')
     @include('partials.ds-hero', [
-        'kicker' => 'Everyday services, with a helping hand',
-        'title' => 'Your trusted digital partner <span class="ds-accent">in Tanzania</span>',
-        'lead' => 'From government applications and business registration to printing, branding and IT, we help you get the next thing done.',
+        'kicker' => $h['hero_kicker'],
+        'title' => $h['hero_title'],
+        'lead' => $h['hero_lead'],
         'image' => $ds['images']['hero'],
-        'points' => ['Modern solutions', 'Reliable support', 'Local expertise'],
+        'points' => $h['hero_points'],
     ])
 
     @include('partials.ds-stats')
@@ -63,10 +66,10 @@
     <section class="ds-section">
         <div class="ds-container">
             @include('partials.ds-heading', [
-                'kicker' => 'What we do',
-                'title' => 'Our services',
-                'copy' => 'Find help with online applications, business paperwork, printing, stationery and technology—all in one place.',
-                'action' => '<a href="' . route('public.services.index') . '" class="ds-btn ds-btn-soft">View all services <i data-lucide="arrow-right"></i></a>',
+                'kicker' => $h['svc_kicker'],
+                'title' => $h['svc_title'],
+                'copy' => $h['svc_copy'],
+                'action' => '<a href="' . route('public.services.index') . '" class="ds-btn ds-btn-soft">' . $h['svc_view_all'] . ' <i data-lucide="arrow-right"></i></a>',
             ])
             <div class="ds-grid-4">
                 @foreach ($homeServices as $service)
@@ -79,7 +82,7 @@
                                 <li>{{ $point }}</li>
                             @endforeach
                         </ul>
-                        <span class="ds-card-link">Learn more <i data-lucide="arrow-up-right"></i></span>
+                        <span class="ds-card-link">{{ __('site.common.learn_more') }} <i data-lucide="arrow-up-right"></i></span>
                     </a>
                 @endforeach
             </div>
@@ -87,19 +90,19 @@
     </section>
 
     @include('partials.ds-process', [
-        'kicker' => 'How it works',
-        'title' => 'Our simple process',
-        'copy' => 'Choose a service, send your details and follow your request with one reference number.',
+        'kicker' => $h['how_kicker'],
+        'title' => $h['how_title'],
+        'copy' => $h['how_copy'],
     ])
 
     {{-- RECENT WORK --}}
     <section class="ds-section">
         <div class="ds-container">
             @include('partials.ds-heading', [
-                'kicker' => 'Our portfolio',
-                'title' => 'Recent work',
-                'copy' => "Some of the projects we've delivered for our clients.",
-                'action' => '<a href="' . route('work') . '" class="ds-btn ds-btn-soft">View all work <i data-lucide="arrow-right"></i></a>',
+                'kicker' => $h['work_kicker'],
+                'title' => $h['work_title'],
+                'copy' => $h['work_copy'],
+                'action' => '<a href="' . route('work') . '" class="ds-btn ds-btn-soft">' . $h['work_view_all'] . ' <i data-lucide="arrow-right"></i></a>',
             ])
             <div class="ds-grid-3">
                 @foreach (array_slice($ds['projects'], 0, 3) as $project)
@@ -112,10 +115,10 @@
     </section>
 
     @include('partials.ds-cta', [
-        'kicker' => 'Ready to get started?',
-        'title' => 'What can we help you with today?',
-        'copy' => "Tell us what you need. We can help you choose a service, prepare your documents or plan your next project.",
-        'buttonLabel' => 'Talk to our team',
+        'kicker' => $h['final_kicker'],
+        'title' => $h['final_title'],
+        'copy' => $h['final_copy'],
+        'buttonLabel' => $h['final_btn'],
         'url' => route('public.contact.show'),
     ])
 @endsection

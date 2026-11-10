@@ -10,36 +10,38 @@ class ServiceCategorySeeder extends Seeder
 {
     public function run(): void
     {
-        // Four clean customer-facing service pillars.
+        // Kiswahili is the primary customer-facing language. Slugs stay stable
+        // because they are the category's identity (bookmarks, footer links,
+        // existing submissions all point at them).
         $pillars = [
             [
                 'slug' => 'online-government-services',
-                'name' => 'Government & Online Services',
-                'description' => 'Government applications, identification, immigration, education, jobs and online assistance.',
+                'name' => 'Huduma za Serikali na Mtandaoni',
+                'description' => 'Maombi ya serikali, utambulisho, uhamiaji, elimu, ajira na msaada wa mtandaoni.',
                 'sort_order' => 1,
                 'icon' => '🏛',
                 'color' => '#1657D9',
             ],
             [
                 'slug' => 'business-services',
-                'name' => 'Business Services',
-                'description' => 'Business registration, company setup, compliance and related business support.',
+                'name' => 'Huduma za Biashara',
+                'description' => 'Usajili wa biashara, uanzishaji wa kampuni, miongozo ya kisheria na msaada wa biashara.',
                 'sort_order' => 2,
                 'icon' => '▣',
                 'color' => '#1657D9',
             ],
             [
                 'slug' => 'printing-graphics-design',
-                'name' => 'Printing, Branding & Stationery',
-                'description' => 'Printing, graphic design, branding and everyday stationery solutions.',
+                'name' => 'Uchapishaji, Brandi na Vifaa',
+                'description' => 'Uchapishaji, ubunifu wa graphics, brandi na vifaa vya ofisi na shule.',
                 'sort_order' => 3,
                 'icon' => '✦',
                 'color' => '#F6C945',
             ],
             [
                 'slug' => 'it-tech-consultancy',
-                'name' => 'IT & Technology',
-                'description' => 'Websites, software systems, hosting and practical technology consulting.',
+                'name' => 'IT na Teknolojia',
+                'description' => 'Tovuti, mifumo ya programu, hosting, simu na ushauri wa teknolojia.',
                 'sort_order' => 4,
                 'icon' => '⌘',
                 'color' => '#1657D9',
@@ -57,13 +59,13 @@ class ServiceCategorySeeder extends Seeder
         $business = ServiceCategory::where('slug', 'business-services')->firstOrFail();
 
         $onlineGroups = [
-            ['slug' => 'serikali-identification', 'name' => 'Government & Identification', 'sort_order' => 1, 'icon' => 'ID', 'description' => 'NIDA, civil registration, police clearance, driving and other identification-related services.'],
-            ['slug' => 'passport-immigration', 'name' => 'Passport & Immigration', 'sort_order' => 2, 'icon' => 'PAS', 'description' => 'Passport, visa and immigration services in one place.'],
-            ['slug' => 'jobs', 'name' => 'Jobs & Careers', 'sort_order' => 3, 'icon' => 'JOB', 'description' => 'Job applications and job search support.'],
-            ['slug' => 'education', 'name' => 'Education', 'sort_order' => 4, 'icon' => 'EDU', 'description' => 'School, scholarship and examination application assistance.'],
-            ['slug' => 'tra', 'name' => 'TRA & Tax', 'sort_order' => 5, 'icon' => 'TAX', 'description' => 'TIN, tax clearance and tax return assistance.'],
-            ['slug' => 'travel', 'name' => 'Travel & Bookings', 'sort_order' => 6, 'icon' => 'TRV', 'description' => 'Flights, accommodation and travel planning.'],
-            ['slug' => 'other-online-forms', 'name' => 'Other Online Forms', 'sort_order' => 7, 'icon' => 'WEB', 'description' => 'Other online applications and institutional forms.'],
+            ['slug' => 'serikali-identification', 'name' => 'Serikali na Kitambulisho', 'sort_order' => 1, 'icon' => 'ID', 'description' => 'NIDA, usajili wa matukio ya kiraia, leseni za udereva na huduma nyingine za kitambulisho.'],
+            ['slug' => 'passport-immigration', 'name' => 'Pasipoti na Uhamiaji', 'sort_order' => 2, 'icon' => 'PAS', 'description' => 'Pasipoti, visa na huduma za uhamiaji mahali pamoja.'],
+            ['slug' => 'jobs', 'name' => 'Kazi na Ajira', 'sort_order' => 3, 'icon' => 'JOB', 'description' => 'Maombi ya kazi na msaada wa kutafuta kazi.'],
+            ['slug' => 'education', 'name' => 'Elimu, Vyuo na Mikopo', 'sort_order' => 4, 'icon' => 'EDU', 'description' => 'Maombi ya shule, vyuo, mikopo (HESLB) na ufadhili.'],
+            ['slug' => 'tra', 'name' => 'TRA na Kodi', 'sort_order' => 5, 'icon' => 'TAX', 'description' => 'TIN, kibali cha kodi, marejesho ya kodi na msaada wa TRA.'],
+            ['slug' => 'travel', 'name' => 'Usafiri na Booking', 'sort_order' => 6, 'icon' => 'TRV', 'description' => 'Ndege, malazi na kupanga safari.'],
+            ['slug' => 'other-online-forms', 'name' => 'Fomu Nyingine Mtandaoni', 'sort_order' => 7, 'icon' => 'WEB', 'description' => 'Maombi mengine ya mtandaoni, NSSF na fomu za taasisi.'],
         ];
 
         foreach ($onlineGroups as $group) {
@@ -79,8 +81,8 @@ class ServiceCategorySeeder extends Seeder
         ServiceCategory::updateOrCreate(
             ['slug' => 'stationery'],
             [
-                'name' => 'Stationery',
-                'description' => 'Office and school stationery supplies, including customized items.',
+                'name' => 'Vifaa vya Ofisi na Shule',
+                'description' => 'Usambazaji wa vifaa vya ofisi na shule, pamoja na vyenye nembo ya biashara.',
                 'sort_order' => 2,
                 'icon' => 'STA',
                 'parent_id' => $printing->id,
@@ -92,11 +94,24 @@ class ServiceCategorySeeder extends Seeder
         ServiceCategory::updateOrCreate(
             ['slug' => 'brela-business'],
             [
-                'name' => 'BRELA & Business Registration',
-                'description' => 'Business names, company registration and related business setup services.',
+                'name' => 'BRELA na Usajili wa Biashara',
+                'description' => 'Usajili wa majina ya biashara, usajili wa kampuni na huduma nyingine za kuanzisha biashara.',
                 'sort_order' => 1,
                 'icon' => 'BRL',
                 'parent_id' => $business->id,
+                'is_active' => true,
+            ],
+        );
+
+        // Telecom lines, Lipa Number and digital payments sit under the IT pillar.
+        ServiceCategory::updateOrCreate(
+            ['slug' => 'simu-mtandao-na-malipo'],
+            [
+                'name' => 'Simu, Mtandao na Malipo',
+                'description' => 'Laini za wakala, Lipa Number, usajili wa laini na huduma za malipo ya simu.',
+                'sort_order' => 5,
+                'icon' => 'TEL',
+                'parent_id' => ServiceCategory::where('slug', 'it-tech-consultancy')->firstOrFail()->id,
                 'is_active' => true,
             ],
         );

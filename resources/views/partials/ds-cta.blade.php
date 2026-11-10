@@ -1,6 +1,6 @@
 {{-- Call-to-action band. Params: $kicker, $title, $copy, $buttonLabel, $url, $checklist (optional) --}}
 @php
-    $checklist = $checklist ?? ['Tailored solutions', 'On-time delivery', 'Affordable pricing', 'Long-term support'];
+    $checklist = $checklist ?? __('site.common.cta_checklist');
 @endphp
 <section class="ds-cta-section">
     <div class="ds-cta ds-reveal">

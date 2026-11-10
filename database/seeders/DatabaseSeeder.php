@@ -42,7 +42,10 @@ class DatabaseSeeder extends Seeder
             OtherOnlineFormsServiceSeeder::class,
             PrintingGraphicsServiceSeeder::class,
             StationeryServiceSeeder::class,
+            TelecomPaymentServiceSeeder::class,
             ItConsultancyServiceSeeder::class,
+            SuppliedGuideServicesSeeder::class,
+            SeparateServicesSeeder::class,
         ]);
 
         // --------------------------------------------------

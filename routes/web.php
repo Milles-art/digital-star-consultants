@@ -37,6 +37,12 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/services', [PublicServiceController::class, 'index'])->name('public.services.index');
 Route::get('/services/{slug}', [PublicServiceController::class, 'show'])->name('public.services.show');
 
+// Printable forms (Fomu) — Kiswahili-first, printable A4 pages.
+Route::get('/fomu', [\App\Http\Controllers\Public\FormController::class, 'index'])->name('public.forms.index');
+Route::get('/fomu/{form}', [\App\Http\Controllers\Public\FormController::class, 'show'])
+    ->whereIn('form', array_keys(\App\Http\Controllers\Public\FormController::FORMS))
+    ->name('public.forms.show');
+
 // Submissions
 Route::post('/submit', [PublicSubmissionController::class, 'store'])
     ->middleware('throttle:10,1')
@@ -45,7 +51,7 @@ Route::post('/submit', [PublicSubmissionController::class, 'store'])
 // Locale, about, work, track HTML, contact page
 Route::get('/locale/{locale}', function (string $locale) {
     if (! in_array($locale, ['en', 'sw'], true)) {
-        $locale = 'en';
+        $locale = 'sw';
     }
     session(['locale' => $locale]);
 
@@ -66,6 +72,27 @@ Route::get('/track/status/{reference}', [TrackPageController::class, 'show'])
     ->name('public.track.show');
 
 Route::get('/contact', [ContactController::class, 'show'])->name('public.contact.show');
+
+// Sitemap (referenced from robots.txt). Built from the live catalogue so new
+// services are picked up automatically.
+Route::get('/sitemap.xml', function () {
+    $static = ['/', '/services', '/fomu', '/work', '/about', '/contact', '/track'];
+
+    $urls = collect($static)
+        ->map(fn ($path) => ['loc' => url($path), 'priority' => $path === '/' ? '1.0' : '0.7'])
+        ->concat(
+            \App\Models\ServiceCategory::query()->where('is_active', true)->pluck('slug')
+                ->map(fn ($slug) => ['loc' => route('public.services.index', ['category' => $slug]), 'priority' => '0.6'])
+        )
+        ->concat(
+            \App\Models\Service::query()->where('is_active', true)->orderBy('slug')->pluck('slug')
+                ->map(fn ($slug) => ['loc' => route('public.services.show', $slug), 'priority' => '0.8'])
+        );
+
+    $xml = view('sitemap', ['urls' => $urls, 'modified' => now()->toAtomString()])->render();
+
+    return response($xml, 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+})->name('sitemap');
 
 Route::get('/track/{reference}', [PublicSubmissionController::class, 'track'])
     ->where('reference', \App\Support\SubmissionReference::PATTERN)

@@ -6,6 +6,9 @@ use App\Models\ServiceCategory;
 use Database\Seeders\Concerns\SeedsServiceFields;
 use Illuminate\Database\Seeder;
 
+/**
+ * Vifaa vya ofisi na shule.
+ */
 class StationeryServiceSeeder extends Seeder
 {
     use SeedsServiceFields;
@@ -14,37 +17,37 @@ class StationeryServiceSeeder extends Seeder
     {
         $id = ServiceCategory::where('slug', 'stationery')->firstOrFail()->id;
 
-        $this->seedService($id, 'Office Stationery Order', [
-            ['label' => 'Full Name', 'field_key' => 'full_name', 'field_type' => 'text'],
-            ['label' => 'Company/Organization', 'field_key' => 'company', 'field_type' => 'text'],
-            ['label' => 'Email Address', 'field_key' => 'email', 'field_type' => 'email'],
-            ['label' => 'Phone Number', 'field_key' => 'phone', 'field_type' => 'tel'],
-            ['label' => 'Delivery Address', 'field_key' => 'delivery_address', 'field_type' => 'text'],
-            ['label' => 'Items Required', 'field_key' => 'items_required', 'field_type' => 'textarea'],
-            ['label' => 'Quantity Details', 'field_key' => 'quantity_details', 'field_type' => 'textarea'],
-            ['label' => 'Budget Range', 'field_key' => 'budget', 'field_type' => 'text', 'is_required' => false],
-            ['label' => 'Delivery Date', 'field_key' => 'delivery_date', 'field_type' => 'date'],
-        ], sortOrder: 1);
+        $this->seedService($id, 'Oda ya Vifaa vya Ofisi', [
+            ['label' => 'Majina Kamili', 'field_key' => 'full_name', 'field_type' => 'text'],
+            ['label' => 'Kampuni / Taasisi', 'field_key' => 'company', 'field_type' => 'text'],
+            ['label' => 'Barua Pepe', 'field_key' => 'email', 'field_type' => 'email'],
+            ['label' => 'Namba ya Simu', 'field_key' => 'phone', 'field_type' => 'tel'],
+            ['label' => 'Anwani ya Kupelekea', 'field_key' => 'delivery_address', 'field_type' => 'text'],
+            ['label' => 'Vifaa Vinavyohitajika', 'field_key' => 'items_required', 'field_type' => 'textarea'],
+            ['label' => 'Maelezo ya Idadi', 'field_key' => 'quantity_details', 'field_type' => 'textarea'],
+            ['label' => 'Kiwango cha Bajeti', 'field_key' => 'budget', 'field_type' => 'text', 'is_required' => false],
+            ['label' => 'Tarehe ya Kupeleka', 'field_key' => 'delivery_date', 'field_type' => 'date'],
+        ], sortOrder: 1, slug: 'office-stationery-order');
 
-        $this->seedService($id, 'School Stationery Request', [
-            ['label' => 'School Name', 'field_key' => 'school_name', 'field_type' => 'text'],
-            ['label' => 'Contact Person', 'field_key' => 'contact_person', 'field_type' => 'text'],
-            ['label' => 'Email Address', 'field_key' => 'email', 'field_type' => 'email'],
-            ['label' => 'Phone Number', 'field_key' => 'phone', 'field_type' => 'tel'],
-            ['label' => 'Delivery Address', 'field_key' => 'delivery_address', 'field_type' => 'text'],
-            ['label' => 'Stationery List', 'field_key' => 'stationery_list', 'field_type' => 'textarea'],
-            ['label' => 'Expected Use Date', 'field_key' => 'use_date', 'field_type' => 'date'],
-        ], sortOrder: 2);
+        $this->seedService($id, 'Ombi la Vifaa vya Shule', [
+            ['label' => 'Jina la Shule', 'field_key' => 'school_name', 'field_type' => 'text'],
+            ['label' => 'Mtu wa Kuwasiliana Naye', 'field_key' => 'contact_person', 'field_type' => 'text'],
+            ['label' => 'Barua Pepe', 'field_key' => 'email', 'field_type' => 'email'],
+            ['label' => 'Namba ya Simu', 'field_key' => 'phone', 'field_type' => 'tel'],
+            ['label' => 'Anwani ya Kupelekea', 'field_key' => 'delivery_address', 'field_type' => 'text'],
+            ['label' => 'Orodha ya Vifaa', 'field_key' => 'stationery_list', 'field_type' => 'textarea'],
+            ['label' => 'Tarehe Inayotarajika ya Matumizi', 'field_key' => 'use_date', 'field_type' => 'date'],
+        ], sortOrder: 2, slug: 'school-stationery-request');
 
-        $this->seedService($id, 'Customized Stationery (Branded)', [
-            ['label' => 'Company/Organization Name', 'field_key' => 'company_name', 'field_type' => 'text'],
-            ['label' => 'Contact Person', 'field_key' => 'contact_person', 'field_type' => 'text'],
-            ['label' => 'Email Address', 'field_key' => 'email', 'field_type' => 'email'],
-            ['label' => 'Phone Number', 'field_key' => 'phone', 'field_type' => 'tel'],
-            ['label' => 'Stationery Type', 'field_key' => 'stationery_type', 'field_type' => 'select', 'options' => ['Letterheads', 'Envelopes', 'Business Cards', 'Notepads']],
-            ['label' => 'Quantity Required', 'field_key' => 'quantity', 'field_type' => 'number'],
-            ['label' => 'Brand/Logo File', 'field_key' => 'upload_logo', 'field_type' => 'file'],
-            ['label' => 'Design Preferences', 'field_key' => 'design_preferences', 'field_type' => 'textarea', 'is_required' => false],
-        ], sortOrder: 3);
+        $this->seedService($id, 'Vifaa Vilivyoboreshwa kwa Nembo (Branded)', [
+            ['label' => 'Jina la Kampuni / Taasisi', 'field_key' => 'company_name', 'field_type' => 'text'],
+            ['label' => 'Mtu wa Kuwasiliana Naye', 'field_key' => 'contact_person', 'field_type' => 'text'],
+            ['label' => 'Barua Pepe', 'field_key' => 'email', 'field_type' => 'email'],
+            ['label' => 'Namba ya Simu', 'field_key' => 'phone', 'field_type' => 'tel'],
+            ['label' => 'Aina ya Vifaa', 'field_key' => 'stationery_type', 'field_type' => 'select', 'options' => ['Barua (Letterheads)', 'Mafuli (Envelopes)', 'Kadi za Biashara', 'Daftari']],
+            ['label' => 'Idadi Inayohitajika', 'field_key' => 'quantity', 'field_type' => 'number'],
+            ['label' => 'Faili la Nembo / Logo', 'field_key' => 'upload_logo', 'field_type' => 'file'],
+            ['label' => 'Maelezo ya Muundo', 'field_key' => 'design_preferences', 'field_type' => 'textarea', 'is_required' => false],
+        ], sortOrder: 3, slug: 'customized-stationery-branded');
     }
 }

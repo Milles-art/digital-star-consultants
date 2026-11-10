@@ -1,6 +1,13 @@
 @extends('layouts.digitalstar')
 
-@section('title', ($selectedCategory?->name ? $selectedCategory->name . ' | ' : 'Services | ') . 'Digital Star Consultants')
+@php
+    $cat = __('site.services.catalogue');
+@endphp
+
+@section('title', ($selectedCategory?->name ? $selectedCategory->name . ' | ' : $cat['meta_suffix'] . ' | ') . 'Digital Star Consultants')
+@section('description', $selectedCategory
+    ? __('site.services.catalogue.meta_desc_category', ['name' => $selectedCategory->name])
+    : $cat['meta_desc_default'])
 
 @php
     $totalServices = $categories->sum(fn ($c) => $c->children->sum('active_services_count') + $c->active_services_count);
@@ -8,19 +15,19 @@
 
     if ($selectedCategory) {
         $heroTitle = e($selectedCategory->name);
-        $heroLead = e($selectedCategory->description ?: 'Choose the service that matches what you need.');
+        $heroLead = e($selectedCategory->description ?: $cat['hero_fallback_lead']);
     } elseif ($search) {
-        $heroTitle = 'Search <span class="ds-accent">results.</span>';
-        $heroLead = 'Showing services that match <strong style="color:#fff">&ldquo;' . e($search) . '&rdquo;</strong>.';
+        $heroTitle = $cat['search_title'];
+        $heroLead = __('site.services.catalogue.search_lead', ['query' => $search]);
     } else {
-        $heroTitle = 'Everything you need. <span class="ds-accent">In one place.</span>';
-        $heroLead = 'From NIDA and passports to BRELA, printing and websites — pick the exact service you need and our team guides the rest, from documents to delivery.';
+        $heroTitle = $cat['hero_title'];
+        $heroLead = $cat['hero_lead'];
     }
 @endphp
 
 @if ($selectedCategory)
     @section('hero-crumbs')
-        <a href="{{ route('public.services.index') }}">Services</a>
+        <a href="{{ route('public.services.index') }}">{{ $cat['crumb'] }}</a>
         <i data-lucide="chevron-right"></i>
         @if ($selectedCategory->parent)
             <a href="{{ route('public.services.index', ['category' => $selectedCategory->parent->slug]) }}">{{ $selectedCategory->parent->name }}</a>
@@ -31,26 +38,26 @@
 @endif
 
 @section('hero-actions')
-    <a href="#catalogue" class="ds-btn ds-btn-mint">Browse services <i data-lucide="arrow-down"></i></a>
-    <a href="{{ route('public.track.form') }}" class="ds-btn ds-btn-ghost-light">Track an application</a>
+    <a href="#catalogue" class="ds-btn ds-btn-mint">{{ $cat['browse_btn'] }} <i data-lucide="arrow-down"></i></a>
+    <a href="{{ route('public.track.form') }}" class="ds-btn ds-btn-ghost-light">{{ $cat['track_btn'] }}</a>
 @endsection
 
 @section('hero-aside')
     <div class="ds-hero-card">
         <div class="ds-hero-card-chip" aria-hidden="true"></div>
-        <span class="ds-hero-card-label">{{ $search ? 'Matching services' : 'Services available' }}</span>
+        <span class="ds-hero-card-label">{{ $search ? $cat['aside_matching'] : $cat['aside_available'] }}</span>
         <strong class="ds-hero-number">{{ $search ? $services->count() : $totalServices }}</strong>
-        <small>{{ $search ? 'matching your search' : 'across all service areas' }}</small>
-        <p>Choose the exact service and we'll guide you through the application.</p>
+        <small>{{ $search ? $cat['aside_matching_small'] : $cat['aside_available_small'] }}</small>
+        <p>{{ $cat['aside_copy'] }}</p>
     </div>
 @endsection
 
 @section('content')
     @include('partials.ds-hero', [
-        'kicker' => 'Digital Star services',
+        'kicker' => $cat['kicker'],
         'title' => $heroTitle,
         'lead' => $heroLead,
-        'points' => ['Guided applications', 'Document support', 'Status tracking'],
+        'points' => $cat['points'],
     ])
 
     {{-- Search + service area tabs --}}
@@ -59,13 +66,13 @@
             <form class="ds-search" method="GET" action="{{ route('public.services.index') }}" role="search">
                 <label class="ds-search-input">
                     <i data-lucide="search"></i>
-                    <input name="search" value="{{ $search }}" aria-label="Search services"
-                           placeholder="Search services: passport, TIN, business registration, website...">
+                    <input name="search" value="{{ $search }}" aria-label="{{ $cat['search_aria'] }}"
+                           placeholder="{{ $cat['search_ph'] }}">
                 </label>
-                <button class="ds-btn ds-btn-primary" type="submit">Search</button>
+                <button class="ds-btn ds-btn-primary" type="submit">{{ $cat['search_btn'] }}</button>
             </form>
-            <div class="ds-tabs" aria-label="Service areas">
-                <a class="ds-tab {{ !$selectedCategory && !$search ? 'is-active' : '' }}" href="{{ route('public.services.index') }}">All services</a>
+            <div class="ds-tabs" aria-label="{{ $cat['tabs_aria'] }}">
+                <a class="ds-tab {{ !$selectedCategory && !$search ? 'is-active' : '' }}" href="{{ route('public.services.index') }}">{{ $cat['all_services'] }}</a>
                 @foreach ($categories as $category)
                     <a class="ds-tab {{ $selectedCategory?->slug === $category->slug || $selectedCategory?->parent?->slug === $category->slug ? 'is-active' : '' }}"
                        href="{{ route('public.services.index', ['category' => $category->slug]) }}">{{ $category->name }}</a>
@@ -82,10 +89,10 @@
                 @forelse ($serviceGroups as $group)
                     <div class="ds-group">
                         @include('partials.ds-heading', [
-                            'kicker' => $pad($loop->iteration) . ' · Service group',
+                            'kicker' => $pad($loop->iteration) . ' · ' . $cat['group_kicker'],
                             'title' => $group['name'],
                             'copy' => $group['description'],
-                            'action' => '<span class="ds-count">' . $group['services']->count() . ' services</span>',
+                            'action' => '<span class="ds-count">' . __('site.services.catalogue.services_count', ['count' => $group['services']->count()]) . '</span>',
                         ])
                         <div class="ds-grid-4">
                             @foreach ($group['services'] as $service)
@@ -96,11 +103,11 @@
                 @empty
                     <div class="ds-empty">
                         <span class="ds-icon-box"><i data-lucide="search-x"></i></span>
-                        <h3>No service found</h3>
-                        <p>Try another search term or browse a service area.</p>
+                        <h3>{{ $cat['empty_title'] }}</h3>
+                        <p>{{ $cat['empty_copy'] }}</p>
                         <div class="ds-actions">
-                            <a class="ds-btn ds-btn-primary" href="{{ route('public.services.index') }}">Browse all services</a>
-                            <a class="ds-btn ds-btn-soft" href="{{ route('public.contact.show') }}">Ask our team</a>
+                            <a class="ds-btn ds-btn-primary" href="{{ route('public.services.index') }}">{{ $cat['browse_all'] }}</a>
+                            <a class="ds-btn ds-btn-soft" href="{{ route('public.contact.show') }}">{{ $cat['ask_team'] }}</a>
                         </div>
                     </div>
                 @endforelse
@@ -108,9 +115,9 @@
             {{-- 2. Full catalogue: every pillar --}}
             @elseif (!$selectedCategory)
                 @include('partials.ds-heading', [
-                    'kicker' => 'Complete catalogue',
-                    'title' => 'Four areas. One team behind all of them.',
-                    'copy' => 'Every service below is handled by a real person at Digital Star — grouped by purpose so you find yours in seconds, not hours.',
+                    'kicker' => $cat['catalogue_kicker'],
+                    'title' => $cat['catalogue_title'],
+                    'copy' => $cat['catalogue_copy'],
                 ])
                 <div class="ds-stack-lg">
                     @foreach ($categories as $category)
@@ -120,10 +127,10 @@
                         @endphp
                         <div class="ds-pillar ds-reveal">
                             @include('partials.ds-heading', [
-                                'kicker' => $pad($loop->iteration) . ' · Service pillar',
+                                'kicker' => $pad($loop->iteration) . ' · ' . $cat['pillar_kicker'],
                                 'title' => $category->name,
                                 'copy' => $category->description,
-                                'action' => '<a class="ds-btn ds-btn-soft" href="' . route('public.services.index', ['category' => $category->slug]) . '">' . $pillarServices . ' services <i data-lucide="arrow-right"></i></a>',
+                                'action' => '<a class="ds-btn ds-btn-soft" href="' . route('public.services.index', ['category' => $category->slug]) . '">' . __('site.services.catalogue.services_count', ['count' => $pillarServices]) . ' <i data-lucide="arrow-right"></i></a>',
                             ])
                             @if ($category->children->isNotEmpty())
                                 <div class="ds-grid-4">
@@ -146,9 +153,9 @@
             @elseif ($selectedCategory->isTopLevel())
                 @include('partials.ds-heading', [
                     'kicker' => $selectedCategory->name,
-                    'title' => 'Choose a group.',
-                    'copy' => 'Every group below opens into the specific services available there.',
-                    'action' => '<span class="ds-count">' . $childCategories->count() . ' groups</span>',
+                    'title' => $cat['choose_group'],
+                    'copy' => $cat['choose_group_copy'],
+                    'action' => '<span class="ds-count">' . __('site.services.catalogue.groups_count', ['count' => $childCategories->count()]) . '</span>',
                 ])
                 @if ($childCategories->isNotEmpty())
                     <div class="ds-grid-4">
@@ -160,9 +167,9 @@
                 @if ($services->isNotEmpty())
                     <div class="ds-group">
                         @include('partials.ds-heading', [
-                            'kicker' => 'Services',
-                            'title' => 'Available directly here',
-                            'action' => '<span class="ds-count">' . $services->count() . ' services</span>',
+                            'kicker' => $cat['crumb'],
+                            'title' => $cat['direct'],
+                            'action' => '<span class="ds-count">' . __('site.services.catalogue.services_count', ['count' => $services->count()]) . '</span>',
                         ])
                         <div class="ds-grid-4">
                             @foreach ($services as $service)
@@ -175,10 +182,10 @@
             {{-- 4. A group: its services --}}
             @else
                 @include('partials.ds-heading', [
-                    'kicker' => $selectedCategory->parent?->name ?? 'Service group',
+                    'kicker' => $selectedCategory->parent?->name ?? $cat['group_kicker'],
                     'title' => $selectedCategory->name,
-                    'copy' => "Open a service to see exactly what it costs, what to prepare, and how to apply — then finish the whole thing online in minutes.",
-                    'action' => '<span class="ds-count">' . $services->count() . ' services</span>',
+                    'copy' => $cat['group_desc'],
+                    'action' => '<span class="ds-count">' . __('site.services.catalogue.services_count', ['count' => $services->count()]) . '</span>',
                 ])
                 @if ($services->isNotEmpty())
                     <div class="ds-grid-4">
@@ -189,10 +196,10 @@
                 @else
                     <div class="ds-empty">
                         <span class="ds-icon-box"><i data-lucide="inbox"></i></span>
-                        <h3>No active services in this group yet.</h3>
-                        <p>Check back soon, or ask our team about what you need.</p>
+                        <h3>{{ $cat['no_active_title'] }}</h3>
+                        <p>{{ $cat['no_active_copy'] }}</p>
                         <div class="ds-actions">
-                            <a class="ds-btn ds-btn-primary" href="{{ route('public.services.index') }}">Back to service areas</a>
+                            <a class="ds-btn ds-btn-primary" href="{{ route('public.services.index') }}">{{ $cat['back_areas'] }}</a>
                         </div>
                     </div>
                 @endif
@@ -201,22 +208,22 @@
     </section>
 
     @include('partials.ds-process', [
-        'kicker' => 'How applying works',
-        'title' => 'From search to done in three moves.',
-        'copy' => 'No queues, no guesswork. Here is the whole journey before you even start.',
+        'kicker' => $cat['process_kicker'],
+        'title' => $cat['process_title'],
+        'copy' => $cat['process_copy'],
         'steps' => [
-            ['title' => 'Find it fast', 'copy' => 'Search or browse the catalogue and open the exact service you need.', 'icon' => 'search'],
-            ['title' => 'Apply with guidance', 'copy' => 'A short form tells us what matters — we check documents and details with you.', 'icon' => 'file-check'],
-            ['title' => 'Track to completion', 'copy' => 'Get a reference number and follow your request until it is delivered.', 'icon' => 'radar'],
+            ['title' => $cat['step1_title'], 'copy' => $cat['step1_copy'], 'icon' => 'search'],
+            ['title' => $cat['step2_title'], 'copy' => $cat['step2_copy'], 'icon' => 'file-check'],
+            ['title' => $cat['step3_title'], 'copy' => $cat['step3_copy'], 'icon' => 'radar'],
         ],
     ])
 
     @include('partials.ds-cta', [
-        'kicker' => 'Already applied?',
-        'title' => 'Track your application anytime.',
-        'copy' => 'Every request is handled by our team and tracked with a unique reference number.',
-        'buttonLabel' => 'Track an application',
+        'kicker' => $cat['cta_kicker'],
+        'title' => $cat['cta_title'],
+        'copy' => $cat['cta_copy'],
+        'buttonLabel' => $cat['cta_btn'],
         'url' => route('public.track.form'),
-        'checklist' => ['Guided applications', 'Document support', 'Status tracking'],
+        'checklist' => $cat['points'],
     ])
 @endsection

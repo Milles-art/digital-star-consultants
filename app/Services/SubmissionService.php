@@ -89,6 +89,9 @@ class SubmissionService
                             'status' => $submission->status,
                             'service_id' => $service->id,
                             'field_count' => $service->fields->count(),
+                            'requirements_version' => $service->metadata['government_requirements']['version'] ?? null,
+                            'follow_up_items' => \App\Support\ServiceRequirementReview::missing($service, $inputFields, $uploadedFiles)
+                                ->map(fn ($field) => ['key' => $field->field_key, 'label' => $field->label])->all(),
                         ],
                     ]);
                 }

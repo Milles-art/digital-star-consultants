@@ -82,10 +82,10 @@ class ServiceController extends Controller
                 ->get();
 
             $serviceGroups = $services
-                ->groupBy(fn (Service $service): string => $service->category?->full_path ?? 'Other services')
+                ->groupBy(fn (Service $service): string => $service->category?->full_path ?? __('site.services.group_other'))
                 ->map(fn ($group, string $name): array => [
                     'name' => $name,
-                    'description' => $group->first()?->category?->description ?? 'Professional assistance from application to completion.',
+                    'description' => $group->first()?->category?->description ?? __('site.services.card_fallback'),
                     'services' => $group->values(),
                 ])
                 ->values();
@@ -157,7 +157,7 @@ class ServiceController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Service not found',
+                'message' => __('site.form_errors.service_not_found'),
             ], 404);
         }
 
@@ -192,6 +192,7 @@ class ServiceController extends Controller
                     'help_text' => $field->help_text,
                     'default_value' => $field->default_value,
                     'is_required' => $field->is_required,
+                    'review_rules' => $service->metadata['government_requirements']['fields'][$field->field_key] ?? null,
                     'sort_order' => $field->sort_order,
                 ]),
             ],

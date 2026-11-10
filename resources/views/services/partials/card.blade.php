@@ -10,9 +10,9 @@
 <a href="{{ route('public.services.show', $service->slug) }}" class="ds-service ds-reveal" style="--d:{{ $delay ?? 0 }}s">
     <span class="ds-icon-box">@include('partials.icon', ['iconKey' => $iconKey])</span>
     <h3>{{ $service->name }}</h3>
-    <p>{{ \Illuminate\Support\Str::limit($service->description ?: 'Professional assistance from application to completion.', 96) }}</p>
+    <p>{{ \Illuminate\Support\Str::limit($service->description ?: __('site.services.card_fallback'), 96) }}</p>
     <span class="ds-card-link ds-price">
-        {{ $service->is_free ? 'Quote on request' : $service->formatted_price }}
+        {{ $service->is_free ? __('site.services.quote_on_request') : $service->formatted_price }}
         <i data-lucide="arrow-up-right"></i>
     </span>
 </a>

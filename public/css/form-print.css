@@ -1,0 +1,187 @@
+/* Digital Star Consultants - printable public forms (Fomu)
+   The on-screen sheet mirrors the A4 office forms; print output drops all
+   chrome so customers can save a clean PDF or print on paper. */
+
+.pf-toolbar {
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;
+  margin-bottom: 22px;
+}
+.pf-hint { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--ds-muted-fg); font-size: 14px; }
+.pf-hint [data-lucide] { width: 17px; height: 17px; flex: none; }
+.pf-toolbar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.pf-page {
+  --pf-blue: #12358f;
+  --pf-blue-dark: #0d2a73;
+  --pf-ink: #101828;
+  --pf-line: #9aa7c4;
+  max-width: 820px; margin: 0 auto; padding: 34px 38px 22px;
+  background: #fff; color: var(--pf-ink);
+  border: 1px solid var(--ds-border); border-radius: 16px;
+  box-shadow: var(--ds-shadow);
+  font-size: 13.5px; line-height: 1.5;
+}
+
+.pf-head { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.pf-brand { display: flex; justify-content: center; }
+.pf-title {
+  margin: 0; padding: 12px 18px; width: 100%;
+  background: var(--pf-blue); color: #fff;
+  font-size: 20px; font-weight: 800; letter-spacing: .01em; line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.pf-contact-bar {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: center; align-items: center;
+  margin: 14px 0 20px; padding: 9px 16px;
+  border: 1px solid var(--pf-line); border-radius: 8px;
+  color: var(--pf-blue-dark); font-size: 12.5px; font-weight: 600;
+}
+.pf-contact-bar span { display: inline-flex; align-items: center; gap: 7px; }
+.pf-contact-bar [data-lucide] { width: 14px; height: 14px; flex: none; }
+
+.pf-section { margin-bottom: 18px; break-inside: avoid-page; }
+.pf-section-head {
+  display: inline-block; margin: 0 0 12px; padding: 6px 14px;
+  background: var(--pf-blue); color: #fff;
+  font-size: 13px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase;
+  border-radius: 4px;
+}
+
+.pf-lead { margin: 0 0 10px; font-weight: 700; }
+.pf-note { margin: 0 0 10px; font-weight: 600; color: var(--pf-blue-dark); }
+
+/* ---- fill-in lines ---- */
+.pf-lines { display: grid; gap: 10px 26px; margin: 0; padding: 0; }
+.pf-lines-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pf-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.pf-line-label { flex: none; max-width: 62%; font-weight: 600; }
+.pf-line-rule { flex: 1 1 auto; min-width: 40px; border-bottom: 1px solid var(--pf-line); transform: translateY(-3px); }
+
+/* ---- tick boxes ---- */
+.pf-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 22px; margin: 0; padding: 0; list-style: none; }
+.pf-check { display: flex; align-items: center; gap: 9px; }
+.pf-check-other { grid-column: 1 / -1; }
+.pf-box { flex: none; width: 15px; height: 15px; border: 1.5px solid var(--pf-blue); border-radius: 3px; }
+.pf-box-lg { width: 17px; height: 17px; }
+
+.pf-choices { display: flex; flex-direction: column; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.pf-choice { display: flex; align-items: center; gap: 11px; font-weight: 700; }
+
+/* ---- paired parent blocks (BABA / MAMA) ---- */
+.pf-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 26px; }
+.pf-group-label {
+  display: inline-block; margin-bottom: 9px; padding: 3px 12px;
+  background: var(--pf-blue); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .04em;
+  border-radius: 3px;
+}
+.pf-group .pf-lines { gap: 8px; }
+.pf-group .pf-line-label { max-width: 58%; }
+
+/* ---- declarations & terms ---- */
+.pf-declaration { display: flex; flex-direction: column; gap: 11px; }
+.pf-declaration p { margin: 0; text-align: justify; }
+
+.pf-terms { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.pf-terms li::marker { font-weight: 800; color: var(--pf-blue); }
+
+/* ---- signature rows ---- */
+.pf-signatures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; margin-top: 18px; }
+.pf-signature { display: flex; flex-direction: column; gap: 4px; }
+.pf-signature .pf-line-rule { transform: none; }
+.pf-signature small { font-weight: 700; color: var(--pf-blue-dark); }
+
+/* ---- office-use box ---- */
+.pf-office {
+  display: flex; gap: 22px; align-items: center;
+  padding: 16px 18px; border: 1.5px solid var(--pf-line); border-radius: 8px;
+}
+.pf-office-fields { flex: 1 1 auto; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.pf-stamp {
+  flex: none; width: 108px; height: 108px; display: grid; place-items: center; text-align: center;
+  border: 2px dashed var(--pf-blue); border-radius: 50%;
+  color: var(--pf-blue); font-size: 11px; font-weight: 800; letter-spacing: .04em; padding: 10px;
+}
+
+/* ---- pricing table ---- */
+.pf-pricing { width: 100%; border-collapse: collapse; }
+.pf-pricing th, .pf-pricing td { border: 1px solid var(--pf-line); padding: 9px 11px; vertical-align: middle; text-align: left; }
+.pf-pricing thead th {
+  background: var(--pf-blue); color: #fff; font-size: 11.5px; font-weight: 800;
+  letter-spacing: .03em; text-transform: uppercase;
+}
+.pf-num { width: 38px; text-align: center; font-weight: 700; }
+.pf-package { width: 168px; }
+.pf-package-badge {
+  display: inline-block; padding: 5px 12px; border-radius: 999px;
+  background: var(--pf-blue); color: #fff; font-size: 11.5px; font-weight: 800; letter-spacing: .03em;
+}
+.pf-price { width: 122px; text-align: right; font-size: 16px; font-weight: 800; color: var(--pf-blue-dark); white-space: nowrap; }
+.pf-price-details { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; }
+
+/* ---- closing footer ---- */
+.pf-footer-box {
+  display: flex; gap: 20px; align-items: center;
+  margin-top: 18px; padding: 16px 18px; border: 1.5px solid var(--pf-line); border-radius: 8px;
+}
+.pf-footer-main { flex: 1 1 auto; min-width: 0; }
+.pf-footer-title { margin: 0 0 12px; font-weight: 700; }
+.pf-footer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.pf-chip {
+  display: inline-block; padding: 3px 10px; border-radius: 4px;
+  background: var(--pf-blue); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .03em;
+}
+.pf-footer-fee { margin: 8px 0 0; font-size: 15px; color: var(--pf-blue-dark); }
+.pf-footer-grid small { font-weight: 700; color: var(--pf-blue-dark); }
+.pf-phones { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.pf-phones a { color: var(--pf-blue-dark); font-weight: 800; text-decoration: none; }
+.pf-footer-seal {
+  flex: none; width: 104px; height: 104px; display: grid; place-items: center; gap: 2px; text-align: center;
+  border: 2px solid var(--pf-blue); border-radius: 10px; color: var(--pf-blue); padding: 8px;
+}
+.pf-footer-seal [data-lucide] { width: 30px; height: 30px; }
+.pf-footer-seal small { font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+
+.pf-banner {
+  margin: 14px 0 0; padding: 10px 14px; text-align: center;
+  background: var(--pf-blue); color: #fff; border-radius: 6px;
+  font-size: 12.5px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase;
+}
+
+.pf-sheet-foot {
+  display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: space-between;
+  margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--pf-line);
+  color: var(--pf-line); font-size: 11px; font-weight: 600;
+}
+
+/* ---- responsive ---- */
+@media (max-width: 720px) {
+  .pf-page { padding: 22px 18px 16px; border-radius: 10px; }
+  .pf-title { font-size: 16px; }
+  .pf-lines-2, .pf-checks, .pf-groups, .pf-signatures, .pf-footer-grid { grid-template-columns: minmax(0, 1fr); }
+  .pf-office, .pf-footer-box { flex-direction: column; align-items: stretch; }
+  .pf-stamp, .pf-footer-seal { margin: 0 auto; }
+  .pf-package, .pf-price { width: auto; }
+}
+
+/* ---- print ---- */
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+
+  body { background: #fff !important; }
+  .ds-header, .ds-drawer, .ds-drawer-backdrop, .ds-footer, .pf-toolbar,
+  .ds-hero, [data-lucide] { display: none !important; }
+
+  .ds-section { padding: 0 !important; }
+  .ds-container { max-width: none !important; padding: 0 !important; }
+
+  .pf-page {
+    max-width: none; margin: 0; padding: 0;
+    border: 0; border-radius: 0; box-shadow: none;
+    font-size: 11pt; line-height: 1.45;
+  }
+  .pf-section { break-inside: avoid; }
+  .pf-title { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .pf-section-head, .pf-group-label, .pf-pricing thead th, .pf-banner,
+  .pf-chip, .pf-package-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

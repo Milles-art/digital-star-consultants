@@ -96,7 +96,7 @@ it('track endpoint returns limited data and no PII', function () {
 });
 
 it('returns 404 for unknown track reference', function () {
-    $this->getJson('/track/DSC-DOES-NOT-EXIST')
+    $this->getJson('/track/DSC-20261106-ABC123')
         ->assertNotFound()
         ->assertJsonPath('status', 'error');
 });

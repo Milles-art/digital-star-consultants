@@ -78,9 +78,11 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    // Kiswahili is the primary customer-facing language. English stays
+    // available through the header switch (?lang=en / session 'locale').
+    'locale' => env('APP_LOCALE', 'sw'),
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'sw'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 

@@ -10,17 +10,17 @@
         default => 'text',
     };
 @endphp
-<div class="ds-field {{ in_array($field->field_type, ['textarea', 'radio', 'checkbox']) ? 'ds-full' : '' }}" data-field-label="{{ $field->label }}">
+<div class="ds-field {{ in_array($field->field_type, ['textarea', 'radio', 'checkbox']) ? 'ds-full' : '' }}" data-field-label="{{ $field->label }}"
+     data-service-condition="{{ json_encode($requirementRules[$field->field_key]['applies_when'] ?? new \stdClass()) }}">
     @if ($field->field_type === 'checkbox')
         <label class="ds-check">
             <input id="{{ $fieldId }}" type="checkbox" name="{{ $name }}" value="1" @checked($old)>
-            <span>{{ $field->label }} @unless($field->is_required)<span class="ds-optional">({{ __('site.services.optional') }})</span>@endunless</span>
+            <span>{{ $field->label }}</span>
         </label>
         @if ($field->help_text)<span class="ds-field-help">{{ $field->help_text }}</span>@endif
     @else
         <label for="{{ $fieldId }}">
             {{ $field->label }}
-            @if ($field->is_required)*@else<span class="ds-optional">({{ __('site.services.optional') }})</span>@endif
         </label>
         @if ($field->help_text)<span class="ds-field-help">{{ $field->help_text }}</span>@endif
 

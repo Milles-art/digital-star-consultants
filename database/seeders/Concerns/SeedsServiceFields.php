@@ -27,6 +27,9 @@ trait SeedsServiceFields
      * @param  array<int, array<string, mixed>>  $fields  flat list of field
      *         defs, e.g. ['label' => ..., 'field_key' => ..., 'field_type' => ...]
      *         Use `...$this->contactFields()` to splice in a template.
+     * @param  string|null  $slug  Pass an explicit slug when renaming a service
+     *         in another language: the slug is the service's identity, so
+     *         changing it would orphan existing submissions.
      */
     protected function seedService(
         int $categoryId,
@@ -34,9 +37,24 @@ trait SeedsServiceFields
         array $fields,
         ?string $description = null,
         int $sortOrder = 0,
+        ?string $slug = null,
+        ?int $price = null,
     ): Service {
+        $profile = \App\Support\GovernmentServiceCatalogue::definition($slug ?? Str::slug($name));
+        if ($profile) {
+            $name = $profile['name'];
+            $description = $profile['description'];
+            $fields = $profile['fields'];
+            if ($profile['category']) {
+                $categoryId = \App\Models\ServiceCategory::firstOrCreate(
+                    ['slug' => $profile['category']],
+                    ['name' => 'Huduma za Biashara', 'is_active' => true, 'sort_order' => 2],
+                )->id;
+            }
+        }
+
         $service = Service::updateOrCreate(
-            ['slug' => Str::slug($name)],
+            ['slug' => $slug ?? Str::slug($name)],
             [
                 'service_category_id' => $categoryId,
                 'name' => $name,
@@ -45,6 +63,46 @@ trait SeedsServiceFields
                 'is_active' => true,
             ]
         );
+
+        // The name is only refreshed when a slug was supplied explicitly, so a
+        // renamed service never silently re-slugs itself on the next seed run.
+        if ($slug !== null && $service->name !== $name) {
+            $service->name = $name;
+        }
+        if ($price !== null && $service->price != $price) {
+            $service->price = $price;
+        }
+        if ($service->isDirty()) {
+            $service->save();
+        }
+
+        // Service::updating() regenerates the slug from the name whenever the
+        // name changes. That breaks every existing /services/{slug} link, so an
+        // explicitly supplied slug is re-asserted here and stays authoritative.
+        if ($slug !== null && $service->slug !== $slug) {
+            $service->slug = $slug;
+            $service->save();
+        }
+
+        if ($profile) {
+            $service->metadata = array_replace($service->metadata ?? [], [
+                'government_requirements' => [
+                    'version' => \App\Support\GovernmentServiceCatalogue::VERSION,
+                    'reviewed_on' => '2026-11-06',
+                    'sources' => $profile['sources'],
+                    'document_sources' => $profile['document_sources'] ?? [],
+                    'official_verification' => \App\Support\GovernmentRequirementEvidence::forService($slug ?? $service->slug),
+                    'fields' => collect($fields)->mapWithKeys(fn ($field) => [
+                        $field['field_key'] => [
+                            'review_required' => $field['review_required'] ?? false,
+                            'applies_when' => $field['applies_when'] ?? [],
+                            'preparation_visible' => $field['preparation_visible'] ?? true,
+                        ],
+                    ])->all(),
+                ],
+            ]);
+            $service->save();
+        }
 
         // Never delete field records here: submission_field_values reference
         // service_fields and deletion would destroy historical customer data.

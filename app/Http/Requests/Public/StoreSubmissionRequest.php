@@ -27,12 +27,25 @@ class StoreSubmissionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'service_id.required' => 'Please select a service',
-            'service_id.exists' => 'Selected service does not exist',
-            'customer_name.required' => 'Your name is required',
-            'customer_phone.required' => 'Phone number is required',
-            'customer_email.email' => 'Please enter a valid email address',
-            'preferred_date.after_or_equal' => 'Preferred date cannot be in the past',
+            'service_id.required' => __('site.form_errors.service_required'),
+            'service_id.exists' => __('site.form_errors.service_invalid'),
+            'customer_name.required' => __('site.form_errors.name_required'),
+            'customer_phone.required' => __('site.form_errors.phone_required'),
+            'customer_email.email' => __('site.contact.email_invalid'),
+            'preferred_date.after_or_equal' => __('site.services.date_past'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'service_id' => __('site.services.title'),
+            'customer_name' => __('site.services.detail.full_name'),
+            'customer_phone' => __('site.services.detail.phone'),
+            'customer_email' => __('site.services.detail.email'),
+            'customer_notes' => __('site.services.notes'),
+            'preferred_date' => __('site.services.detail.preferred_date'),
+            'fields' => __('site.services.fields'),
         ];
     }
 }

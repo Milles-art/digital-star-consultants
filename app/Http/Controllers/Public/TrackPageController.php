@@ -37,7 +37,7 @@ class TrackPageController extends Controller
         $customerName = null;
         if ($submission) {
             $parts = preg_split('/\s+/', trim((string) $submission->customer_name), -1, PREG_SPLIT_NO_EMPTY);
-            $customerName = $parts[0] ?? 'Customer';
+            $customerName = $parts[0] ?? __('site.track.customer_fallback');
         }
 
         return view('track.show', [
@@ -51,22 +51,22 @@ class TrackPageController extends Controller
     private function timelineFor(?string $status): array
     {
         $steps = [
-            ['key' => 'pending', 'label' => 'Request received', 'description' => 'Your application has been received successfully.'],
-            ['key' => 'in_progress', 'label' => 'Being processed', 'description' => 'Our team is reviewing and working on your request.'],
-            ['key' => 'completed', 'label' => 'Completed', 'description' => 'Your request has been completed.'],
+            ['key' => 'pending', 'label' => __('site.track.tl_received_label'), 'description' => __('site.track.tl_received_desc')],
+            ['key' => 'in_progress', 'label' => __('site.track.tl_processing_label'), 'description' => __('site.track.tl_processing_desc')],
+            ['key' => 'completed', 'label' => __('site.track.tl_completed_label'), 'description' => __('site.track.tl_completed_desc')],
         ];
 
         if ($status === Submission::STATUS_AWAITING_CUSTOMER) {
             $steps = [
-                ['key' => 'pending', 'label' => 'Request received', 'description' => 'Your application has been received successfully.'],
-                ['key' => 'awaiting_customer', 'label' => 'Action needed from you', 'description' => 'We need additional information or documents before we can continue.'],
-                ['key' => 'in_progress', 'label' => 'Processing resumes', 'description' => 'We will continue once the requested information is received.'],
-                ['key' => 'completed', 'label' => 'Completed', 'description' => 'Your request has been completed.'],
+                ['key' => 'pending', 'label' => __('site.track.tl_received_label'), 'description' => __('site.track.tl_received_desc')],
+                ['key' => 'awaiting_customer', 'label' => __('site.track.tl_action_label'), 'description' => __('site.track.tl_action_desc')],
+                ['key' => 'in_progress', 'label' => __('site.track.tl_resume_label'), 'description' => __('site.track.tl_resume_desc')],
+                ['key' => 'completed', 'label' => __('site.track.tl_completed_label'), 'description' => __('site.track.tl_completed_desc')],
             ];
         } elseif (in_array($status, [Submission::STATUS_REJECTED, Submission::STATUS_CANCELLED], true)) {
             $steps = [
-                ['key' => 'pending', 'label' => 'Request received', 'description' => 'Your application was received successfully.'],
-                ['key' => $status, 'label' => $status === Submission::STATUS_REJECTED ? 'Request not approved' : 'Request cancelled', 'description' => $status === Submission::STATUS_REJECTED ? 'Please contact us for more information about your request.' : 'This request is no longer active.'],
+                ['key' => 'pending', 'label' => __('site.track.tl_received_label'), 'description' => __('site.track.tl_received_desc')],
+                ['key' => $status, 'label' => $status === Submission::STATUS_REJECTED ? __('site.track.tl_not_approved_label') : __('site.track.tl_cancelled_label'), 'description' => $status === Submission::STATUS_REJECTED ? __('site.track.tl_not_approved_desc') : __('site.track.tl_cancelled_desc')],
             ];
         }
 

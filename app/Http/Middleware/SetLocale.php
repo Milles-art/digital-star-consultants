@@ -12,13 +12,14 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         $supported = ['en', 'sw'];
+        // Kiswahili is the default. Visitors can switch to English with ?lang=en.
         $locale = $request->query('lang')
             ?? $request->session()->get('locale')
             ?? $request->cookie('locale')
-            ?? config('app.locale', 'en');
+            ?? config('app.locale', 'sw');
 
         if (! in_array($locale, $supported, true)) {
-            $locale = 'en';
+            $locale = 'sw';
         }
 
         if ($request->query('lang') && in_array($request->query('lang'), $supported, true)) {

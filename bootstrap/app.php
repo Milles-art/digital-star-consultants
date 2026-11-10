@@ -13,6 +13,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Behind Cloudflare quick tunnel (TLS terminates at Cloudflare and
+        // forwards plain HTTP + X-Forwarded-Proto), trust the proxy so
+        // asset()/url() generate https:// links instead of http://.
+        $middleware->trustProxies(at: '*');
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         // Locale needs the session started by the web middleware group.
         $middleware->web(append: [\App\Http\Middleware\SetLocale::class]);

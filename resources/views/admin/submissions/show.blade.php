@@ -18,10 +18,13 @@
         $value = $valuesByField->get($field->id);
         return $value && ($value->isFile() ? $value->hasFile() : filled($value->value));
     })->count();
-    $requiredMissingCount = $activeServiceFields->where('is_required', true)->filter(function ($field) use ($valuesByField) {
-        $value = $valuesByField->get($field->id);
-        return ! $value || ($value->isFile() ? ! $value->hasFile() : blank($value->value));
-    })->count();
+    $reviewAnswers = $submission->values->mapWithKeys(fn ($value) => [($value->field_key_snapshot ?: $value->field?->field_key) => $value->value])->all();
+    $reviewFiles = $submission->values->filter(fn ($value) => $value->hasFile())
+        ->mapWithKeys(fn ($value) => [($value->field_key_snapshot ?: $value->field?->field_key) => $value->file_path])->all();
+    $reviewMissing = $submission->service
+        ? \App\Support\ServiceRequirementReview::missing($submission->service, $reviewAnswers, $reviewFiles)
+        : collect();
+    $requiredMissingCount = $reviewMissing->count();
     $fileValues = $serviceFields->map(fn ($field) => $valuesByField->get($field->id))
         ->filter(fn ($value) => $value && $value->isFile() && $value->hasFile())
         ->values();
@@ -111,8 +114,16 @@
 
                 <div class="dsc-submitted-head">
                     <div><span class="dsc-card-kicker">SERVICE INFORMATION</span><h4>Exactly what the customer submitted</h4><p class="dsc-section-note">Every configured field is shown below. A missing value means the customer did not provide it in this request.</p></div>
-                    <div class="dsc-missing-pill {{ $requiredMissingCount ? 'has-missing' : 'is-good' }}">{{ $requiredMissingCount }} required missing</div>
+                    <div class="dsc-missing-pill {{ $requiredMissingCount ? 'has-missing' : 'is-good' }}">{{ $requiredMissingCount }} {{ __('requirements.review_missing') }}</div>
                 </div>
+
+                @if($reviewMissing->isNotEmpty())
+                    <div class="dsc-data-alert">
+                        <div><strong>{{ __('requirements.follow_up') }}</strong>
+                            <ul>@foreach($reviewMissing as $missingField)<li>{{ $missingField->label }}</li>@endforeach</ul>
+                        </div>
+                    </div>
+                @endif
 
                 @if($recordedCount < $activeServiceFields->count())
                     <div class="dsc-data-alert">
@@ -129,7 +140,7 @@
                                 $display = $value ? $value->getValueForDisplay() : null;
                             @endphp
                             <div class="dsc-answer-row {{ $hasValue ? 'has-value' : 'is-missing' }}">
-                                <div class="dsc-answer-label"><strong>{{ $value?->field_label_snapshot ?: $field->label }}</strong>@if($field->is_required)<span>Required</span>@endif @if(!$field->is_active)<em>Archived field</em>@endif</div>
+                                <div class="dsc-answer-label"><strong>{{ $value?->field_label_snapshot ?: $field->label }}</strong>@if($reviewMissing->contains('id', $field->id))<span>{{ __('requirements.review_needed') }}</span>@endif @if(!$field->is_active)<em>Archived field</em>@endif</div>
                                 <div class="dsc-answer-value">
                                     @if($hasValue)
                                         @if($value->isFile())
@@ -192,6 +203,8 @@
 
             <section class="dsc-panel dsc-internal-panel" id="edit-details">
                 <div class="dsc-card-title-row"><div><span class="dsc-card-kicker">INTERNAL</span><h3>Staff workspace</h3></div><span class="dsc-card-state">Private</span></div>
+                @can('update', $submission)
+                {{-- Management: full edit form --}}
                 <form method="POST" action="{{ route('admin.submissions.update', $submission) }}" class="dsc-internal-form">
                     @csrf @method('PUT')
                     <div class="dsc-field-grid">
@@ -204,10 +217,21 @@
                     </div>
                     <button class="dsc-primary-action" type="submit">Save changes</button>
                 </form>
+                @else
+                {{-- Staff: notes-only form via the staff route --}}
+                <form method="POST" action="{{ route('staff.submissions.notes', $submission) }}" class="dsc-internal-form">
+                    @csrf @method('PUT')
+                    <div class="dsc-field-grid">
+                        <label class="full"><span>Internal staff notes</span><textarea name="staff_notes" rows="5" placeholder="Add private processing notes, follow-ups or handover details...">{{ $submission->staff_notes }}</textarea></label>
+                    </div>
+                    <button class="dsc-primary-action" type="submit">Save notes</button>
+                </form>
+                @endcan
             </section>
         </main>
 
         <aside class="dsc-request-sidebar">
+            @can('assign', $submission)
             <section class="dsc-side-card">
                 <span class="dsc-side-kicker">ASSIGNMENT</span><h3>Request owner</h3>
                 <form method="POST" action="{{ route('admin.submissions.assign', $submission) }}" class="dsc-side-form">
@@ -216,20 +240,27 @@
                     <button class="dsc-primary-action" type="submit">Assign request</button>
                 </form>
             </section>
+            @endcan
 
             <section class="dsc-side-card">
                 <span class="dsc-side-kicker">NEXT ACTION</span><h3>Update status</h3>
                 <div class="dsc-side-actions">
+                    @can('update', $submission)
                     <form method="POST" action="{{ route('admin.submissions.in-progress', $submission) }}">@csrf<button type="submit"><i class="is-blue">↗</i><span><strong>Start processing</strong><small>Move into active work.</small></span></button></form>
                     <form method="POST" action="{{ route('admin.submissions.awaiting-customer', $submission) }}">@csrf<input type="hidden" name="reason" value="Additional information is required to continue processing this request."><button type="submit"><i class="is-gold">?</i><span><strong>Await customer</strong><small>Pause until information arrives.</small></span></button></form>
+                    @endcan
+                    @can('complete', $submission)
                     <form method="POST" action="{{ route('admin.submissions.complete', $submission) }}">@csrf<button type="submit"><i class="is-green">✓</i><span><strong>Mark completed</strong><small>Close the request.</small></span></button></form>
+                    @endcan
                 </div>
             </section>
 
+            @can('reject', $submission)
             <section class="dsc-side-card is-danger">
                 <span class="dsc-side-kicker">EXCEPTION</span><h3>Reject request</h3>
                 <form method="POST" action="{{ route('admin.submissions.reject', $submission) }}" class="dsc-side-form">@csrf<textarea name="reason" rows="4" placeholder="Reason for rejection…"></textarea><button class="dsc-danger-action" type="submit">Reject request</button></form>
             </section>
+            @endcan
 
             <section class="dsc-side-card">
                 <span class="dsc-side-kicker">REQUEST DETAILS</span><h3>Record</h3>

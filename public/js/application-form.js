@@ -15,7 +15,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressStep = document.querySelector('[data-progress-step]');
     const progressBar = document.querySelector('[data-progress-bar]');
     const anchor = document.getElementById('application');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let current = 1;
+
+    // Localised strings injected by services/show.blade.php (falls back to English).
+    const T = Object.assign({
+        full_name: 'Full name',
+        phone: 'Phone number',
+        email: 'Email address',
+        preferred_date: 'Preferred date',
+        notes: 'Additional notes',
+        field: 'Field',
+        yes: 'Yes',
+        no: 'No',
+        additional_info: 'Additional information',
+        no_additional_fields: 'No additional fields',
+        document: 'Document',
+        no_file_selected: 'No file selected',
+        documents: 'Documents',
+        no_documents_required: 'No documents required',
+        selected_prefix: 'Selected:',
+        submitting: 'Submitting...',
+        error: 'We could not submit your application. Please check your details.',
+    }, window.DS_FORM_I18N || {});
+
+    // Conditions change only which preparation items apply; they never make
+    // documents mandatory for submitting an assistance request.
+    const conditionalItems = [...document.querySelectorAll('[data-service-condition]')];
+    const syncConditions = () => {
+        const answers = {};
+        form.querySelectorAll('[name^="fields["]').forEach((input) => {
+            const key = input.name.match(/^fields\[([^\]]+)\]$/)?.[1];
+            if (key && input.type !== 'file' && (!['radio', 'checkbox'].includes(input.type) || input.checked)) {
+                answers[key] = input.value;
+            }
+        });
+        conditionalItems.forEach((item) => {
+            const conditions = JSON.parse(item.dataset.serviceCondition || '{}');
+            const applies = Object.entries(conditions).every(([key, allowed]) => allowed.includes(answers[key]));
+            item.hidden = !applies;
+            item.querySelectorAll('input,select,textarea').forEach((input) => { input.disabled = !applies; });
+        });
+    };
+    form.addEventListener('change', syncConditions);
+    form.addEventListener('input', syncConditions);
+    syncConditions();
 
     const showMessage = (text) => { message.hidden = false; message.textContent = text; };
     const clearMessage = () => { message.hidden = true; message.textContent = ''; };
@@ -47,40 +91,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateReview = () => {
         form.querySelector('[data-review="contact"]').replaceChildren(
-            row('Full name', valueOf('customer_name')),
-            row('Phone number', valueOf('customer_phone')),
-            row('Email address', valueOf('customer_email')),
-            row('Preferred date', valueOf('preferred_date')),
-            row('Additional notes', valueOf('customer_notes')),
+            row(T.full_name, valueOf('customer_name')),
+            row(T.phone, valueOf('customer_phone')),
+            row(T.email, valueOf('customer_email')),
+            row(T.preferred_date, valueOf('preferred_date')),
+            row(T.notes, valueOf('customer_notes')),
         );
 
-        const dynamic = [...form.querySelectorAll('[name^="fields["]')].filter((el) => el.type !== 'file');
+        const dynamic = [...form.querySelectorAll('[name^="fields["]')].filter((el) => el.type !== 'file' && !el.disabled);
         const seen = new Set();
         const serviceRows = [];
         dynamic.forEach((el) => {
             if (seen.has(el.name)) return;
             seen.add(el.name);
-            const label = el.closest('[data-field-label]')?.dataset.fieldLabel || 'Field';
+            const label = el.closest('[data-field-label]')?.dataset.fieldLabel || T.field;
             let value;
             if (el.type === 'radio') value = dynamic.find((x) => x.name === el.name && x.checked)?.value;
-            else if (el.type === 'checkbox') value = el.checked ? 'Yes' : 'No';
+            else if (el.type === 'checkbox') value = el.checked ? T.yes : T.no;
             else value = el.value;
             serviceRows.push(row(label, value));
         });
         form.querySelector('[data-review="service"]').replaceChildren(
-            ...(serviceRows.length ? serviceRows : [row('Additional information', 'No additional fields')])
+            ...(serviceRows.length ? serviceRows : [row(T.additional_info, T.no_additional_fields)])
         );
 
         const fileRows = [...form.querySelectorAll('input[type="file"]')]
-            .map((input) => row(input.dataset.label || 'Document', input.files?.[0]?.name || 'No file selected'));
+            .filter((input) => !input.disabled)
+            .map((input) => row(input.dataset.label || T.document, input.files?.[0]?.name || T.no_file_selected));
         form.querySelector('[data-review="files"]').replaceChildren(
-            ...(fileRows.length ? fileRows : [row('Documents', 'No documents required')])
+            ...(fileRows.length ? fileRows : [row(T.documents, T.no_documents_required)])
         );
     };
 
     const setStep = (n, scroll = true) => {
         current = n;
-        steps.forEach((panel, i) => { panel.hidden = i + 1 !== current; });
+        steps.forEach((panel, i) => {
+            const active = i + 1 === current;
+            panel.hidden = !active;
+            if (active && !reduceMotion) { panel.classList.remove('is-enter'); void panel.offsetWidth; panel.classList.add('is-enter'); }
+        });
         stepItems.forEach((item) => {
             const x = Number(item.dataset.stepItem);
             item.classList.toggle('is-active', x === current);
@@ -106,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = form.querySelector(`[data-file-name-for="${CSS.escape(input.id)}"]`);
         if (!target) return;
         if (input.files?.length) {
-            target.textContent = `Selected: ${input.files[0].name}`;
+            target.textContent = `${T.selected_prefix} ${input.files[0].name}`;
             target.classList.add('ds-file-name');
         }
     }));
@@ -117,7 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
         clearMessage();
         const label = submit.innerHTML;
         submit.disabled = true;
-        submit.textContent = 'Submitting...';
+        submit.classList.add('is-loading');
+        submit.setAttribute('aria-busy', 'true');
+        submit.textContent = T.submitting;
         try {
             const response = await fetch(form.dataset.submitUrl, {
                 method: 'POST',
@@ -130,9 +181,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json().catch(() => ({}));
             if (!response.ok) {
                 const firstError = data.errors ? Object.values(data.errors)[0]?.[0] : null;
-                throw new Error(firstError || data.message || 'We could not submit your application. Please check your details.');
+                throw new Error(firstError || data.message || T.error);
             }
             const ref = data.data.reference_number;
+            const successCopy = $('[data-success-message]');
+            if (successCopy && data.message) successCopy.textContent = data.message;
             steps.forEach((panel) => { panel.hidden = true; });
             $('[data-wizard-nav]').hidden = true;
             $('[data-reference]').textContent = ref;
@@ -145,6 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage(error.message);
         } finally {
             submit.disabled = false;
+            submit.classList.remove('is-loading');
+            submit.removeAttribute('aria-busy');
             submit.innerHTML = label;
         }
     });

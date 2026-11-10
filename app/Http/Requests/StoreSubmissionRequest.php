@@ -31,15 +31,31 @@ class StoreSubmissionRequest extends FormRequest
     }
 
     /**
+     * Attribute names shown in validation messages (public form wizard).
+     */
+    public function attributes(): array
+    {
+        return [
+            'service_id' => __('site.services.title'),
+            'customer_name' => __('site.services.detail.full_name'),
+            'customer_phone' => __('site.services.detail.phone'),
+            'customer_email' => __('site.services.detail.email'),
+            'customer_notes' => __('site.services.notes'),
+            'preferred_date' => __('site.services.detail.preferred_date'),
+            'fields' => __('site.services.fields'),
+        ];
+    }
+
+    /**
      * Get custom messages for validator errors.
      */
     public function messages(): array
     {
         return [
-            'service_id.required' => 'Service is required',
-            'service_id.exists' => 'The selected service is invalid',
-            'customer_name.required' => 'Customer name is required',
-            'customer_phone.required' => 'Customer phone is required',
+            'service_id.required' => __('site.form_errors.service_required'),
+            'service_id.exists' => __('site.form_errors.service_invalid'),
+            'customer_name.required' => __('site.form_errors.name_required'),
+            'customer_phone.required' => __('site.form_errors.phone_required'),
         ];
     }
 }

@@ -1,0 +1,1154 @@
+{
+  "catalogue_version": "2026-11-06.7",
+  "checked_on": "2026-11-06",
+  "services": {
+    "nida-registration-correction": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://eonline.nida.go.tz/"
+      ],
+      "supported_field_keys": [
+        "citizenship",
+        "date_of_birth",
+        "email",
+        "father_full_name",
+        "father_nida_number",
+        "full_name",
+        "house_number",
+        "mother_full_name",
+        "mother_nida_number",
+        "residential_address",
+        "upload_birth_certificate",
+        "upload_citizenship_certificate",
+        "upload_parent_birth_certificate",
+        "upload_parent_identity",
+        "upload_resident_permit",
+        "upload_supporting_docs"
+      ]
+    },
+    "nida-correction": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://nida.go.tz/index.php/Usajili-Marekebisho",
+        "https://nida.go.tz/index.php/Mabadiliko-Majina",
+        "https://www.nida.go.tz/index.php/Mabadiliko-Watumishi"
+      ],
+      "supported_field_keys": [
+        "correction_case",
+        "correction_details",
+        "full_name",
+        "nida_number",
+        "upload_correction_evidence",
+        "upload_marriage_divorce_evidence",
+        "upload_name_change_documents"
+      ]
+    },
+    "nida-number-lookup": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://services.nida.go.tz/get_nin"
+      ],
+      "supported_field_keys": [
+        "date_of_birth",
+        "full_name",
+        "mother_first_name",
+        "mother_last_name"
+      ]
+    },
+    "nida-card-replacement": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://nida.go.tz/index.php/Usajili-Huisha"
+      ],
+      "supported_field_keys": [
+        "replacement_reason",
+        "upload_damaged_card",
+        "upload_payment_receipt",
+        "upload_police_loss_report"
+      ]
+    },
+    "birth-certificate-application-rita": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.rita.go.tz/page.php?p=9",
+        "https://www.rita.go.tz/page.php?lang=en&m=Registration&p=9",
+        "https://ecrvs.zcsra.go.tz/Birth/Form"
+      ],
+      "supported_field_keys": [
+        "applicant_full_name",
+        "birth_hospital",
+        "birth_location",
+        "child_full_name",
+        "date_of_birth",
+        "gender",
+        "upload_birth_notification",
+        "upload_birth_supporting_docs",
+        "upload_parent_guardian_identity"
+      ]
+    },
+    "birth-certificate-verification": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://www.rita.go.tz/page.php?p=9",
+        "https://rita.go.tz/erita.php"
+      ],
+      "supported_field_keys": [
+        "upload_existing_certificate"
+      ]
+    },
+    "birth-certificate-old-to-new": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://www.rita.go.tz/page.php?p=9",
+        "https://rita.go.tz/erita.php"
+      ],
+      "supported_field_keys": [
+        "upload_birth_supporting_docs",
+        "upload_existing_certificate",
+        "upload_parent_guardian_identity"
+      ]
+    },
+    "birth-certificate-correction": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.rita.go.tz/page.php?p=9"
+      ],
+      "supported_field_keys": [
+        "correction_details",
+        "upload_correction_evidence",
+        "upload_correction_letter",
+        "upload_existing_certificate"
+      ]
+    },
+    "death-certificate-application-rita": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.rita.go.tz/page.php?p=10",
+        "https://www.rita.go.tz/page.php?lang=en&m=Registration&p=10",
+        "https://www.zcsra.go.tz/vifo/"
+      ],
+      "supported_field_keys": [
+        "applicant_full_name",
+        "date_of_death",
+        "death_age_band",
+        "death_location",
+        "deceased_full_name",
+        "relationship_to_deceased",
+        "upload_applicant_id",
+        "upload_burial_permit",
+        "upload_deceased_identity",
+        "upload_delay_affidavit",
+        "upload_family_minutes",
+        "upload_relationship_evidence",
+        "upload_ward_security_minutes",
+        "upload_weo_death_letter"
+      ]
+    },
+    "death-certificate-verification": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://www.rita.go.tz/page.php?p=10",
+        "https://rita.go.tz/erita.php"
+      ],
+      "supported_field_keys": [
+        "upload_existing_certificate"
+      ]
+    },
+    "death-certificate-correction": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.rita.go.tz/page.php?p=10"
+      ],
+      "supported_field_keys": [
+        "correction_details",
+        "upload_correction_evidence",
+        "upload_correction_letter",
+        "upload_existing_certificate"
+      ]
+    },
+    "foreign-death-registration": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.rita.go.tz/page.php?p=10",
+        "https://www.rita.go.tz/page.php?lang=en&m=Registration&p=10"
+      ],
+      "supported_field_keys": [
+        "upload_certificate_translation",
+        "upload_deceased_birth_certificate",
+        "upload_deceased_passport",
+        "upload_embassy_letter",
+        "upload_foreign_death_certificate",
+        "upload_medical_certificate"
+      ]
+    },
+    "police-clearance-good-conduct": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://pcc.tpf.go.tz/"
+      ],
+      "supported_field_keys": [
+        "applicant_route",
+        "identity_type",
+        "upload_identity_document",
+        "upload_passport_copy",
+        "upload_passport_photo"
+      ]
+    },
+    "loss-report": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://lormis.tpf.go.tz/registration/step-3",
+        "https://lormis.tpf.go.tz/Home"
+      ],
+      "supported_field_keys": [
+        "circumstances_of_loss",
+        "date_of_loss",
+        "document_number",
+        "document_type_lost",
+        "full_name",
+        "gender",
+        "nationality",
+        "place_of_loss",
+        "reporter_identity_number",
+        "reporter_identity_type",
+        "residential_address",
+        "upload_passport_photo"
+      ]
+    },
+    "loss-report-follow-up": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://lormis.tpf.go.tz/registration/step-3",
+        "https://lormis.tpf.go.tz/Home"
+      ],
+      "supported_field_keys": [
+        "official_reference"
+      ]
+    },
+    "driving-licence-application-renewal": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/images/uploads/pages/Driver%E2%80%99s_License_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://www.zanrevenue.org/help/driving-and-road-license",
+        "https://www.zanrevenue.org/uploads/forms/zrb_vehicle_tld_606.pdf"
+      ],
+      "supported_field_keys": [
+        "competence_test_details",
+        "driving_school",
+        "efd_verification_code",
+        "licence_category",
+        "printing_region",
+        "provisional_licence_number"
+      ]
+    },
+    "learner-driving-licence": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/images/uploads/pages/Driver%E2%80%99s_License_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://www.zanrevenue.org/help/driving-and-road-license",
+        "https://www.zanrevenue.org/uploads/forms/zrb_vehicle_tld_606.pdf"
+      ],
+      "supported_field_keys": [
+        "driving_school",
+        "licence_category",
+        "printing_region"
+      ]
+    },
+    "driving-licence-renewal": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/images/uploads/pages/Driver%E2%80%99s_License_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://www.zanrevenue.org/help/driving-and-road-license",
+        "https://www.zanrevenue.org/uploads/forms/zrb_vehicle_tld_606.pdf"
+      ],
+      "supported_field_keys": [
+        "existing_licence_number",
+        "licence_category",
+        "printing_region"
+      ]
+    },
+    "driving-licence-class-addition": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "partial",
+      "source_urls": [
+        "http://www.tra.go.tz/index.php/2012-11-20-06-37-07",
+        "https://elibrary.osg.go.tz/bitstreams/226a0d91-d630-4fde-b01c-ef823b9ff9b0/download",
+        "https://www.tra.go.tz/images/uploads/pages/Driver%E2%80%99s_License_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://www.zanrevenue.org/help/driving-and-road-license",
+        "https://www.zanrevenue.org/uploads/forms/zrb_vehicle_tld_606.pdf"
+      ],
+      "supported_field_keys": [
+        "licence_category",
+        "upload_competence_certificate"
+      ]
+    },
+    "driving-licence-replacement": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/images/uploads/pages/Driver%E2%80%99s_License_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://www.zanrevenue.org/help/driving-and-road-license",
+        "https://www.zanrevenue.org/uploads/forms/zrb_vehicle_tld_606.pdf"
+      ],
+      "supported_field_keys": [
+        "existing_licence_number",
+        "printing_region",
+        "replacement_reason",
+        "upload_police_loss_report",
+        "upload_zanzibar_loss_declaration",
+        "upload_zanzibar_police_statement"
+      ]
+    },
+    "vehicle-related-applications": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/page/motor",
+        "https://www.tra.go.tz/images/uploads/pages/Motor_Vehicle_Registration_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://procedures.tiseza.go.tz/media/Tax%20Administration%20Act%202015%20English%20Version.pdf"
+      ],
+      "supported_field_keys": [
+        "buyer_tin",
+        "chassis_number",
+        "seller_tin",
+        "transaction_date",
+        "upload_application_letter",
+        "upload_brela_confirmation",
+        "upload_lawyer_receipt",
+        "upload_ownership_affidavit",
+        "upload_sale_agreement",
+        "upload_sale_efd",
+        "upload_vehicle_registration"
+      ]
+    },
+    "vehicle-registration": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/page/motor",
+        "https://www.tra.go.tz/images/uploads/pages/Motor_Vehicle_Registration_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/"
+      ],
+      "supported_field_keys": [
+        "chassis_number",
+        "engine_number",
+        "owner_tin",
+        "titleholder_tin",
+        "vehicle_make_model",
+        "vehicle_usage"
+      ]
+    },
+    "vehicle-information-correction": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/page/motor",
+        "https://www.tra.go.tz/images/uploads/pages/Motor_Vehicle_Registration_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/"
+      ],
+      "supported_field_keys": [
+        "chassis_number",
+        "engine_number",
+        "inspection_report_number"
+      ]
+    },
+    "vehicle-document-replacement": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/images/uploads/forms/APPLICATION_FOR_REPLACEMENT_MOTOR_VEHICLE.pdf",
+        "https://repository.mof.go.tz/bitstreams/2f4a3588-93de-48c2-ac4a-cda2c7eb4519/download",
+        "https://oagmis.oag.go.tz/portal/legislation/3807/download",
+        "https://www.tra.go.tz/page/motor",
+        "https://www.tra.go.tz/images/uploads/pages/Motor_Vehicle_Registration_Guide.pdf",
+        "https://taxpayerportal.tra.go.tz/"
+      ],
+      "supported_field_keys": [
+        "chassis_number",
+        "owner_address",
+        "owner_full_name",
+        "owner_identification_number",
+        "upload_police_loss_report",
+        "upload_replacement_application",
+        "vehicle_make_model",
+        "vehicle_registration_number"
+      ]
+    },
+    "nhif-registration": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.nhif.or.tz/faqs/je-ni-mahitaji-gani-yanatakiwa-ili-kumsajili-mtoto-katika-bima-ya-afya",
+        "https://www.nhif.or.tz/faqs/utaratibu-wa-kusajiliwa-katika-vifurushi-vya-ngorongoro-afya-na-serengeti-afya-ni-upi",
+        "https://www.nhif.or.tz/uploads/publications/sw1734772042-Toto%20Afya%20Final%20From%20L.pdf",
+        "https://www.nhif.or.tz/uploads/publications/sw1734772012-Serengeti%20Afya%20Ngorongoro%20Final%20from.pdf"
+      ],
+      "supported_field_keys": [
+        "birth_verification_number",
+        "children_birth_verification",
+        "date_of_birth",
+        "dependants_details",
+        "full_name",
+        "guardian_details",
+        "marriage_verification_number",
+        "membership_route",
+        "nida_number",
+        "school_registration_number",
+        "upload_dependant_photos",
+        "upload_passport_photo",
+        "upload_spouse_identity"
+      ]
+    },
+    "new-passport-application": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://eservices.immigration.go.tz/online/web/passport/guidelines",
+        "https://eservices.immigration.go.tz/online/web/passport/",
+        "https://elibrary.osg.go.tz/bitstreams/cadb8ab8-14b1-450e-8912-0c62a8634013/download"
+      ],
+      "supported_field_keys": [
+        "date_of_birth",
+        "emergency_contact_details",
+        "full_name",
+        "guarantor1_name",
+        "guarantor2_name",
+        "upload_birth_certificate",
+        "upload_guardian_consent",
+        "upload_national_identity",
+        "upload_parent_birth_certificate",
+        "upload_passport_photo",
+        "upload_travel_evidence"
+      ]
+    },
+    "passport-renewal": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://eservices.immigration.go.tz/online/web/passport/guidelines",
+        "https://eservices.immigration.go.tz/online/web/passport/",
+        "https://www.immigration.go.tz/index.php/regulations?download=25%3Amwongozo-wa-pasipoti"
+      ],
+      "supported_field_keys": [
+        "passport_number",
+        "upload_birth_certificate",
+        "upload_national_identity",
+        "upload_old_passport",
+        "upload_parent_birth_certificate",
+        "upload_passport_photo",
+        "upload_travel_evidence"
+      ]
+    },
+    "passport-replacement": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://eservices.immigration.go.tz/online/web/passport/guidelines",
+        "https://www.uk.tzembassy.go.tz/services/tanzania-citizen-services",
+        "https://www.immigration.go.tz/index.php/regulations?download=25%3Amwongozo-wa-pasipoti"
+      ],
+      "supported_field_keys": [
+        "loss_details",
+        "request_type",
+        "upload_national_identity",
+        "upload_old_passport",
+        "upload_passport_photo",
+        "upload_police_loss_report"
+      ]
+    },
+    "passport-update-correction": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.uk.tzembassy.go.tz/services/tanzania-citizen-services"
+      ],
+      "supported_field_keys": [
+        "information_to_update",
+        "upload_current_passport",
+        "upload_supporting_document"
+      ]
+    },
+    "visa-application": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://visa.immigration.go.tz/guidelines"
+      ],
+      "supported_field_keys": [
+        "nationality",
+        "passport_expiry_date",
+        "passport_number",
+        "upload_invitation",
+        "upload_passport_biodata",
+        "upload_passport_photo",
+        "upload_return_ticket"
+      ]
+    },
+    "residence-immigration-application": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://eservices.immigration.go.tz/online/web/permit/guidelines"
+      ],
+      "supported_field_keys": [
+        "full_name",
+        "nationality",
+        "permit_class",
+        "purpose_of_residence",
+        "upload_application_letter",
+        "upload_employer_documents",
+        "upload_employment_contract",
+        "upload_investment_licence",
+        "upload_investment_premises",
+        "upload_investment_registration",
+        "upload_investment_tax_records",
+        "upload_passport_copy",
+        "upload_passport_photo",
+        "upload_qualifications",
+        "upload_work_permit"
+      ]
+    },
+    "residence-permit-renewal": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://eservices.immigration.go.tz/online/web/permit/guidelines"
+      ],
+      "supported_field_keys": [
+        "full_name",
+        "nationality",
+        "permit_class",
+        "purpose_of_residence",
+        "upload_application_letter",
+        "upload_employer_documents",
+        "upload_employment_contract",
+        "upload_investment_licence",
+        "upload_investment_premises",
+        "upload_investment_registration",
+        "upload_investment_tax_records",
+        "upload_passport_copy",
+        "upload_passport_photo",
+        "upload_previous_permit",
+        "upload_qualifications",
+        "upload_work_permit"
+      ]
+    },
+    "residence-permit-change": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://eservices.immigration.go.tz/online/web/permit/guidelines"
+      ],
+      "supported_field_keys": [
+        "full_name",
+        "nationality",
+        "permit_class",
+        "purpose_of_residence",
+        "upload_application_letter",
+        "upload_employer_documents",
+        "upload_employment_contract",
+        "upload_investment_licence",
+        "upload_investment_premises",
+        "upload_investment_registration",
+        "upload_investment_tax_records",
+        "upload_no_objection",
+        "upload_passport_copy",
+        "upload_passport_photo",
+        "upload_previous_permit",
+        "upload_qualifications",
+        "upload_work_permit"
+      ]
+    },
+    "tin-registration": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/page/starting-business-income-for-individuals-and-paying-taxes",
+        "https://www.tra.go.tz/images/uploads/acts/HOW_TO_REGISTER_GET_AN_ACCOUNT_AS_WELL_AS_UPDATING_TIN_INFORMATION_IN_TAXPAYERS_PORTAL.pdf",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://www.tiseza.go.tz/pages/tax-identification-number-tin"
+      ],
+      "supported_field_keys": [
+        "business_address",
+        "business_name",
+        "full_name",
+        "nida_number",
+        "registered_phone",
+        "upload_business_premises",
+        "upload_constitution",
+        "upload_incorporation",
+        "upload_local_government_letter",
+        "upload_nida_copy"
+      ]
+    },
+    "kubalishwa-jina-tin": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "partial",
+      "source_urls": [
+        "https://www.tra.go.tz/images/uploads/forms/APPLICATION_FOR_TAXPAYER_ENTITY_REGISTRATION_OR_CHANGE_OF_REGISTERED_PARTICULARS.pdf",
+        "https://www.tra.go.tz/images/uploads/pages/Digital_Registration-_User_Manual.pdf",
+        "https://elibrary.osg.go.tz/bitstreams/92000677-95db-435e-a4ad-c5fa77752cb1/download",
+        "https://www.tra.go.tz/images/uploads/acts/HOW_TO_REGISTER_GET_AN_ACCOUNT_AS_WELL_AS_UPDATING_TIN_INFORMATION_IN_TAXPAYERS_PORTAL.pdf",
+        "https://www.tra.go.tz/page/starting-business-income-for-individuals-and-paying-taxes",
+        "https://taxpayerportal.tra.go.tz/"
+      ],
+      "supported_field_keys": [
+        "correct_full_name",
+        "current_tin_name",
+        "taxpayer_type",
+        "tin_number",
+        "upload_change_notification",
+        "upload_entity_amendment_form"
+      ]
+    },
+    "tax-clearance-certificate": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/page/starting-business-income-for-individuals-and-paying-taxes",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://procedures.tiseza.go.tz/procedure/print/296/step/0?l=en"
+      ],
+      "supported_field_keys": [
+        "tax_records_status",
+        "tin_number"
+      ]
+    },
+    "tax-return-filing-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/page/value-added-tax-vat",
+        "https://www.tra.go.tz/images/uploads/pages/WHT_USER_MANUAL_UPDATED.pdf",
+        "https://taxpayerportal.tra.go.tz/"
+      ],
+      "supported_field_keys": [
+        "filing_period",
+        "tin_number",
+        "upload_tax_records",
+        "withholding_transactions"
+      ]
+    },
+    "leseni-ya-biashara": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.brela.go.tz/services/patents"
+      ],
+      "supported_field_keys": [
+        "business_activities",
+        "business_address",
+        "business_name",
+        "licence_applicant_type",
+        "licence_authority",
+        "nida_number",
+        "tin_number",
+        "upload_business_extract",
+        "upload_citizenship_residence",
+        "upload_premises_evidence",
+        "upload_registration",
+        "upload_sector_permit",
+        "upload_tax_clearance"
+      ]
+    },
+    "business-licence-renewal": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.brela.go.tz/services/patents"
+      ],
+      "supported_field_keys": [
+        "business_activities",
+        "business_address",
+        "business_name",
+        "licence_applicant_type",
+        "licence_authority",
+        "nida_number",
+        "tin_number",
+        "upload_business_extract",
+        "upload_citizenship_residence",
+        "upload_premises_evidence",
+        "upload_registration",
+        "upload_sector_permit",
+        "upload_tax_clearance"
+      ]
+    },
+    "business-registration-brela": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://www.brela.go.tz/index.php/services/registration-of-business-names",
+        "https://bos.brela.go.tz/"
+      ],
+      "supported_field_keys": [
+        "business_address",
+        "business_name",
+        "citizenship",
+        "date_of_birth",
+        "email",
+        "nida_number",
+        "owner_full_name",
+        "owner_residential_address",
+        "ownership_type",
+        "partners_details",
+        "registered_phone"
+      ]
+    },
+    "company-registration-brela": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.brela.go.tz/services/registration-of-companies",
+        "https://bos.brela.go.tz/"
+      ],
+      "supported_field_keys": [
+        "applicant_nin",
+        "company_name",
+        "company_type",
+        "directors_details",
+        "shareholders_details",
+        "upload_articles",
+        "upload_memorandum",
+        "upload_signed_forms"
+      ]
+    },
+    "business-name-search-reservation": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://bos.brela.go.tz/",
+        "https://www.brela.go.tz/uploads/documents/sw-1758107506-THE%20BUSINESS%20NAMES%20ACT%2C%20CAP%20213%20R.E%202023.pdf"
+      ],
+      "supported_field_keys": [
+        "entity_type",
+        "proposed_names"
+      ]
+    },
+    "business-name-reservation": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://brela.go.tz/uploads/documents/sw-1758107576-THE%20COMPANIES%20ACT%2C%20REVISED%20EDITION%2C%202023.pdf",
+        "https://bos.brela.go.tz/"
+      ],
+      "supported_field_keys": [
+        "entity_type",
+        "proposed_names"
+      ]
+    },
+    "ngo-registration-brela": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://www.jamii.go.tz/services/ngos-registration"
+      ],
+      "supported_field_keys": [
+        "founders_names",
+        "ngo_name",
+        "ngo_type",
+        "upload_constitution",
+        "upload_foreign_constitution",
+        "upload_foreign_registration",
+        "upload_founding_minutes",
+        "upload_recommendation"
+      ]
+    },
+    "maombi-ya-mkopo-heslb": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.heslb.go.tz/images/storage/downloads/1781868431_2-bachelor-degree-guidelines-for-2026-2027.pdf",
+        "https://www.heslb.go.tz/images/storage/downloads/1781874797_1-diploma-guidelines-for-2026-2027-fnl-resized-pdfresizercom.pdf",
+        "https://www.heslb.go.tz/index.php/news/37"
+      ],
+      "supported_field_keys": [
+        "academic_year_intake",
+        "bank_account_number",
+        "bank_details",
+        "bank_name",
+        "birth_certificate_verification_number",
+        "date_of_birth",
+        "exam_numbers",
+        "guarantor_contact",
+        "guarantor_identity",
+        "guarantor_name",
+        "napa_guarantor",
+        "napa_parents",
+        "napa_student",
+        "nida_number",
+        "parent_death_verification",
+        "student_name",
+        "study_level",
+        "upload_birth_certificate",
+        "upload_signed_application_form"
+      ]
+    },
+    "maombi-ya-chuo": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tcu.go.tz/index.php/services/students-admissions-and-transfers/undergraduate-admissions",
+        "https://www.nactvet.go.tz/storage/public/files/KUFUNGULIWA%20KWA%20DIRISHA%20LA%20UDAHILI%202026-2027%20%281%29.pdf"
+      ],
+      "supported_field_keys": []
+    },
+    "school-application-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://tamisemi.go.tz/our-website"
+      ],
+      "supported_field_keys": []
+    },
+    "school-transfer-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://tamisemi.go.tz/our-website"
+      ],
+      "supported_field_keys": []
+    },
+    "school-selection-follow-up": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://selform.tamisemi.go.tz/Account/Login"
+      ],
+      "supported_field_keys": []
+    },
+    "scholarship-application-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.moe.go.tz/sites/default/files/TANGAZO%20LA%20CHINA.pdf"
+      ],
+      "supported_field_keys": [
+        "upload_recommendations",
+        "upload_transcripts"
+      ]
+    },
+    "exam-registration-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://ores.necta.go.tz/ores/",
+        "https://eservices.necta.go.tz/eservices/"
+      ],
+      "supported_field_keys": [
+        "candidate_reference",
+        "exam_body",
+        "exam_type"
+      ]
+    },
+    "job-application-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://portal.ajira.go.tz/app/vacancy-list/view-advert-to-apply/4d4BAYrsYpyowy7L1eiXcw%3D%3D"
+      ],
+      "supported_field_keys": [
+        "education_background",
+        "nida_number",
+        "referees_details",
+        "upload_application_letter",
+        "upload_certificates",
+        "upload_passport_photo",
+        "upload_professional_registration"
+      ]
+    },
+    "job-search-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "intake_only",
+      "source_urls": [
+        "https://portal.ajira.go.tz/app/vacancy-list/view-advert-to-apply/4d4BAYrsYpyowy7L1eiXcw%3D%3D"
+      ],
+      "supported_field_keys": []
+    },
+    "madai-ya-nssf": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "partial",
+      "source_urls": [
+        "https://www.bot.go.tz/Publications/Regular/Financial%20Stability/en/2026050610584713.pdf",
+        "https://www.pmo.go.tz/uploads/documents/sw-1767252825-26%20Disemba%2C%202025..pdf",
+        "https://www.nssf.go.tz/publications/forms",
+        "https://www.kazi.go.tz/uploads/documents/en-1600099192-SOCIAL-SECURITY-SCHEMES-BENEFITS-REGULATIONS-2018.pdf",
+        "https://www.nssf.go.tz/faqs?page=3",
+        "https://www.nssf.go.tz/benefits/unemployment-benefit"
+      ],
+      "supported_field_keys": [
+        "cessation_reason",
+        "contribution_months",
+        "reemployment",
+        "termination_date",
+        "upload_employment_exit_letter"
+      ]
+    },
+    "kufuatilia-simu-iliyopotea": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://www.address.tcra.go.tz/faqs"
+      ],
+      "supported_field_keys": [
+        "imei_1",
+        "investigator_contact",
+        "police_reference",
+        "upload_police_report",
+        "upload_purchase_receipt"
+      ]
+    },
+    "madai-eardhi": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "partial",
+      "source_urls": [
+        "https://www.lands.go.tz/uploads/notices/sw1749727103-e-Ardhi%20-%20Public%20Portal%20User%20Manual%20Ver%201.0%20-%202025.05.19%20-%20%28to%20HGCU%29%20%281%29.pdf",
+        "https://eardhi.lands.go.tz/",
+        "https://lands.go.tz/news/kilimanjaro-waanza-kutumia-mfumo-wa-e-ardhi"
+      ],
+      "supported_field_keys": []
+    },
+    "marekebisho-majina-eardhi": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.lands.go.tz/uploads/documents/sw-1682059525-MIONGOZO%20%28FINAL%29.pdf",
+        "https://www.lands.go.tz/services/registration-of-tittle"
+      ],
+      "supported_field_keys": [
+        "correct_name",
+        "existing_name",
+        "upload_application_letter",
+        "upload_land_title"
+      ]
+    },
+    "latra-registration": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://www.latra.go.tz/howdois/kujisajili-kwenye-mfumo-wa-rrims",
+        "https://www.latra.go.tz/howdois/how-to-apply-for-licence"
+      ],
+      "supported_field_keys": [
+        "company_registration_number",
+        "email",
+        "nida_number",
+        "owner_name",
+        "registrant_type",
+        "upload_company_registration"
+      ]
+    },
+    "general-form-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "intake_only",
+      "source_urls": [],
+      "supported_field_keys": []
+    },
+    "ngo-membership-application": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "intake_only",
+      "source_urls": [
+        "https://www.jamii.go.tz/services/ngos-registration"
+      ],
+      "supported_field_keys": []
+    },
+    "welfarecommunity-assistance-request": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "intake_only",
+      "source_urls": [
+        "https://www.tasaf.go.tz/"
+      ],
+      "supported_field_keys": []
+    },
+    "brela-company-name-search": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://bos.brela.go.tz/",
+        "https://www.brela.go.tz/uploads/documents/sw-1758107506-THE%20BUSINESS%20NAMES%20ACT%2C%20CAP%20213%20R.E%202023.pdf"
+      ],
+      "supported_field_keys": [
+        "proposed_names"
+      ]
+    },
+    "business-license-application": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.brela.go.tz/services/patents"
+      ],
+      "supported_field_keys": [
+        "business_activities",
+        "business_address",
+        "business_name",
+        "licence_applicant_type",
+        "licence_authority",
+        "nida_number",
+        "tin_number",
+        "upload_business_extract",
+        "upload_citizenship_residence",
+        "upload_premises_evidence",
+        "upload_registration",
+        "upload_sector_permit",
+        "upload_tax_clearance"
+      ]
+    },
+    "tin-application": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/page/starting-business-income-for-individuals-and-paying-taxes",
+        "https://www.tra.go.tz/images/uploads/acts/HOW_TO_REGISTER_GET_AN_ACCOUNT_AS_WELL_AS_UPDATING_TIN_INFORMATION_IN_TAXPAYERS_PORTAL.pdf",
+        "https://taxpayerportal.tra.go.tz/",
+        "https://www.tiseza.go.tz/pages/tax-identification-number-tin"
+      ],
+      "supported_field_keys": [
+        "business_address",
+        "business_name",
+        "full_name",
+        "nida_number",
+        "registered_phone",
+        "upload_business_premises",
+        "upload_constitution",
+        "upload_incorporation",
+        "upload_local_government_letter",
+        "upload_nida_copy"
+      ]
+    },
+    "vat-registration": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://www.tra.go.tz/page/value-added-tax-vat"
+      ],
+      "supported_field_keys": [
+        "business_activities",
+        "business_address",
+        "registration_basis",
+        "taxable_turnover",
+        "tin_number",
+        "upload_intending_trade_evidence"
+      ]
+    },
+    "passport-assistance": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "core_checked",
+      "source_urls": [
+        "https://eservices.immigration.go.tz/online/web/passport/guidelines",
+        "https://eservices.immigration.go.tz/online/web/passport/",
+        "https://elibrary.osg.go.tz/bitstreams/cadb8ab8-14b1-450e-8912-0c62a8634013/download"
+      ],
+      "supported_field_keys": [
+        "date_of_birth",
+        "emergency_contact_details",
+        "full_name",
+        "guarantor1_name",
+        "guarantor2_name",
+        "upload_birth_certificate",
+        "upload_guardian_consent",
+        "upload_national_identity",
+        "upload_parent_birth_certificate",
+        "upload_passport_photo",
+        "upload_travel_evidence"
+      ]
+    },
+    "visa-support": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "case_specific",
+      "source_urls": [
+        "https://visa.immigration.go.tz/guidelines"
+      ],
+      "supported_field_keys": [
+        "nationality",
+        "passport_expiry_date",
+        "passport_number",
+        "upload_invitation",
+        "upload_passport_biodata",
+        "upload_passport_photo",
+        "upload_return_ticket"
+      ]
+    },
+    "nssf-old-age-benefit": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "partial",
+      "source_urls": [
+        "https://www.nssf.go.tz/publications/forms",
+        "https://media.tanzlii.org/media/legislation/316836/source_file/5d0ecbcb4e5f46ba/1998-418.pdf",
+        "https://www.nssf.go.tz/faqs?page=3",
+        "https://www.nssf.go.tz/benefits/old-age-pension"
+      ],
+      "supported_field_keys": [
+        "upload_employment_exit_letter"
+      ]
+    },
+    "nssf-survivors-benefit": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "partial",
+      "source_urls": [
+        "https://www.bot.go.tz/Publications/Regular/Financial%20Stability/en/2026050610584713.pdf",
+        "https://www.pmo.go.tz/uploads/documents/sw-1767252825-26%20Disemba%2C%202025..pdf",
+        "https://www.nssf.go.tz/publications/forms",
+        "https://media.tanzlii.org/media/legislation/316836/source_file/5d0ecbcb4e5f46ba/1998-418.pdf",
+        "https://www.nssf.go.tz/benefits/survivors-pension",
+        "https://www.nssf.go.tz/faqs?page=3"
+      ],
+      "supported_field_keys": [
+        "claimant_name",
+        "deceased_member_name",
+        "relationship_to_member"
+      ]
+    },
+    "nssf-maternity-benefit": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "partial",
+      "source_urls": [
+        "https://media.tanzlii.org/media/legislation/306379/source_file/1999-284.pdf",
+        "https://www.nssf.go.tz/publications/forms",
+        "https://media.tanzlii.org/media/legislation/316836/source_file/5d0ecbcb4e5f46ba/1998-418.pdf",
+        "https://www.nssf.go.tz/benefits/maternity-benefits",
+        "https://www.nssf.go.tz/faqs?page=3"
+      ],
+      "supported_field_keys": [
+        "upload_maternity_medical_evidence"
+      ]
+    },
+    "nssf-invalidity-benefit": {
+      "scope": "Public-source comparison; no authenticated application or agency approval",
+      "status": "partial",
+      "source_urls": [
+        "https://www.nssf.go.tz/uploads/publications/en-1771921274-NSSF%20ACT%20CAP%2050%20RE.%202023.pdf",
+        "https://www.nssf.go.tz/publications/forms",
+        "https://media.tanzlii.org/media/legislation/316836/source_file/5d0ecbcb4e5f46ba/1998-418.pdf",
+        "https://www.nssf.go.tz/faqs?page=3",
+        "https://www.nssf.go.tz/uploads/publications/en-1771921274-NSSF%20ACT%20CAP%2050%20RE.%202023.pdf"
+      ],
+      "supported_field_keys": [
+        "upload_employment_exit_letter",
+        "upload_medical_board_assessment"
+      ]
+    }
+  }
+}

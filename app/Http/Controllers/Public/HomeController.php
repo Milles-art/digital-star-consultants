@@ -29,12 +29,13 @@ class HomeController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        $steps = [
-            ['n' => '01', 'title' => 'Choose a service', 'desc' => 'Browse our services and select the one that matches your needs.', 'icon' => 'messages-square', 'copy' => 'Browse our services and select the one that matches your needs.'],
-            ['n' => '02', 'title' => 'Send your request', 'desc' => 'Complete the application with your details and supporting documents.', 'icon' => 'file-text', 'copy' => 'Complete the application with your details and supporting documents.'],
-            ['n' => '03', 'title' => 'We review it', 'desc' => 'Our team checks your request and contacts you if anything else is needed.', 'icon' => 'rocket', 'copy' => 'Our team checks your request and contacts you if anything else is needed.'],
-            ['n' => '04', 'title' => 'Get your result', 'desc' => 'Follow your application status and receive the outcome when it is ready.', 'icon' => 'life-buoy', 'copy' => 'Follow your application status and receive the outcome when it is ready.'],
-        ];
+        $steps = array_map(fn (array $step) => [
+            'n' => $step['n'],
+            'title' => $step['title'],
+            'desc' => $step['copy'],
+            'icon' => $step['icon'],
+            'copy' => $step['copy'],
+        ], __('site.home.proc_steps'));
 
         $popularServices = Service::query()
             ->with('category')

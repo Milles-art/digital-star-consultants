@@ -7,6 +7,8 @@
     $fileFields = $service->fields->filter(fn ($field) => $field->field_type === 'file');
     $detailFields = $service->fields->filter(fn ($field) => ! in_array($field->field_type, ['file', 'hidden']));
     $price = $service->is_free ? $d['stat_fee_value'] : $service->formatted_price;
+    $requirementRules = $service->metadata['government_requirements']['fields'] ?? [];
+    $preparationDocuments = \App\Support\ServicePreparationChecklist::documents($service);
 @endphp
 
 @section('title', $service->name . ' | Digital Star Consultants')
@@ -120,24 +122,20 @@
                         <li><i data-lucide="circle-check"></i><span>{!! $d['need_accurate'] !!}</span></li>
 
                         {{-- Exact documents required for this service --}}
-                        @if ($fileFields->isNotEmpty())
+                        @if ($preparationDocuments->isNotEmpty())
                             <li style="padding-left:8px;border-left:3px solid var(--ds-accent);margin-left:4px">
                                 <span style="display:block;font-size:0.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ds-accent);margin-bottom:8px">
-                                    {{ $d['documents_required'] }}
+                                    {{ __('requirements.documents') }}
                                 </span>
                                 <ul style="list-style:none;padding:0;margin:0">
-                                    @foreach ($fileFields as $field)
+                                    @foreach ($preparationDocuments as $document)
                                         <li style="margin-bottom:6px;display:flex;align-items:flex-start;gap:10px">
                                             <i data-lucide="file-text" style="width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--ds-accent)"></i>
                                             <span>
-                                                <strong>{{ $field->label }}</strong>
-                                                @if ($field->is_required)
-                                                    <span class="ds-badge ds-badge-required" style="font-size:0.7rem;margin-left:6px">{{ __("site.services.detail.badge_required") }}</span>
-                                                @else
-                                                    <span class="ds-badge ds-badge-optional" style="font-size:0.7rem;margin-left:6px">{{ __("site.services.detail.badge_optional") }}</span>
-                                                @endif
-                                                @if ($field->help_text)
-                                                    <br><small style="color:var(--ds-muted-fg);display:block;margin-top:2px">{{ $field->help_text }}</small>
+                                                <strong>{{ $document['label'] }}</strong>
+                                                @include('services.partials.requirement-context', ['conditions' => $document['conditions']])
+                                                @if ($document['help'])
+                                                    <small style="color:var(--ds-muted-fg);display:block;margin-top:2px">{{ $document['help'] }}</small>
                                                 @endif
                                             </span>
                                         </li>
@@ -148,11 +146,11 @@
                         @endif
 
                         {{-- Exact information required for this service --}}
-                        @php $infoFields = $detailFields->filter(fn ($f) => $f->is_required); @endphp
+                        @php $infoFields = $detailFields; @endphp
                         @if ($infoFields->isNotEmpty())
                             <li style="padding-left:8px;border-left:3px solid var(--ds-accent);margin-left:4px">
                                 <span style="display:block;font-size:0.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ds-accent);margin-bottom:8px">
-                                    {{ $d['info_required'] }}
+                                    {{ __('requirements.information') }}
                                 </span>
                                 <ul style="list-style:none;padding:0;margin:0">
                                     @foreach ($infoFields as $field)
@@ -160,6 +158,7 @@
                                             <i data-lucide="type" style="width:14px;height:14px;flex-shrink:0;margin-top:2px;color:var(--ds-accent)"></i>
                                             <span>
                                                 <strong>{{ $field->label }}</strong>
+                                                @include('services.partials.requirement-context', ['conditions' => $requirementRules[$field->field_key]['applies_when'] ?? []])
                                                 @if ($field->help_text)
                                                     <br><small style="color:var(--ds-muted-fg);display:block;margin-top:2px">{{ $field->help_text }}</small>
                                                 @endif
@@ -170,8 +169,17 @@
                             </li>
                         @endif
 
-                        <li><i data-lucide="circle-check"></i><span>{!! $d['need_contact'] !!}</span></li>
+                        <li><i data-lucide="circle-check"></i><span>{{ __('requirements.guidance') }}</span></li>
                     </ul>
+                    @if (!empty($service->metadata['government_requirements']['sources']))
+                        <h4>{{ __('requirements.authority_sources') }}</h4>
+                        <ul class="ds-list">
+                            @foreach ($service->metadata['government_requirements']['sources'] as $source)
+                                <li><a href="{{ $source }}" target="_blank" rel="noopener noreferrer">{{ parse_url($source, PHP_URL_HOST) }}</a></li>
+                            @endforeach
+                        </ul>
+                        <p>{{ __('requirements.source_note') }}</p>
+                    @endif
                 </div>
                 <div class="ds-panel ds-panel-muted ds-reveal" style="--d:.1s">
                     <span class="ds-kicker">{{ $d['process_kicker'] }}</span>
@@ -246,7 +254,8 @@
                     <section class="ds-step-panel" data-step="2" hidden>
                         <span class="ds-kicker">{{ __('site.services.detail.step_of', ['no' => '02']) }}</span>
                         <h3>{{ $d['step2_title'] }}</h3>
-                        <p>{!! __('site.services.detail.step2_copy', ['name' => $service->name]) !!}</p>
+                        <p>{{ __('requirements.guidance') }}</p>
+                        <p>{{ __('requirements.case_note') }}</p>
                         @if ($detailFields->isNotEmpty())
                             <div class="ds-form-row">
                                 @foreach ($detailFields as $field)
@@ -269,17 +278,16 @@
                     <section class="ds-step-panel" data-step="3" hidden>
                         <span class="ds-kicker">{{ __('site.services.detail.step_of', ['no' => '03']) }}</span>
                         <h3>{{ $d['step3_title'] }}</h3>
-                        <p>{{ $d['step3_copy'] }}</p>
+                        <p>{{ __('requirements.guidance') }}</p>
 
                         @if ($fileFields->isNotEmpty())
                             {{-- Documents required checklist --}}
                             <div class="ds-panel" style="margin-bottom:20px">
-                                <span class="ds-kicker">{{ $d['documents_required'] }}</span>
+                                <span class="ds-kicker">{{ __('requirements.documents') }}</span>
                                 <ul class="ds-list">
                                     @foreach ($fileFields as $field)
-                                        <li>
+                                        <li data-service-condition="{{ json_encode($requirementRules[$field->field_key]['applies_when'] ?? new \stdClass()) }}">
                                             <strong>{{ $field->label }}</strong>
-                                            @if ($field->is_required) <span class="ds-badge ds-badge-required">{{ __("site.services.detail.badge_required") }}</span> @else <span class="ds-badge ds-badge-optional">{{ __("site.services.detail.badge_optional") }}</span> @endif
                                             @if ($field->help_text)
                                                 <br><small style="color:var(--ds-muted-fg)">{{ $field->help_text }}</small>
                                             @endif
@@ -295,10 +303,10 @@
                             {{-- File upload boxes --}}
                             <div class="ds-files">
                                 @foreach ($fileFields as $field)
-                                    <label class="ds-file">
+                                    <label class="ds-file" data-service-condition="{{ json_encode($requirementRules[$field->field_key]['applies_when'] ?? new \stdClass()) }}">
                                         <span class="ds-icon-box"><i data-lucide="cloud-upload"></i></span>
                                         <span style="min-width:0">
-                                            <strong>{{ $field->label }} @if ($field->is_required)*@else<span class="ds-optional">({{ __('site.services.optional') }})</span>@endif</strong>
+                                            <strong>{{ $field->label }}</strong>
                                             <small data-file-name-for="field-{{ $field->field_key }}">{{ $d['file_hint'] }}</small>
                                         </span>
                                         <input id="field-{{ $field->field_key }}" type="file" name="fields[{{ $field->field_key }}]"
@@ -339,7 +347,7 @@
                     <section class="ds-success" data-success role="status" aria-live="polite" hidden>
                         <span class="ds-icon-box"><i data-lucide="check"></i></span>
                         <h3>{{ $d['success_title'] }}</h3>
-                        <p>{{ $d['success_copy'] }}</p>
+                        <p data-success-message>{{ $d['success_copy'] }}</p>
                         <span class="ds-ref" data-reference></span>
                         <div class="ds-actions" style="justify-content:center">
                             <a class="ds-btn ds-btn-primary" data-track-link href="#">{{ $d['track'] }} <i data-lucide="arrow-right"></i></a>
@@ -375,5 +383,5 @@
         // Localised strings for the 4-step wizard (application-form.js).
         window.DS_FORM_I18N = {!! json_encode($wizardI18n, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!};
     </script>
-    <script src="{{ asset('js/application-form.js') }}"></script>
+    <script src="{{ asset('js/application-form.js') }}?v={{ @filemtime(public_path('js/application-form.js')) }}"></script>
 @endpush

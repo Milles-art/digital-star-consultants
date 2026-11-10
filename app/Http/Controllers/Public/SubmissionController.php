@@ -32,16 +32,12 @@ class SubmissionController extends Controller
 
         $fieldRules = [];
         $fieldAttributes = [];
-        $requiredFields = [];
         foreach ($service->fields as $field) {
             // Allow partial submissions: replace 'required' with 'nullable'
             // so customers can submit with whatever info/docs they have.
             $rules = array_map(fn ($r) => $r === 'required' ? 'nullable' : $r, $field->getValidationRules());
             $fieldRules["fields.{$field->field_key}"] = $rules;
             $fieldAttributes["fields.{$field->field_key}"] = $field->label;
-            if ($field->is_required) {
-                $requiredFields[] = $field->field_key;
-            }
         }
 
         // Validate one canonical field bag. Laravel keeps uploaded files in the
@@ -60,12 +56,8 @@ class SubmissionController extends Controller
         // team contacting the customer to collect the missing docs/info.
         $textValues = is_array($request->input('fields', [])) ? $request->input('fields', []) : [];
         $fileValues = is_array($request->file('fields', [])) ? $request->file('fields', []) : [];
-        $submittedFields = array_unique(array_merge(
-            array_keys(array_filter($textValues, fn ($v) => $v !== null && $v !== '')),
-            array_keys($fileValues)
-        ));
-        $missingRequired = array_diff($requiredFields, $submittedFields);
-        $status = empty($missingRequired)
+        $missingRequired = \App\Support\ServiceRequirementReview::missing($service, $textValues, $fileValues);
+        $status = $missingRequired->isEmpty()
             ? Submission::STATUS_PENDING
             : Submission::STATUS_AWAITING_CUSTOMER;
 

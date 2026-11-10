@@ -1,39 +1,41 @@
 @extends('layouts.digitalstar')
 
-@section('title', 'About | Digital Star Consultants')
-
 @php
+    $a = __('site.about');
     $ds = config('digitalstar');
     $values = [
-        ['icon' => 'eye', 'title' => 'We simplify', 'copy' => 'We help you understand what the service requires before you start, so you avoid unnecessary back-and-forth.'],
-        ['icon' => 'layers', 'title' => 'We organize', 'copy' => 'Your information and supporting documents are handled in a structured way that makes requests easier to process.'],
-        ['icon' => 'message-circle', 'title' => 'We communicate', 'copy' => 'You can track your request and know when there is an update or when we need something from you.'],
-        ['icon' => 'trending-up', 'title' => 'We keep improving', 'copy' => 'We combine service assistance with digital expertise to make the overall experience clearer and more useful.'],
+        ['icon' => 'eye', 'title' => $a['v1_t'], 'copy' => $a['v1_d']],
+        ['icon' => 'layers', 'title' => $a['v2_t'], 'copy' => $a['v2_d']],
+        ['icon' => 'message-circle', 'title' => $a['v3_t'], 'copy' => $a['v3_d']],
+        ['icon' => 'trending-up', 'title' => $a['v4_t'], 'copy' => $a['v4_d']],
     ];
 @endphp
 
+@section('title', __('site.nav.about') . ' | Digital Star Consultants')
+@section('description', $a['meta_desc'])
+
 @section('hero-actions')
-    <a href="{{ route('public.services.index') }}" class="ds-btn ds-btn-mint">Explore services <i data-lucide="arrow-right"></i></a>
-    <a href="{{ route('public.contact.show') }}" class="ds-btn ds-btn-ghost-light">Talk to us</a>
+    <a href="{{ route('public.services.index') }}" class="ds-btn ds-btn-mint">{{ $a['btn_services'] }} <i data-lucide="arrow-right"></i></a>
+    <a href="{{ route('public.contact.show') }}" class="ds-btn ds-btn-ghost-light">{{ $a['btn_talk'] }}</a>
 @endsection
 
 @section('hero-aside')
     <div class="ds-hero-card">
         <div class="ds-hero-card-chip" aria-hidden="true"></div>
-        <span class="ds-hero-card-label">Our promise</span>
-        <h3>Clear process. Helpful support.</h3>
-        <small>From first request to final result</small>
-        <p>From the first request to the final result, we keep the next step easy to understand.</p>
+        <span class="ds-hero-card-label">{{ $a['aside_label'] }}</span>
+        <h3>{{ $a['aside_title'] }}</h3>
+        <small>{{ $a['aside_small'] }}</small>
+        <p>{{ $a['aside_copy'] }}</p>
     </div>
 @endsection
 
 @section('content')
     @include('partials.ds-hero', [
-        'kicker' => 'About Digital Star',
-        'title' => 'We make digital services <span class="ds-accent">easier to access.</span>',
-        'lead' => 'Digital Star Consultants helps people, businesses and organizations complete important digital tasks with clear guidance and a simpler process.',
+        'kicker' => $a['hero_kicker'],
+        'title' => $a['hero_title'],
+        'lead' => $a['hero_lead'],
         'image' => $ds['images']['team'],
-        'points' => ['Clear process', 'Helpful support', 'Local expertise'],
+        'points' => $a['hero_points'],
     ])
 
     @include('partials.ds-stats')
@@ -42,17 +44,17 @@
     <section class="ds-section">
         <div class="ds-container ds-split">
             <div class="ds-photo ds-reveal">
-                <img src="{{ $ds['images']['collab'] }}" alt="Digital Star team collaborating">
+                <img src="{{ $ds['images']['collab'] }}" alt="{{ $a['photo_alt'] }}">
                 <div class="ds-photo-badge">
-                    <strong>4+ years</strong>
-                    <span>Serving clients across Tanzania</span>
+                    <strong>{{ $a['badge_years'] }}</strong>
+                    <span>{{ $a['badge_span'] }}</span>
                 </div>
             </div>
             <div>
                 @include('partials.ds-heading', [
-                    'kicker' => 'Why Digital Star',
-                    'title' => 'One place for the tasks that slow you down.',
-                    'copy' => 'Portals, forms, requirements and business processes can be difficult to navigate alone. We turn those complicated tasks into a guided service experience.',
+                    'kicker' => $a['why_kicker'],
+                    'title' => $a['why_title'],
+                    'copy' => $a['why_copy'],
                 ])
                 <div class="ds-values">
                     @foreach ($values as $value)
@@ -70,16 +72,16 @@
     </section>
 
     @include('partials.ds-process', [
-        'kicker' => 'How we work',
-        'title' => 'Built around people, not paperwork.',
-        'copy' => 'Our service experience is designed to give customers clarity at every stage.',
+        'kicker' => $a['how_kicker'],
+        'title' => $a['how_title'],
+        'copy' => $a['how_copy'],
     ])
 
     @include('partials.ds-cta', [
-        'kicker' => 'Ready to start?',
-        'title' => "Let's get something moving.",
-        'copy' => 'Find a service, start an application or speak with our team about what you need.',
-        'buttonLabel' => 'Contact us',
+        'kicker' => $a['final_kicker'],
+        'title' => $a['final_title'],
+        'copy' => $a['final_copy'],
+        'buttonLabel' => $a['final_btn'],
         'url' => route('public.contact.show'),
     ])
 @endsection

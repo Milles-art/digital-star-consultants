@@ -30,6 +30,44 @@ document.addEventListener('DOMContentLoaded', () => {
         revealEls.forEach((el) => el.classList.add('is-visible'));
     }
 
+    // Count-up animation for stat numbers (runs once when scrolled into view)
+    const countUp = (el) => {
+        const raw = (el.dataset.count || el.textContent).trim();
+        if (raw.includes('/')) return; // skip ratios like "24/7" — counting them looks wrong
+        const match = raw.match(/^([\d.,]+)(\D*)$/);
+        if (!match) return; // skip values like "24/7" that aren't countable
+        const suffix = match[2];
+        const target = parseFloat(match[1].replace(/,/g, ''));
+        if (!isFinite(target) || target === 0) return;
+        const decimals = (match[1].split('.')[1] || '').length;
+        const duration = 1400;
+        const start = performance.now();
+        const tick = (now) => {
+            const p = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+            const current = target * eased;
+            const shown = decimals ? current.toFixed(decimals) : Math.round(current).toLocaleString('en-US');
+            el.textContent = shown + suffix;
+            if (p < 1) requestAnimationFrame(tick);
+            else el.textContent = match[1] + suffix; // restore exact original
+        };
+        requestAnimationFrame(tick);
+    };
+
+    const statNums = document.querySelectorAll('.ds-stat strong[data-count]');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (statNums.length && !reduceMotion && 'IntersectionObserver' in window) {
+        const countObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    countUp(entry.target);
+                    countObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        statNums.forEach((el) => countObserver.observe(el));
+    }
+
     // Work page: category filters
     const tabs = [...document.querySelectorAll('[data-work-filter]')];
     const cards = [...document.querySelectorAll('[data-project-category]')];
@@ -40,7 +78,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const filter = tab.dataset.workFilter;
         cards.forEach((card) => {
-            card.classList.toggle('is-hidden', filter !== 'all' && card.dataset.projectCategory !== filter);
+            const show = filter === 'all' || card.dataset.projectCategory === filter;
+            card.classList.toggle('is-hidden', !show);
+            // Brief pop-in so the switch feels deliberate instead of abrupt
+            if (show && !reduceMotion) {
+                card.classList.remove('is-pop');
+                void card.offsetWidth; // restart the animation
+                card.classList.add('is-pop');
+            }
         });
     }));
 

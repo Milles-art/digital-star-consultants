@@ -48,10 +48,21 @@ class SubmissionController extends Controller
     {
         $this->authorize('view', $submission);
 
-        $submission->load(['service', 'values.field']);
+        $submission->load(['service.category', 'service.fields', 'service.allFields', 'processedBy', 'values.field']);
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('activity_logs')) {
+            $submission->load('activities.user');
+        } else {
+            $submission->setRelation('activities', new \Illuminate\Support\Collection());
+        }
+
+        // Pass an empty staff collection — staff users cannot reassign requests.
+        // The $staff variable is required by the shared show view but the
+        // assignment form is hidden behind an @can guard for staff viewers.
+        $staff = collect();
 
         if (! request()->expectsJson()) {
-            return view('admin.submissions.show', compact('submission'));
+            return view('admin.submissions.show', compact('submission', 'staff'));
         }
 
         return response()->json([

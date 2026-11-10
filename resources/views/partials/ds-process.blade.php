@@ -1,10 +1,5 @@
 @php
-    $steps = $steps ?? [
-        ['title' => 'Discuss your needs', 'copy' => 'We listen to understand your goals and requirements.', 'icon' => 'messages-square'],
-        ['title' => 'Get a proposal', 'copy' => 'We provide a clear plan and quotation.', 'icon' => 'file-text'],
-        ['title' => 'We build & deliver', 'copy' => 'Our team brings your solution to life.', 'icon' => 'rocket'],
-        ['title' => 'Ongoing support', 'copy' => 'We ensure your success with continuous support.', 'icon' => 'life-buoy'],
-    ];
+    $steps = $steps ?? array_map(fn ($s) => ['title' => $s['title'], 'copy' => $s['copy'], 'icon' => $s['icon']], __('site.common.proc_steps'));
 @endphp
 <section class="ds-section ds-section-tint">
     <div class="ds-container">

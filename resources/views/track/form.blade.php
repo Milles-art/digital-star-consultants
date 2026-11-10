@@ -1,47 +1,49 @@
 @extends('layouts.digitalstar')
 
-@section('title', 'Track an application | Digital Star Consultants')
-
 @php
+    $t = __('site.track');
     $features = [
-        ['icon' => 'activity', 'title' => 'Live status', 'copy' => 'See the latest stage of your application at any time.'],
-        ['icon' => 'signpost', 'title' => 'Clear next step', 'copy' => 'Know whether you need to do anything or just wait.'],
-        ['icon' => 'hash', 'title' => 'One reference', 'copy' => 'Use the same code from submission to completion.'],
+        ['icon' => 'activity', 'title' => $t['f1_title'], 'copy' => $t['f1_copy']],
+        ['icon' => 'signpost', 'title' => $t['f2_title'], 'copy' => $t['f2_copy']],
+        ['icon' => 'hash', 'title' => $t['f3_title'], 'copy' => $t['f3_copy']],
     ];
 @endphp
+
+@section('title', $t['title'] . ' | Digital Star Consultants')
+@section('description', $t['meta_desc'])
 
 @section('hero-aside')
     <div class="ds-hero-card">
         <div class="ds-hero-card-chip" aria-hidden="true"></div>
-        <span class="ds-hero-card-label">Your reference number</span>
-        <h3>Track an application</h3>
+        <span class="ds-hero-card-label">{{ $t['aside_label'] }}</span>
+        <h3>{{ $t['title'] }}</h3>
         <small>{{ __('public.reference_example') }}: {{ \App\Support\SubmissionReference::example() }}</small>
         <form method="GET" action="{{ route('public.track.form') }}" class="ds-form" id="track-form" style="margin-top:20px;gap:14px">
-            <label class="ds-field">Reference number
+            <label class="ds-field">{{ $t['field_label'] }}
                 <input id="tracking-reference" name="reference" required autocomplete="off" maxlength="28" value="{{ old('reference') }}" placeholder="{{ \App\Support\SubmissionReference::example() }}" aria-describedby="reference-help">
             </label>
             <small id="reference-help">{{ __('public.reference_help') }}</small>
             @error('reference')<p class="ds-alert ds-alert-error" role="alert">{{ $message }}</p>@enderror
-            <button class="ds-btn ds-btn-mint ds-btn-block" type="submit">Check status <i data-lucide="arrow-right"></i></button>
+            <button class="ds-btn ds-btn-mint ds-btn-block" type="submit">{{ $t['btn'] }} <i data-lucide="arrow-right"></i></button>
         </form>
-        <p class="ds-hero-note"><i data-lucide="shield-check"></i> Private and secure. Your reference is only used to find your status.</p>
+        <p class="ds-hero-note"><i data-lucide="shield-check"></i> {{ $t['secure'] }}</p>
     </div>
 @endsection
 
 @section('content')
     @include('partials.ds-hero', [
-        'kicker' => 'Application tracking',
-        'title' => 'Know where your request <span class="ds-accent">stands.</span>',
-        'lead' => 'Enter your Digital Star reference number to see the latest status, service details and the next step.',
-        'points' => ['Live status', 'Clear next step', 'One reference'],
+        'kicker' => $t['hero_kicker'],
+        'title' => $t['title_span'],
+        'lead' => $t['lead_full'],
+        'points' => [$t['f1_title'], $t['f2_title'], $t['f3_title']],
     ])
 
     <section class="ds-section">
         <div class="ds-container">
             @include('partials.ds-heading', [
-                'kicker' => 'How tracking works',
-                'title' => 'Three steps, one reference.',
-                'copy' => 'Use the same code from submission to completion.',
+                'kicker' => $t['how_kicker'],
+                'title' => $t['how_title'],
+                'copy' => $t['how_copy'],
             ])
             <div class="ds-grid-3-even">
                 @foreach ($features as $item)
@@ -55,12 +57,11 @@
 
             <div class="ds-panel ds-banner ds-reveal">
                 <div>
-                    <span class="ds-kicker">Can't find your reference?</span>
-                    <h3>Check your confirmation message or contact our team.</h3>
+                    <span class="ds-kicker">{{ $t['no_ref_kicker'] }}</span>
+                    <h3>{{ $t['no_ref_title'] }}</h3>
                 </div>
-                <a class="ds-btn ds-btn-primary" href="{{ route('public.contact.show') }}">Contact support <i data-lucide="arrow-right"></i></a>
+                <a class="ds-btn ds-btn-primary" href="{{ route('public.contact.show') }}">{{ $t['no_ref_btn'] }} <i data-lucide="arrow-right"></i></a>
             </div>
         </div>
     </section>
 @endsection
-
